@@ -1,0 +1,14 @@
+data/
+migrations/
+venv/
+.idea/
+config.py
+*.bak
+*/*.bak
+*/*.html
+*.ini
+*.log
+**/*.png
+**/*.pyc
+*.xlsx
+*/*.xlsx
