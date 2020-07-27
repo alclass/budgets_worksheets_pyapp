@@ -1,10 +1,42 @@
 #!/usr/bin/env python3
+import collections as coll
 import datetime, json, requests
 import fs.datefs.datefunctions as dtfs
-import collections as coll
 '''
 The main function in this module is call_api_bcb_cotacao_dolar_on_date()
-  See its docstring for info. 
+  See its docstring for info.
+  
+https://dadosabertos.bcb.gov.br/dataset/taxas-de-cambio-todos-os-boletins-diarios
+
+Unidades de medida:
+
+Moedas tipo A: Paridade (dólar): Quantidade da moeda por uma unidade de dólar americano (USD);
+Cotação (unidade monetária corrente): Quantidade de moeda corrente por uma unidade da moeda
+
+Moedas tipo B: Paridade (dólar): Quantidade de dólar americano (USD) por uma unidade da moeda;
+Cotação (unidade monetária corrente): Quantidade de moeda corrente por uma unidade da moeda
+
+Exemplo de cálculo da cotação das moedas tipo A em unidade monetária corrente, considerando o real (BRL) como unidade monetária corrente e o dólar canadense (CAD) como moeda estrangeira:
+
+Cotação de Compra CADBRL = Cotação USDBRL de Compra ÷ Paridade USDCAD de Venda
+Cotação de Venda CADBRL = Cotação USDBRL de Venda ÷ Paridade USDCAD de Compra
+
+Exemplo de cálculo da cotação das moedas tipo B em unidade monetária corrente, considerando o real (BRL) como unidade monetária corrente e o euro (EUR) como moeda estrangeira:
+
+Cotação de Compra EURBRL = Paridade EURUSD de Compra × Cotação USDBRL de Compra
+Cotação de Venda EURBRL = Paridade EURUSD de Venda × Cotação USDBRL de Venda  
+
+https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/documentacao
+
+Para o Euro:
+https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/aplicacao#!/recursos/CotacaoMoedaPeriodoFechamento
+
+https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/CotacaoMoedaPeriodoFechamento
+  (codigoMoeda=@codigoMoeda,dataInicialCotacao=@dataInicialCotacao,dataFinalCotacao=@dataFinalCotacao)
+  ?@codigoMoeda='EUR'&@dataInicialCotacao='07-09-2020'&@dataFinalCotacao='07-22-2020'&
+  $top=100&$format=json&$select=cotacaoCompra,cotacaoVenda,dataHoraCotacao,tipoBoletim
+  
+(Copy here the json result)
 '''
 
 MonetCorrNT = coll.namedtuple('MonetCorrNamedTuple',
@@ -69,7 +101,7 @@ The JsonToDict Result, for the URL above, is:
   print('result', resdict)
   cotacaoCompra = valuedict['cotacaoCompra']
   dataHoraCotacao = valuedict['dataHoraCotacao']
-  dataCotacao = dtfs.convert_yyyymmdd_strdate_to_dtdate(dataHoraCotacao)
+  dataCotacao = dtfs.convert_yyyymmdd_strdate_to_dtdate_or_None(dataHoraCotacao)
   return cotacaoCompra, dataCotacao
 
 CURR_BRL = 'BRL'
@@ -77,6 +109,24 @@ CURR_EUR = 'EUR'
 CURR_USD = 'USD'
 CURRENCIES = [CURR_BRL, CURR_USD, CURR_EUR]
 DEFAULT_CURRENCY = CURR_BRL
+
+def fetch_cotacao_brl_per_usd_for_datelist(datelist):
+  datelist = dtfs.prepare_datelist_uniq_n_in_desc_order(datelist)
+  quote_n_date_resultlist = []
+  lesserDate = datetime.date.today()
+  for pdate in datelist:
+    if pdate >= lesserDate:
+      continue
+    cotacaoCompra, dataCotacao = call_api_bcb_cotacao_dolar_on_date(pdate)
+    quote_n_date_resultlist.append((cotacaoCompra, dataCotacao))
+    if dataCotacao < lesserDate:
+      lesserDate = dataCotacao
+    print ('For', pdate, 'api returned =>', cotacaoCompra, dataCotacao)
+  return quote_n_date_resultlist
+
+def fetch_cotacao_brl_per_usd_within_inidate_n_findate(inidate, findate):
+  daterange = dtfs.get_daterange_asc_or_desc(inidate, findate, makes_desc=True)
+  return fetch_cotacao_brl_per_usd_for_datelist(daterange)
 
 def calculate_monet_corr_value_from_past_brl_indexed_by_usd(ini_montant, ini_date, fin_date):
   '''

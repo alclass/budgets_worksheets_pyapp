@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-import string
+# import math # for math.log(n, base)
+import string # for string.ascii_uppercase
 
 def consume_left_side_int_number_w_optional_having_comma_or_point(word):
   if word is None:
@@ -20,7 +21,7 @@ def consume_left_side_int_number_w_optional_having_comma_or_point(word):
   intnumber = int(numberstr)
   return intnumber
 
-def adhoc_test():
+def adhoc_test1():
   word = '234,4 blah'
   leftnumber = consume_left_side_int_number_w_optional_having_comma_or_point(word)
   print(word , '=>', leftnumber)
@@ -35,7 +36,9 @@ def adhoc_test():
   print(word , '=>', leftnumber)
 
 def process():
-  adhoc_test()
+  adhoc_test1()
+  pass
 
 if __name__ == "__main__":
   process()
+

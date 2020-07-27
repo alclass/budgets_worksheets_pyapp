@@ -40,8 +40,6 @@ class HistPriceList:
   def __init__(self, items):
     self.items = items
 
-
-
   def generate_xlsx(self):
     workbook = xlsxwriter.Workbook('hello.xlsx')
     worksheet = workbook.add_worksheet()
