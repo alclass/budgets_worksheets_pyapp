@@ -5,35 +5,40 @@ import xlsxwriter
 
 '''
 import fs.economicfs.financefunctions as finfs
-finfs.CURR_BRL
 
-DEFAULT_CURRENCY = CURR_BRL
 class HistPriceItem:
+  '''
+  This class is planned to receive either a USD or a EUR foreign_netprice value.
+  Then, it attempts to fetch the exchange rate on the price's recorded date (pricedate).
+  '''
 
-  def __init__(self, pricedate, netprice, ordernum, currency=None):
-    self.pricedate, self.netprice, self.ordernum = pricedate, netprice, ordernum
-    self.currency = currency
+  def __init__(self, foreign_netprice, pricedate, ordernum, currency=None):
+    self.foreign_netprice  = foreign_netprice
+    self.pricedate = pricedate
+    self.ordernum  = ordernum
+    self.currency  = currency # None means DEFAULT which is, by now, USD
     self._brlnetprice = None
     self.treat_currency()
 
   def treat_currency(self):
     if self.currency is None:
-      self.currency = DEFAULT_CURRENCY
-    if self.currency not in CURRENCIES:
-      error_msg = 'Currency %s is not within %s' %(self.currency, str(CURRENCIES))
+      self.currency = finfs.DEFAULT_CURRENCY
+    if self.currency not in finfs.CURRENCIES:
+      error_msg = 'Currency %s is not within %s' %(self.currency, str(finfs.CURRENCIES))
       raise ValueError(error_msg)
+    if self.currency == finfs.CURR_BRL:
+      self._brlnetprice = self.foreign_netprice
 
   def get_currency_in_brl(self):
     if self._brlnetprice:
       return self._brlnetprice
-    if self.currency == CURR_BRL:
-      self._brlnetprice = self.netprice
-    elif self.currency == CURR_EUR:
-      self._brlnetprice = convert_fromto_currency(origvalue, currfrom=self.currency, currto='BRL')
-    elif self.currency == CURR_USD:
-      self._brlnetprice = convert_fromto_currency(origvalue, currfrom=self.currency, currto='BRL')
-    return self.netprice
-
+    if self.currency == finfs.CURR_BRL:
+      self._brlnetprice = self.foreign_netprice
+    elif self.currency == finfs.CURR_EUR:
+      self._brlnetprice = finfs.convert_fromto_currency(self.foreign_netprice, currfrom=self.currency, currto=finfs.CURR_BRL)
+    elif self.currency == finfs.CURR_USD:
+      self._brlnetprice = finfs.convert_fromto_currency(self.foreign_netprice, currfrom=self.currency, currto=finfs.CURR_BRL)
+    return self.foreign_netprice
 
 class HistPriceList:
 

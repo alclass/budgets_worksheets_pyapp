@@ -138,3 +138,19 @@ class TestCaseDateFunctions(unittest.TestCase):
     expected_prepdatelist = [d3conv, d2, d1]
     returned_prepdatelist = dtfs.prepare_datelist_uniq_n_in_desc_order(datelist)
     self.assertEqual(expected_prepdatelist, returned_prepdatelist)
+
+  def test_return_strdate_in_fields_order_if_good_or_None(self):
+    strdate = '2020-7-15'; tosep='/'; inposorder='ymd'; outposorder = 'mdy'
+    expected_strdate = '07/15/2020'
+    returned_strdate = dtfs.convert_sep_or_datefields_position_for_ymdstrdate(strdate, tosep, inposorder, outposorder)
+    self.assertEqual(expected_strdate, returned_strdate)
+    # 2
+    strdate = '7/8/2020'; tosep='-'; inposorder='mdy'; outposorder = 'ymd'
+    expected_strdate = '2020-07-08'
+    returned_strdate = dtfs.convert_sep_or_datefields_position_for_ymdstrdate(strdate, tosep, inposorder, outposorder)
+    self.assertEqual(expected_strdate, returned_strdate)
+    # 3
+    strdate = '07/08/2020'
+    expected_strdate = '2020-07-08'
+    returned_strdate = dtfs.convert_sep_or_datefields_position_for_ymdstrdate(strdate, tosep, inposorder, outposorder)
+    self.assertEqual(expected_strdate, returned_strdate)

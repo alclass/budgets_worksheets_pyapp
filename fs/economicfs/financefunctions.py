@@ -84,10 +84,10 @@ The JsonToDict Result, for the URL above, is:
   if recurse_pass > API_CALL_COTACAO_MAX_PREVIOUS_DAY_TRIES:
     return None, pdate
   refdate = dtfs.get_date_or_previous_monday_to_friday(pdate)
-  mmddyyyy = dtfs.convert_date_to_mmddyyyy_str(refdate)
-  if mmddyyyy is None:
-    return None, pdate
-  url = url_base + url_quer_interpol %{'mmddyyyy': mmddyyyy}
+  #mmddyyyy = dtfs.convert_yyyymmdd_strdate_to_dtdate_or_None(refdate)
+  #if mmddyyyy is None:
+    #return None, pdate
+  url = url_base + url_quer_interpol %{'mmddyyyy': pdate} # mmddyyyy
   print ('calling', url)
   res = requests.get(url)
   if res.status_code != 200:
@@ -111,16 +111,20 @@ CURRENCIES = [CURR_BRL, CURR_USD, CURR_EUR]
 DEFAULT_CURRENCY = CURR_BRL
 
 def fetch_cotacao_brl_per_usd_for_datelist(datelist):
-  datelist = dtfs.prepare_datelist_uniq_n_in_desc_order(datelist)
+  # datelist = dtfs.prepare_datelist_uniq_n_in_desc_order(datelist)
   quote_n_date_resultlist = []
   lesserDate = datetime.date.today()
   for pdate in datelist:
-    if pdate >= lesserDate:
-      continue
-    cotacaoCompra, dataCotacao = call_api_bcb_cotacao_dolar_on_date(pdate)
+    #if pdate >= lesserDate:
+      #continue
+    mdy = dtfs.convert_sep_or_datefields_position_for_ymdstrdate(pdate, tosep='-', sourceposorder='ymd', targetposorder='mdy')
+    print('mdy', mdy)
+    cotacaoCompra, dataCotacao = call_api_bcb_cotacao_dolar_on_date(mdy)
     quote_n_date_resultlist.append((cotacaoCompra, dataCotacao))
-    if dataCotacao < lesserDate:
-      lesserDate = dataCotacao
+    ymd = dtfs.convert_sep_or_datefields_position_for_ymdstrdate(dataCotacao, tosep='-', sourceposorder='mdy', targetposorder='ymd')
+    dtDataCotacao = dtfs.returns_date_or_None(ymd)
+    #if dtDataCotacao < lesserDate:
+      #lesserDate = dataCotacao
     print ('For', pdate, 'api returned =>', cotacaoCompra, dataCotacao)
   return quote_n_date_resultlist
 

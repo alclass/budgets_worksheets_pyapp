@@ -105,6 +105,114 @@ def get_daterange(pinidate, pfindate, accept_future=False):
       daterange.append(ongoingdate)
   return daterange
 
+strdate_separators = ['-', '/', '.']
+def convert_sep_or_datefields_position_for_ymdstrdate(pstrdate, tosep='-', sourceposorder='ymd', targetposorder='ymd'):
+  '''
+    The input pstrdate must be in the ymd order.
+  :param pstrdate:
+  :param tosep:
+  :param posorder:
+  :return:
+  '''
+  if pstrdate is None:
+    return None
+  strdate = str(pstrdate) # force it to be a str, only useful when, for example, a datetime.date is sent in, but not harmful otherwise
+  sep_in_date = ''
+  for sep in strdate_separators:
+    if sep in strdate:
+      sep_in_date = sep
+      break
+  strdate = strdate.replace(sep_in_date, tosep)
+  strdate, pdate = return_strdate_in_fields_order_if_good_or_None(strdate, tosep, sourceposorder)
+  if strdate is None:
+    return None
+  if sourceposorder == targetposorder:
+    return strdate
+  return put_date_fields_in_order(strdate, pdate, tosep, targetposorder)
+
+def return_strdate_in_fields_order_if_good_or_None(strdate, sep, posorder):
+  pp = strdate.split(sep)
+  try:
+    if posorder == 'ymd':
+      y = int(pp[0])
+      m = int(pp[1])
+      d = int(pp[2])
+    elif posorder == 'ydm':
+      y = int(pp[0])
+      m = int(pp[2])
+      d = int(pp[1])
+    elif posorder == 'myd':
+      y = int(pp[1])
+      m = int(pp[0])
+      d = int(pp[2])
+    elif posorder == 'mdy':
+      y = int(pp[2])
+      m = int(pp[0])
+      d = int(pp[1])
+    elif posorder == 'dmy':
+      y = int(pp[2])
+      m = int(pp[1])
+      d = int(pp[0])
+    elif posorder == 'dym':
+      y = int(pp[1])
+      m = int(pp[2])
+      d = int(pp[0])
+  except ValueError:
+    return None, None
+  except IndexError:
+    return None, None
+  year = None; month = None; day = None
+  try:
+    for c in posorder:
+      if c == 'y':
+        year = eval(c)
+      elif c == 'm':
+        month = eval(c)
+      elif c == 'd':
+        day = eval(c)
+      else:
+        return None
+  except TypeError:
+    return None, None
+  try:
+    pdate = datetime.date(int(year), int(month), int(day))
+    return strdate, pdate
+  except ValueError:
+    pass
+  return None, None
+
+def put_date_fields_in_order(strdate, pdate, sep, targetposorder):
+  '''
+    Consider this function private, ie,
+    strdate should already have been tested a good strdate,
+    which is good in caller convert_sep_or_datefields_position_for_ymdstrdate()
+  :param strdate:
+  :param sep:
+  :param posorder:
+  :return:
+  '''
+  y = pdate.year; m = str(pdate.month).zfill(2); d = str(pdate.day).zfill(2)
+  odict = {'y':y, 'm':m, 'd':d, 'sep':sep}
+  if targetposorder == 'ymd':
+    odate = '%(y)s%(sep)s%(m)s%(sep)s%(d)s' %odict
+    return odate
+  elif targetposorder == 'ydm':
+    odate = '%(y)s%(sep)s%(d)s%(sep)s%(m)s' %odict
+    return odate
+  elif targetposorder == 'myd':
+    odate = '%(m)s%(sep)s%(y)s%(sep)s%(d)s' %odict
+    return odate
+  elif targetposorder == 'mdy':
+    odate = '%(m)s%(sep)s%(d)s%(sep)s%(y)s' %odict
+    return odate
+  elif targetposorder == 'dmy':
+    odate = '%(d)s%(sep)s%(m)s%(sep)s%(y)s' %odict
+    return odate
+  elif targetposorder == 'dym':
+    odate = '%(d)s%(sep)s%(y)s%(sep)s%(m)s' %odict
+    return odate
+  return None
+
 def convert_yyyymmdd_strdate_to_dtdate_or_today(strdate):
   pdate = convert_yyyymmdd_strdate_to_dtdate_or_None(strdate)
   if pdate is None:
