@@ -5,6 +5,7 @@ venv/
 config.py
 *.bak
 */*.bak
+*.html
 */*.html
 *.ini
 *.log
@@ -12,3 +13,4 @@ config.py
 **/*.pyc
 *.xlsx
 */*.xlsx
+.~lock*

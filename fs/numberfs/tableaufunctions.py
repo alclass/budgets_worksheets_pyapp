@@ -14,7 +14,7 @@ def pick_up_letter_n_number_from_cellref(cellref):
   letters = ''
   strnumber = ''
   for c in cellref:
-    if c in ZERO_PLUS_UPPERCASE_ASCII_LETTERS:
+    if c in string.ascii_uppercase:
       letters += c
     elif c in string.digits:
       strnumber += c
@@ -239,4 +239,3 @@ def process():
 
 if __name__ == "__main__":
   process()
-

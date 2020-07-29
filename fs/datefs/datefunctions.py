@@ -28,10 +28,10 @@ def get_date_or_previous_monday_to_friday(pdate, max_recurse=0):
     return get_date_or_previous_monday_to_friday(previous_date, max_recurse+1)
   return indate
 
-def returns_date_or_None(pdate):
+def returns_date_or_None(pdate=None):
   return convert_yyyymmdd_strdate_to_dtdate_or_None(pdate)
 
-def returns_date_or_today(pdate):
+def returns_date_or_today(pdate=None):
   indate = returns_date_or_None(pdate)
   if indate is None:
     indate = datetime.date.today()
@@ -218,6 +218,16 @@ def convert_yyyymmdd_strdate_to_dtdate_or_today(strdate):
   if pdate is None:
     pdate = datetime.date.today()
   return pdate
+
+def make_tstamp_for_filename(dtime=None):
+  if dtime is None or type(dtime) != datetime.datetime:
+    dtime = datetime.datetime.now()
+  strdt = str(dtime)
+  strdt = strdt.split('.')[0]
+  strdt = strdt.replace(':', '')
+  strdt = strdt.replace('-', '')
+  strdt = strdt.replace(' ', 'T')
+  return strdt
 
 def convert_yyyymmdd_strdate_to_dtdate_or_None(strdate):
   if strdate is None:

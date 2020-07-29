@@ -1,108 +1,21 @@
 #!/usr/bin/env python3
+'''
+'''
 import collections as coll
-import datetime, json, requests
+import datetime, xlsxwriter
+from prettytable import PrettyTable
 import fs.datefs.datefunctions as dtfs
-'''
-The main function in this module is call_api_bcb_cotacao_dolar_on_date()
-  See its docstring for info.
-  
-https://dadosabertos.bcb.gov.br/dataset/taxas-de-cambio-todos-os-boletins-diarios
-
-Unidades de medida:
-
-Moedas tipo A: Paridade (dólar): Quantidade da moeda por uma unidade de dólar americano (USD);
-Cotação (unidade monetária corrente): Quantidade de moeda corrente por uma unidade da moeda
-
-Moedas tipo B: Paridade (dólar): Quantidade de dólar americano (USD) por uma unidade da moeda;
-Cotação (unidade monetária corrente): Quantidade de moeda corrente por uma unidade da moeda
-
-Exemplo de cálculo da cotação das moedas tipo A em unidade monetária corrente, considerando o real (BRL) como unidade monetária corrente e o dólar canadense (CAD) como moeda estrangeira:
-
-Cotação de Compra CADBRL = Cotação USDBRL de Compra ÷ Paridade USDCAD de Venda
-Cotação de Venda CADBRL = Cotação USDBRL de Venda ÷ Paridade USDCAD de Compra
-
-Exemplo de cálculo da cotação das moedas tipo B em unidade monetária corrente, considerando o real (BRL) como unidade monetária corrente e o euro (EUR) como moeda estrangeira:
-
-Cotação de Compra EURBRL = Paridade EURUSD de Compra × Cotação USDBRL de Compra
-Cotação de Venda EURBRL = Paridade EURUSD de Venda × Cotação USDBRL de Venda  
-
-https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/documentacao
-
-Para o Euro:
-https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/aplicacao#!/recursos/CotacaoMoedaPeriodoFechamento
-
-https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/CotacaoMoedaPeriodoFechamento
-  (codigoMoeda=@codigoMoeda,dataInicialCotacao=@dataInicialCotacao,dataFinalCotacao=@dataFinalCotacao)
-  ?@codigoMoeda='EUR'&@dataInicialCotacao='07-09-2020'&@dataFinalCotacao='07-22-2020'&
-  $top=100&$format=json&$select=cotacaoCompra,cotacaoVenda,dataHoraCotacao,tipoBoletim
-  
-(Copy here the json result)
-'''
+import fs.economicfs.apis_finfunctions as apis
+import fs.numberfs.tableaufunctions as tblfs
+import config
 
 MonetCorrNT = coll.namedtuple('MonetCorrNamedTuple',
-                'ini_montant, fin_montant, '
-                'ini_rate, fin_rate, '
-                'corr_fraction, '
-                'ini_date, fin_date, '
-                'ret_ini_date, ret_fin_date'
-              )
-
-url_base = 'https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/CotacaoDolarDia(dataCotacao=@dataCotacao)'
-url_quer_interpol = "?@dataCotacao='%(mmddyyyy)s'&$top=100&$format=json"
-API_CALL_COTACAO_MAX_PREVIOUS_DAY_TRIES = 8
-def call_api_bcb_cotacao_dolar_on_date(pdate, recurse_pass=0):
-  '''
-  This function calls an endpoint API from the Banco Central site.
-
-* The guide page for it is https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/aplicacao#!/recursos/CotacaoDolarDia
-* An example follows:
-
-https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/CotacaoDolarDia(dataCotacao=@dataCotacao)?@dataCotacao='07-23-2020'&$top=100&$format=json
-The JsonToDict Result, for the URL above, is:
-{
-  '@odata.context': 'https://was-p.bcnet.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata$metadata#_CotacaoDolarDia',
-  'value':[{'cotacaoCompra': 5.1641, 'cotacaoVenda': 5.1647, 'dataHoraCotacao': '2020-07-23 13:02:43.561'}]
-}
-
-* Notice:
-  when there's no currency exchange quote, 'value' is [], ie, the empty list,
-    if, on the other hand, there is data, we're interested in the element-0 which is a dict (in Python terms).
-
-* Time backword recursion:
-  On weekdays or holidays, there is no exchange info. Because of that, the functions looks up
-    to see if value is [] (ie, the empty list) and tries again one day before.
-    However, constant API_CALL_COTACAO_MAX_PREVIOUS_DAY_TRIES defines the maximum number of retries.
-
-  The caller can also check where a date is a weekend day or a holiday in Brasil and
-    in that case the max tries constant can very well be 0, ie, no retries.
-  (This constant can be placed in config.py at the app's root folder, so that it can be changed from there.)
-
-  :param pdate:
-  :param recurse_pass:
-  :return:
-  '''
-  if recurse_pass > API_CALL_COTACAO_MAX_PREVIOUS_DAY_TRIES:
-    return None, pdate
-  refdate = dtfs.get_date_or_previous_monday_to_friday(pdate)
-  #mmddyyyy = dtfs.convert_yyyymmdd_strdate_to_dtdate_or_None(refdate)
-  #if mmddyyyy is None:
-    #return None, pdate
-  url = url_base + url_quer_interpol %{'mmddyyyy': pdate} # mmddyyyy
-  print ('calling', url)
-  res = requests.get(url)
-  if res.status_code != 200:
-    print('res.status_code', res.status_code)
-    return None, pdate
-  resdict = json.loads(res.text)
-  valuedict = resdict['value'][0]
-  if valuedict == []:
-    previous_date = refdate - datetime.timedelta(days=1)
-    return call_api_bcb_cotacao_dolar_on_date(previous_date, recurse_pass + 1)
-  print('result', resdict)
-  cotacaoCompra = valuedict['cotacaoCompra']
-  dataHoraCotacao = valuedict['dataHoraCotacao']
-  dataCotacao = dtfs.convert_yyyymmdd_strdate_to_dtdate_or_None(dataHoraCotacao)
-  return cotacaoCompra, dataCotacao
+  'ini_montant, fin_montant, '
+  'ini_rate, fin_rate, '
+  'corr_fraction, '
+  'ini_date, fin_date, '
+  'ret_ini_date, ret_fin_date'
+)
 
 CURR_BRL = 'BRL'
 CURR_EUR = 'EUR'
@@ -119,7 +32,7 @@ def fetch_cotacao_brl_per_usd_for_datelist(datelist):
       #continue
     mdy = dtfs.convert_sep_or_datefields_position_for_ymdstrdate(pdate, tosep='-', sourceposorder='ymd', targetposorder='mdy')
     print('mdy', mdy)
-    cotacaoCompra, dataCotacao = call_api_bcb_cotacao_dolar_on_date(mdy)
+    cotacaoCompra, dataCotacao = apis.call_api_bcb_cotacao_dolar_on_date(mdy)
     quote_n_date_resultlist.append((cotacaoCompra, dataCotacao))
     ymd = dtfs.convert_sep_or_datefields_position_for_ymdstrdate(dataCotacao, tosep='-', sourceposorder='mdy', targetposorder='ymd')
     dtDataCotacao = dtfs.returns_date_or_None(ymd)
@@ -135,7 +48,7 @@ def fetch_cotacao_brl_per_usd_within_inidate_n_findate(inidate, findate):
 def calculate_monet_corr_value_from_past_brl_indexed_by_usd(ini_montant, ini_date, fin_date):
   '''
   '''
-  fin_rate, ret_fin_date = call_api_bcb_cotacao_dolar_on_date(fin_date)
+  fin_rate, ret_fin_date = apis.call_api_bcb_cotacao_dolar_on_date(fin_date)
   if fin_rate is None:
     print  ('On fin_date', fin_date)
     monet_corr_nt = MonetCorrNT(
@@ -147,7 +60,7 @@ def calculate_monet_corr_value_from_past_brl_indexed_by_usd(ini_montant, ini_dat
     )
     return monet_corr_nt
   if ret_fin_date > ini_date:
-    ini_rate, ret_ini_date  = call_api_bcb_cotacao_dolar_on_date(ini_date)
+    ini_rate, ret_ini_date  = apis.call_api_bcb_cotacao_dolar_on_date(ini_date)
     if ini_rate is None:
       print('On ini_rate', ini_rate)
       monet_corr_nt = MonetCorrNT(
@@ -218,6 +131,7 @@ def monetarily_correct_by_exchange_rate(ini_montant, ini_date, fin_date=None, cu
   )
   return monet_corr_nt
 
+
 def adhoc_test2():
   # converted_money = convert_fromto_currency(10, CURR_USD, CURR_BRL)
   daterange = dtfs.get_daterange('20200720', '20200717')
@@ -230,7 +144,7 @@ def adhoc_test2():
       if refdate >= exchangedate: # notice daterange is reversed, ie, it loops day by day to the past
         print('refdate has already been taken', refdate)
         continue
-    exchangeratio, exchangedate = call_api_bcb_cotacao_dolar_on_date(refdate)
+    exchangeratio, exchangedate = apis.call_api_bcb_cotacao_dolar_on_date(refdate)
     print(refdate, 'exchangeratio =', exchangeratio, 'exchangedate =', exchangedate)
 
 def adhoc_test3():
@@ -263,8 +177,7 @@ def adhoc_test():
   print (monet_corr_nt)
 
 def process():
-  adhoc_test()
-  adhoc_test3()
+  pass
 
 if __name__ == "__main__":
   process()

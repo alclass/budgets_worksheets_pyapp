@@ -5,6 +5,13 @@
 '''
 import fs.numberfs.tableaufunctions as tblfs
 
+def adhoc_test0():
+  cell_letters = 'a'
+  nonrec_number = tblfs.convert_columnletters_to_number_nonrecursively(cell_letters)
+  print(cell_letters, '(nonrecurse) =>',  nonrec_number)
+  returned_letters = tblfs.convert_number_to_columnletters_nonrecursively(nonrec_number)
+  print(nonrec_number, '(recurse) =>',  returned_letters, 'expected', nonrec_number)
+
 def adhoc_test1():
   cell_letters = 'zead'
   rec_number = tblfs.convert_columnletters_to_number_recursively(cell_letters)
@@ -107,7 +114,7 @@ def adhoc_test4():
   returned_letters = tblfs.convert_number_to_columnletters_nonrecursively(returned_number)
   print(returned_number, '(nonrecurse) =>',  returned_letters)
 
-def adhoc_test7():
+def adhoc_test5():
   # 2 forward
   cell_letters = 'zead'
   returned_number = tblfs.convert_columnletters_to_number_recursively_entrance(cell_letters)
@@ -125,7 +132,7 @@ def adhoc_test7():
   next_cellref = tblfs.move_cell_along_tableau(cellref, ncolumns, nrows)
   print(cellref, ' next_cellref =>', next_cellref)
 
-def adhoc_test8():
+def adhoc_test6():
 
   # 1 foward
   cell_letters = 'z';
@@ -144,19 +151,15 @@ def adhoc_test8():
   next_cell_letters = tblfs.move_columns_by(mid_letters, ncolumns)
   print('1 backward', cell_letters,'| mid =', mid_letters, '| next_cellref =>', next_cell_letters)
 
-def adhoc_test8():
-    str_ops = '''
-    26 * 26 ** 5 + 26 * 26 ** 2 + 26 * 26 ** 1
-    26 * 26 ** 5 + 26 * 26 ** 2 + 26 * 26 ** 1
-    26 * 26 ** 5 + 26 * 26 ** 2 + 26 * 26 ** 1
-    26 * 26 ** 5 + 26 * 26 ** 2 + 26 * 26 ** 1
-    26 * 26 ** 5 + 26 * 26 ** 2 + 26 * 26 ** 1
-    26 * 26 ** 5 + 26 * 26 ** 2 + 26 * 26 ** 1
-    '''
-
 def process():
-  # adhoc_test()
-  adhoc_test7()
+  functionname_interpol = 'adhoc_test%d()'
+  for i in range(7):
+    functionname = functionname_interpol %i
+    print('-'*40)
+    print( 'Executing ', functionname)
+    print('-'*40)
+    eval(functionname)
+
 
 if __name__ == "__main__":
   process()
