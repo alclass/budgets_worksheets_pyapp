@@ -82,9 +82,10 @@ def call_api_bcb_cotacao_dolar_on_date(pdate, recurse_pass=0):
   :return:
   '''
   if dtfs.returns_date_or_None(pdate) is None:
-    return None, pdate
+    return pdate, None, None
   if recurse_pass > API_CALL_COTACAO_MAX_PREVIOUS_DAY_TRIES:
-    return None, pdate
+    error_msg = 'Error: could not find an available exchange rate quote from the open BCB API within 10 days backwards from given date (%s)' %str(pdate)
+    return pdate, error_msg, None
   refdate = dtfs.get_date_or_previous_monday_to_friday(pdate)
   # the API accepts a data in the format 'MM/DD/YYYY', so it needs to convert pdate to it
   mmddyyyy = dtfs.convert_sep_or_datefields_position_for_ymdstrdate(pdate, targetposorder='mdy') # tosep='-',
@@ -92,16 +93,16 @@ def call_api_bcb_cotacao_dolar_on_date(pdate, recurse_pass=0):
   print ('calling', url)
   res = requests.get(url)
   if res.status_code != 200:
-    error_msg = 'Connection Error: HTTP status received is not 200: res.status_code %d from the server; pdate = %s' %(res.status_code, str(pdate))
+    error_msg = 'Error: HTTP Connection status received is not 200: res.status_code %d from the server; pdate = %s' %(res.status_code, str(pdate))
     print(error_msg)
-    return None, error_msg
+    return pdate, error_msg, None
   resdict = json.loads(res.text)
   try:
     valuedict = resdict['value'][0]
   except IndexError:
-    error_msg = "HTTP status received was 200, but valuedict = resdict['value'][0] failed :: resdict = ||%s||" %(str(resdict))
+    error_msg = "Error: HTTP status received was 200 OK, but valuedict = resdict['value'][0] failed :: resdict = ||%s||" %(str(resdict))
     print(error_msg)
-    return None, error_msg
+    return pdate, error_msg, None
   if valuedict == []:
     previous_date = refdate - datetime.timedelta(days=1)
     # recurse from here trying the previous day

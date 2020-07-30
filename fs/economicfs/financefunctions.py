@@ -1,15 +1,21 @@
 #!/usr/bin/env python3
-'''
+__doc__ = '''
+  budgets worksheets pyapp
+  This module is intended to contain (mostly) financial (def) functions.
+
+  One of the important functions here is a gateway to fetching exchange rate quotes either via an API or from a sqlite db.
+  Exchange rate quotes, when fetched online, are kept in a sqlite file, so it's somehow like a history buffer.
+
+  @date 2020-07-29 
+  @author Luiz Lewis
 '''
 import collections as coll
-import datetime, xlsxwriter
-from prettytable import PrettyTable
+import datetime
 import fs.datefs.datefunctions as dtfs
 import fs.economicfs.apis_finfunctions as apis
-import fs.numberfs.tableaufunctions as tblfs
-import config
 
-MonetCorrNT = coll.namedtuple('MonetCorrNamedTuple',
+MonetCorrNT = coll.namedtuple(
+  'MonetCorrNamedTuple',
   'ini_montant, fin_montant, '
   'ini_rate, fin_rate, '
   'corr_fraction, '
@@ -130,7 +136,6 @@ def monetarily_correct_by_exchange_rate(ini_montant, ini_date, fin_date=None, cu
     ret_ini_date=None, ret_fin_date=None
   )
   return monet_corr_nt
-
 
 def adhoc_test2():
   # converted_money = convert_fromto_currency(10, CURR_USD, CURR_BRL)
