@@ -1,7 +1,32 @@
 #!/usr/bin/env python3
 import collections as coll
 import datetime
+import os
 import fs.textfs.strfs as strfs
+import config
+
+def get_appsroot_abspath_for_filename_w_tstamp(filename):
+  strdt = make_tstamp_for_filename()
+  name, ext = os.path.splitext(filename)
+  if name.find(' ') > -1:
+    filename = name + ' ' + strdt + ext
+    filename.replace('  ', ' ')
+  else:
+    filename = name + '_' + strdt + ext
+  return config.get_appsroot_abspath_for_filename(filename)
+
+def get_datafolder_abspath_for_filename_w_tstamp(filename):
+  strdt = make_tstamp_for_filename()
+  name, ext = os.path.splitext(filename)
+  if name.find(' ') > -1:
+    filename = name + ' ' + strdt + ext
+    filename.replace('  ', ' ')
+  else:
+    filename = name + '_' + strdt + ext
+  datafolder_abspath = config.get_datafolder_abspath()
+  filepath = os.path.join(datafolder_abspath, filename)
+  return filepath
+
 
 def is_date_weekend(pdate):
   indate = convert_yyyymmdd_strdate_to_dtdate_or_None(pdate)

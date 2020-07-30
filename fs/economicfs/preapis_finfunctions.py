@@ -9,6 +9,7 @@ import fs.economicfs.apis_finfunctions as apis
 # import sqlalchemy
 import models.exchange_rate_modelmod as exmod
 import models.conn_sa as con
+from fs.textfs import strfs
 import config
 
 def dbfetch_bcb_cotacao_compra_dolar_apifallback(pdate, recurse_pass=0):
@@ -45,18 +46,32 @@ def dbfetch_bcb_cotacao_compra_dolar_apifallback(pdate, recurse_pass=0):
 
 def adhoc_test():
   dates = []
-  strdate = '2020-01-07'
+  strdate = '22/9/2015' # '2020-01-07'
+  strdate = dtfs.convert_sep_or_datefields_position_for_ymdstrdate(strdate,tosep='-', sourceposorder='dmy')
   pdate = dtfs.returns_date_or_today(strdate)
   dates.append(pdate)
-  pdate = dtfs.returns_date_or_today()
+  strdate = '12/5/2016' # '2020-01-07'
+  strdate = dtfs.convert_sep_or_datefields_position_for_ymdstrdate(strdate, tosep='-', sourceposorder='dmy')
+  pdate = dtfs.returns_date_or_today(strdate)
   dates.append(pdate)
+
   ptab = PrettyTable()
   ptab.field_names = ['Seq', 'Data', 'valor câmbio', 'data câmbio']
   for i, pdate in enumerate(dates):
     seq = i + 1
     pdate, cotacaoCompra, dataCotacao = dbfetch_bcb_cotacao_compra_dolar_apifallback(pdate)
-    ptab.add_row([seq, pdate, cotacaoCompra, dataCotacao])
+    dmypdate = dtfs.convert_sep_or_datefields_position_for_ymdstrdate(pdate, tosep='/', targetposorder='dmy')
+    dmydataCotacao = dtfs.convert_sep_or_datefields_position_for_ymdstrdate(dataCotacao, tosep='/', targetposorder='dmy')
+    cotacaoCompra_with_comma = strfs.replace_point_to_comma(cotacaoCompra, decimal_places=4)
+    ptab.add_row([seq, dmypdate, cotacaoCompra_with_comma, dmydataCotacao])
   print(ptab)
+  text = ptab.get_html_string()
+  filename = 'exchange_rate_on_dates.html'
+  filepath = dtfs.get_datafolder_abspath_for_filename_w_tstamp(filename)
+  fp = open(filepath, 'w', encoding='utf8')
+  fp.write(text)
+  fp.close()
+
 
 def process():
   # adhoc_test_ptab()
