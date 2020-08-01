@@ -37,7 +37,7 @@ class HistPriceItem:
     self.fetch_source_n_target_exchange_rates()
 
   def treat_dates(self):
-    self.source_date = dtfs.returns_date_or_None(self.source_date)
+    self.source_date = dtfs.returns_date_or_none(self.source_date)
     if self.source_date is None:
       error_msg = "Invalid price's source date (%s) for class HistPriceItem." %str(self.source_date)
       raise ValueError(error_msg)

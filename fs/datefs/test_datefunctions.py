@@ -1,41 +1,51 @@
 #!/usr/bin/env python3
-'''
+"""
 Unit Tests for datefunctions.py
-'''
-import datetime, unittest
+"""
+import datetime
+import unittest
 import fs.datefs.datefunctions as dtfs
+
 
 class TestCaseDateFunctions(unittest.TestCase):
 
   def test_returns_date_or_today(self):
     # 1 date exists
-    stryear = '2020'; strmonth = '7'; strday = '3';
-    strdate = '%s-%s-%s' %(stryear, strmonth, strday)
+    stryear = '2020'
+    strmonth = '7'
+    strday = '3'
+    strdate = '%s-%s-%s' % (stryear, strmonth, strday)
     expected_date = datetime.date(int(stryear), int(strmonth), int(strday))
     returned_date = dtfs.returns_date_or_today(strdate)
     self.assertEqual(expected_date, returned_date)
     # 2 date does not exist, datetime.date.today() should return
-    stryear = '2020'; strmonth = '13'; strday = '3';
-    strdate = '%s-%s-%s' %(stryear, strmonth, strday)
+    stryear = '2020'
+    strmonth = '13'
+    strday = '3'
+    strdate = '%s-%s-%s' % (stryear, strmonth, strday)
     expected_date = datetime.date.today()
     returned_date = dtfs.returns_date_or_today(strdate)
     self.assertEqual(expected_date, returned_date)
 
   def test_returns_date_or_None(self):
     # 1 date exists
-    stryear = '2020'; strmonth = '7'; strday = '3';
-    strdate = '%s-%s-%s' %(stryear, strmonth, strday)
+    stryear = '2020'
+    strmonth = '7'
+    strday = '3'
+    strdate = '%s-%s-%s' % (stryear, strmonth, strday)
     expected_date = datetime.date(int(stryear), int(strmonth), int(strday))
-    returned_date = dtfs.returns_date_or_None(strdate)
+    returned_date = dtfs.returns_date_or_none(strdate)
     self.assertEqual(expected_date, returned_date)
     # 2 date does not exist, None should return
-    stryear = '2020'; strmonth = '13'; strday = '3';
-    strdate = '%s-%s-%s' %(stryear, strmonth, strday)
-    returned_date = dtfs.returns_date_or_None(strdate)
+    stryear = '2020'
+    strmonth = '13'
+    strday = '3'
+    strdate = '%s-%s-%s' % (stryear, strmonth, strday)
+    returned_date = dtfs.returns_date_or_none(strdate)
     self.assertIsNone(returned_date)
     # 3 date does not exist, None should return
     strdate = 'bla blah'
-    returned_date = dtfs.returns_date_or_None(strdate)
+    returned_date = dtfs.returns_date_or_none(strdate)
     self.assertIsNone(returned_date)
 
   def test_get_daterange_asc_or_desc(self):
@@ -79,7 +89,7 @@ class TestCaseDateFunctions(unittest.TestCase):
     today = datetime.date.today()
     tomorrow = today + datetime.timedelta(days=1)
     dayaftertomorrow = today + datetime.timedelta(days=2)
-    expected_daterange = [tomorrow, dayaftertomorrow] # notice NotEqual below
+    expected_daterange = [tomorrow, dayaftertomorrow]  # notice NotEqual below
     returned_daterange = dtfs.get_daterange(tomorrow, dayaftertomorrow, accept_future=False)
     self.assertNotEqual(expected_daterange, returned_daterange)
     # 5 former tries expected_daterange should be [today]
@@ -90,18 +100,18 @@ class TestCaseDateFunctions(unittest.TestCase):
     pdate = '2020-07-03'
     pdate = dtfs.returns_date_or_today(pdate)
     expected_strdate = '07-03-2020'
-    returned_strdate = dtfs.convert_date_to_mmddyyyy_str_or_None(pdate)
+    returned_strdate = dtfs.convert_date_to_mmddyyyy_str_or_none(pdate)
     self.assertEqual(expected_strdate, returned_strdate)
     # 2 use a date that exists on former century
     pdate = '1997-1-31'
     pdate = dtfs.returns_date_or_today(pdate)
     expected_strdate = '01-31-1997'
-    returned_strdate = dtfs.convert_date_to_mmddyyyy_str_or_None(pdate)
+    returned_strdate = dtfs.convert_date_to_mmddyyyy_str_or_none(pdate)
     self.assertEqual(expected_strdate, returned_strdate)
     # 3 use a date that does not exist
     pdate = '1997-1-32'
-    pdate = dtfs.returns_date_or_None(pdate)
-    returned_strdate = dtfs.convert_date_to_mmddyyyy_str_or_None(pdate)
+    pdate = dtfs.returns_date_or_none(pdate)
+    returned_strdate = dtfs.convert_date_to_mmddyyyy_str_or_none(pdate)
     self.assertIsNone(returned_strdate)
 
   def test_sort_asc_or_desc_datelist(self):
@@ -140,12 +150,18 @@ class TestCaseDateFunctions(unittest.TestCase):
     self.assertEqual(expected_prepdatelist, returned_prepdatelist)
 
   def test_return_strdate_in_fields_order_if_good_or_None(self):
-    strdate = '2020-7-15'; tosep='/'; inposorder='ymd'; outposorder = 'mdy'
+    strdate = '2020-7-15'
+    tosep = '/'
+    inposorder = 'ymd'
+    outposorder = 'mdy'
     expected_strdate = '07/15/2020'
     returned_strdate = dtfs.convert_sep_or_datefields_position_for_ymdstrdate(strdate, tosep, inposorder, outposorder)
     self.assertEqual(expected_strdate, returned_strdate)
     # 2
-    strdate = '7/8/2020'; tosep='-'; inposorder='mdy'; outposorder = 'ymd'
+    strdate = '7/8/2020'
+    tosep = '-'
+    inposorder = 'mdy'
+    outposorder = 'ymd'
     expected_strdate = '2020-07-08'
     returned_strdate = dtfs.convert_sep_or_datefields_position_for_ymdstrdate(strdate, tosep, inposorder, outposorder)
     self.assertEqual(expected_strdate, returned_strdate)
@@ -154,3 +170,26 @@ class TestCaseDateFunctions(unittest.TestCase):
     expected_strdate = '2020-07-08'
     returned_strdate = dtfs.convert_sep_or_datefields_position_for_ymdstrdate(strdate, tosep, inposorder, outposorder)
     self.assertEqual(expected_strdate, returned_strdate)
+
+  def test_convert_strdatetime_to_datetime_or_none(self):
+    strdatetime = '2012-12-12 12:12:12.123'
+    expected_datetime = datetime.datetime(2012,12,12,12,12,12,123000)
+    returned_datetime = dtfs.convert_strdatetime_to_datetime_or_none(strdatetime)
+    self.assertEqual(expected_datetime, returned_datetime)
+    strdatetime = '2012-12-12 12:12:12'
+    expected_datetime = datetime.datetime(2012,12,12,12,12,12)
+    returned_datetime = dtfs.convert_strdatetime_to_datetime_or_none(strdatetime)
+    self.assertEqual(expected_datetime, returned_datetime)
+    strdatetime = None
+    returned_datetime = dtfs.convert_strdatetime_to_datetime_or_none(strdatetime)
+    self.assertIsNone(returned_datetime)
+    strdatetime = 'bla'
+    returned_datetime = dtfs.convert_strdatetime_to_datetime_or_none(strdatetime)
+    self.assertIsNone(returned_datetime)
+    strdatetime = '2012-13-12 12:12:12'
+    returned_datetime = dtfs.convert_strdatetime_to_datetime_or_none(strdatetime)
+    self.assertIsNone(returned_datetime)
+    strdatetime = '2222-12-12 12:12:12'
+    expected_datetime = datetime.datetime(2222,12,12,12,12,12)
+    returned_datetime = dtfs.convert_strdatetime_to_datetime_or_none(strdatetime)
+    self.assertEqual(expected_datetime, returned_datetime)

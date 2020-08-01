@@ -19,7 +19,7 @@ def fetch_cotacao_brl_per_usd_for_datelist(datelist):
 def get_datelist():
   datelist = strdatelist.split('\n')
   datelist = list(filter(lambda x : x != '', datelist))
-  datelist = list(map(lambda x: dtfs.returns_date_or_None(x), datelist))
+  datelist = list(map(lambda x: dtfs.returns_date_or_none(x), datelist))
   print (datelist)
   return datelist
 
