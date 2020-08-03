@@ -57,13 +57,23 @@ url_quer_interpol = "?@dataCotacao='%(mmddyyyy)s'&$top=100&$format=json"
 
 API_CALL_COTACAO_MAX_PREVIOUS_DAY_TRIES = 8
 
-bcb_api1_nt = coll.namedtuple('BCBAPI1DataStr', 'cotacao_compra cotacao_venda cotacao_datahora param_date error_msg')
-# 'value': [{'cotacaoCompra': 5.1641, 'cotacaoVenda': 5.1647, 'dataHoraCotacao': '2020-07-23 13:02:43.561'}]
+bcb_api1_nt = coll.namedtuple('BCBAPI1DataStr',
+                              'cotacao_compra cotacao_venda cotacao_datahora param_date error_msg gen_msg')
+# 1) cotacao_compra is cotacaoCompra, 2) cotacao_venda is cotacaoVenda &  3) cotacao_datahora is dataHoraCotacao
 
 
-def call_api_bcb_cotacao_dolar_on_date(pdate, recurse_pass=0):
+def call_api_bcb_cotacao_dolar_on_date(pdate):
   """
-  This function calls an endpoint API from the Banco Central site.
+  This function calls an endpoint API from the Banco Central do Brasil web services.
+  Consider it a PRIVATE function in the sense that it should not be called directly.
+
+  The call should be done to:
+    preapis_finfunctions.dbfetch_bcb_cotacao_compra_dolar_apifallback()
+
+  This is necessary for the following reasons:
+    1) the entrance function (in preapis) filters out weekend days (that do not have quotes);
+    2) the entrance function checks a local 'buffer' database for the asked info;
+    3) the entrance function envelops this so that it records an API response.
 
 * The guide page for it is https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/aplicacao#!/recursos/CotacaoDolarDia
 * An example follows:
@@ -96,51 +106,58 @@ def call_api_bcb_cotacao_dolar_on_date(pdate, recurse_pass=0):
     so that it can be changed from there.)
 
   :param pdate:
-  :param recurse_pass:
   :return:
   """
-  if dtfs.returns_date_or_none(pdate) is None:
+  refdate = dtfs.returns_date_or_none(pdate)
+  if refdate is None:
+    pdatetime = datetime.datetime.now()
     error_msg = 'Given date (%s) is None' % str(pdate)
     res_bcb_api = bcb_api1_nt(
-      cotacao_compra=None, cotacao_venda=None, cotacao_datahora=None, error_msg=error_msg, param_date=pdate
+      cotacao_compra=None, cotacao_venda=None, cotacao_datahora=pdatetime,
+      param_date=pdate,
+      error_msg=error_msg, gen_msg=None,
     )
     return res_bcb_api
-  if recurse_pass > API_CALL_COTACAO_MAX_PREVIOUS_DAY_TRIES:
-    error_msg = 'Error: could not find an available exchange rate quote' \
-                ' from the open BCB API within 10 days backwards from given date (%s)' % str(pdate)
-    res_bcb_api = bcb_api1_nt(
-      cotacao_compra=None, cotacao_venda=None, cotacao_datahora=None, error_msg=error_msg, param_date=pdate
-    )
-    return res_bcb_api
-  refdate = dtfs.get_date_or_previous_monday_to_friday(pdate)
   # the API accepts a data in the format 'MM/DD/YYYY', so it needs to convert pdate to it
-  mmddyyyy = dtfs.convert_sep_or_datefields_position_for_ymdstrdate(pdate, targetposorder='mdy')
+  mmddyyyy = dtfs.convert_sep_or_datefields_position_for_ymdstrdate(refdate, tosep='/', targetposorder='mdy')
   url = url_base + url_quer_interpol % {'mmddyyyy': mmddyyyy}
   print('calling', url)
   res = requests.get(url)
   if res.status_code != 200:
     error_msg = 'Error: HTTP Connection status received is not 200: res.status_code %d from the server; pdate = %s' \
-                % (res.status_code, str(pdate))
-    print(error_msg)
+                % (res.status_code, str(refdate))
+    pdatetime = datetime.datetime.now()
+    print(error_msg, pdatetime)
     res_bcb_api = bcb_api1_nt(
-      cotacao_compra=None, cotacao_venda=None, cotacao_datahora=None, error_msg=error_msg, param_date=pdate
+      cotacao_compra=None, cotacao_venda=None, cotacao_datahora=pdatetime,
+      param_date=refdate,
+      error_msg=error_msg, gen_msg=None,
     )
     return res_bcb_api
   resdict = json.loads(res.text)
   try:
     valuedict = resdict['value'][0]
   except IndexError:
-    error_msg = "Error: HTTP status received was 200 OK, but valuedict = resdict['value'][0] failed: resdict = ||%s||" \
-                % (str(resdict))
-    print(error_msg)
+    # in general, this case means that the date does not have quotes as happens for holidays and weekend days
+    # but the important fact is that the response came with a 200 OK status code
+    datatime_cotacao = dtfs.convert_date_to_datetime_or_none(refdate)
+    gen_msg = 'BCB API day with no quotes'
+    print(gen_msg, refdate, datatime_cotacao)
     res_bcb_api = bcb_api1_nt(
-      cotacao_compra=None, cotacao_venda=None, cotacao_datahora=None, error_msg=error_msg, param_date=pdate
+      cotacao_compra=None, cotacao_venda=None, cotacao_datahora=datatime_cotacao,
+      param_date=refdate,
+      error_msg=None, gen_msg=gen_msg,
     )
     return res_bcb_api
   if len(valuedict) == 0:
-    previous_date = refdate - datetime.timedelta(days=1)
-    # recurse from here trying the previous day
-    return call_api_bcb_cotacao_dolar_on_date(previous_date, recurse_pass + 1)
+    # maybe this case never happens and it's the above case when holidays or weekend days happen
+    datatime_cotacao = dtfs.convert_date_to_datetime_or_none(refdate)
+    res_bcb_api = bcb_api1_nt(
+      cotacao_compra=None, cotacao_venda=None, cotacao_datahora=datatime_cotacao,
+      param_date=refdate,
+      error_msg=None, gen_msg='BCB API len(valuedict) = 0',
+    )
+    return res_bcb_api
   print('result', resdict)
   cotacao_compra = valuedict['cotacaoCompra']
   cotacao_venda = valuedict['cotacaoVenda']
@@ -148,7 +165,8 @@ def call_api_bcb_cotacao_dolar_on_date(pdate, recurse_pass=0):
   datatime_cotacao = dtfs.convert_strdatetime_to_datetime_or_none(data_hora_cotacao)
   res_bcb_api = bcb_api1_nt(
     cotacao_compra=cotacao_compra, cotacao_venda=cotacao_venda, cotacao_datahora=datatime_cotacao,
-    error_msg=None, param_date=pdate
+    param_date=refdate,
+    error_msg=None, gen_msg='BCB API',
   )
   return res_bcb_api
 
@@ -161,7 +179,8 @@ def pretry_print_api_list(res_bcb_api1_list):
   :return:
   """
   ptab = PrettyTable()
-  ptab.field_names = ['Seq', 'cotacao_compra', 'cotacao_venda', 'cotacao_datahora', 'param_date', 'error_msg']
+  ptab.field_names = ['Seq', 'cotacao_compra', 'cotacao_venda', 'cotacao_datahora',
+                      'param_date', 'error_msg', 'gen_msg']
   for i, res_api1_nt in enumerate(res_bcb_api1_list):
     seq = i + 1
     ptab.add_row([
@@ -170,17 +189,20 @@ def pretry_print_api_list(res_bcb_api1_list):
       res_api1_nt.cotacao_venda,
       res_api1_nt.cotacao_datahora,
       res_api1_nt.param_date,
-      res_api1_nt.error_msg
+      res_api1_nt.error_msg,
+      res_api1_nt.gen_msg
     ])
   print(ptab)
 
 
 def adhoc_test():
   dates = []
-  strdate = '2020-01-06'
+  strdate = '2020-07-30'
   pdate = dtfs.returns_date_or_today(strdate)
   dates.append(pdate)
-  pdate = dtfs.returns_date_or_today()
+  # pdate = dtfs.returns_date_or_today()
+  strdate = '2020-07-31'
+  pdate = dtfs.returns_date_or_today(strdate)
   dates.append(pdate)
   res_bcb_api1_list = []
   for pdate in dates:

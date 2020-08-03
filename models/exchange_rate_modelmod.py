@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+"""
+  docstring
+"""
 import datetime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Date, Time, TIMESTAMP
@@ -30,6 +33,8 @@ class ExchangeRateDate(Base):
 
   @property
   def quotesdatetime(self):
+    if self.quotesdate is None:
+      return None
     return datetime.datetime(
       self.quotesdate.year,
       self.quotesdate.month,
@@ -38,6 +43,14 @@ class ExchangeRateDate(Base):
       self.quotesdaytime.minute,
       self.quotesdaytime.second
     )
+
+  @quotesdatetime.setter
+  def quotesdatetime(self, pdatetime):
+    if pdatetime is None:
+      return
+    pdate, ptime = dtfs.split_date_n_time_from_datetime(pdatetime)
+    self.quotesdate = pdate
+    self.quotesdaytime = ptime
 
   @property
   def buyquote(self):
@@ -59,10 +72,22 @@ class ExchangeRateDate(Base):
     :param buyquote_as_decimal:
     :return:
     """
+    if buyquote_as_decimal is None:
+      return
+    try:
+      buyquote_as_decimal = float(buyquote_as_decimal)
+    except ValueError:
+      return
     self.buyquote_as_int = int(buyquote_as_decimal * self.EXCHANGE_RATE_DECIMAL_TO_INTEGER)
 
   @sellquote.setter
   def sellquote(self, sellquote_as_decimal):
+    if sellquote_as_decimal is None:
+      return
+    try:
+      sellquote_as_decimal = float(sellquote_as_decimal)
+    except ValueError:
+      return
     self.sellquote_as_int = int(sellquote_as_decimal * self.EXCHANGE_RATE_DECIMAL_TO_INTEGER)
 
   def __repr__(self):

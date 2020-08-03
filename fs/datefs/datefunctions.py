@@ -59,6 +59,9 @@ def convert_datetime_to_date_or_none(pdatetime):
 def convert_strdatetime_to_datetime_or_none(strdatetime):
   if strdatetime is None:
     return None
+  if type(strdatetime) == datetime.datetime:
+    return strdatetime
+  strdatetime = str(strdatetime)
   pp = strdatetime.split(' ')
   strdate = pp[0]
   pdate = returns_date_or_none(strdate)
@@ -204,6 +207,32 @@ def get_daterange_asc_or_desc(pinidate, pfindate, makes_desc=False, accept_futur
     return get_daterange(findate, inidate, accept_future)
   return get_daterange(inidate, findate, accept_future)
 
+
+def generate_daterange(pinidate, pfindate, accept_future=False):
+  inidate = returns_date_or_today(pinidate)
+  findate = returns_date_or_today(pfindate)
+  today = datetime.date.today()
+  if not accept_future:
+    if inidate > today and findate <= today:
+      inidate = today
+    elif findate > today and inidate <= today:
+      findate = today
+    elif inidate > today and findate > today:
+      return None
+  if inidate == findate:
+    yield inidate
+    return
+  elif inidate < findate:
+    ongoingdate = inidate
+    while ongoingdate <= findate:  # fimdate will also be included in daterange
+      yield ongoingdate
+      ongoingdate = ongoingdate + datetime.timedelta(days=1)
+  elif inidate > findate:
+    ongoingdate = inidate
+    while ongoingdate >= findate:  # fimdate will also be included in daterange
+      yield ongoingdate
+      ongoingdate = ongoingdate - datetime.timedelta(days=1)
+  return
 
 def get_daterange(pinidate, pfindate, accept_future=False):
   inidate = returns_date_or_today(pinidate)
@@ -439,8 +468,27 @@ def convert_date_to_mmddyyyy_str_or_none(pdate):
   return mmddyyyy
 
 
+def adhoc_test():
+  inidate = '2020-1-1'
+  findate = '2020-1-5'
+  print('Generate', findate, inidate)
+  for pdate in generate_daterange(findate, inidate):
+    print(pdate)
+  print('-'*30)
+  print('Get', inidate, findate)
+  for pdate in get_daterange(inidate, findate):
+    print(pdate)
+  print('-'*30)
+  inidate = '2021-1-1'
+  findate = '2021-1-5'
+  print('Generate', findate, inidate)
+  for pdate in generate_daterange(findate, inidate):
+    print(pdate)
+  print('Finished')
+
+
 def process():
-  pass
+  adhoc_test()
 
 
 if __name__ == "__main__":
