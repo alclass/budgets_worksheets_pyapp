@@ -171,7 +171,7 @@ def batch_fetch_brl_usd_cotacoes_month_by_month(inidate, findate):
 
 
 def batch_fetch_brl_usd_cotacoes():
-  year = 2017
+  year = 2016
   today = datetime.date.today()
   yesterday = today - datetime.timedelta(days=1)
   for nmonth in range(1, 13):

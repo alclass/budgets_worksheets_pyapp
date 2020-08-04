@@ -117,6 +117,11 @@ def form_percent_str(fraction):
 
 
 def adhoc_test():
+  inidate = '2017-01-01'
+  findate = '2017-12-31'
+  buyincrease, sellincrease = calculate_var_inidate_to_findate(inidate, findate)
+  print('buyincrease', form_percent_str(buyincrease))
+  print('sellincrease', form_percent_str(sellincrease))
   inidate = '2018-01-01'
   findate = '2018-12-31'
   buyincrease, sellincrease = calculate_var_inidate_to_findate(inidate, findate)
@@ -130,6 +135,12 @@ def adhoc_test():
 
 
 def adhoc_test2():
+  inidate = '2016-01-01'
+  findate = '2016-12-31'
+  list_min_max(inidate, findate)
+  inidate = '2017-01-01'
+  findate = '2017-12-31'
+  list_min_max(inidate, findate)
   inidate = '2018-01-01'
   findate = '2018-12-31'
   list_min_max(inidate, findate)
