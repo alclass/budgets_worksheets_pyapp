@@ -47,8 +47,10 @@ The API accepts a data in the format 'MM/DD/YYYY'. The returned dataHoraCotacao 
 import collections as coll
 import datetime
 import json
+import os
 import requests
 from prettytable import PrettyTable
+import config
 import fs.datefs.datefunctions as dtfs
 
 url_base = 'https://olinda.bcb.gov.br/olinda/servico/PTAX/' \
@@ -58,7 +60,7 @@ url_quer_interpol = "?@dataCotacao='%(mmddyyyy)s'&$top=100&$format=json"
 API_CALL_COTACAO_MAX_PREVIOUS_DAY_TRIES = 8
 
 bcb_api1_nt = coll.namedtuple('BCBAPI1DataStr',
-                              'cotacao_compra cotacao_venda cotacao_datahora param_date error_msg gen_msg')
+                              'cotacao_compra cotacao_venda cotacao_datahora param_date error_msg gen_msg exchanger')
 # 1) cotacao_compra is cotacaoCompra, 2) cotacao_venda is cotacaoVenda &  3) cotacao_datahora is dataHoraCotacao
 
 
@@ -116,6 +118,7 @@ def call_api_bcb_cotacao_dolar_on_date(pdate):
       cotacao_compra=None, cotacao_venda=None, cotacao_datahora=pdatetime,
       param_date=pdate,
       error_msg=error_msg, gen_msg=None,
+      exchanger=None
     )
     return res_bcb_api
   # the API accepts a data in the format 'MM/DD/YYYY', so it needs to convert pdate to it
@@ -132,6 +135,7 @@ def call_api_bcb_cotacao_dolar_on_date(pdate):
       cotacao_compra=None, cotacao_venda=None, cotacao_datahora=pdatetime,
       param_date=refdate,
       error_msg=error_msg, gen_msg=None,
+      exchanger=None
     )
     return res_bcb_api
   resdict = json.loads(res.text)
@@ -147,6 +151,7 @@ def call_api_bcb_cotacao_dolar_on_date(pdate):
       cotacao_compra=None, cotacao_venda=None, cotacao_datahora=datatime_cotacao,
       param_date=refdate,
       error_msg=None, gen_msg=gen_msg,
+      exchanger=None
     )
     return res_bcb_api
   if len(valuedict) == 0:
@@ -156,6 +161,7 @@ def call_api_bcb_cotacao_dolar_on_date(pdate):
       cotacao_compra=None, cotacao_venda=None, cotacao_datahora=datatime_cotacao,
       param_date=refdate,
       error_msg=None, gen_msg='BCB API len(valuedict) = 0',
+      exchanger=None
     )
     return res_bcb_api
   print('result', resdict)
@@ -167,6 +173,7 @@ def call_api_bcb_cotacao_dolar_on_date(pdate):
     cotacao_compra=cotacao_compra, cotacao_venda=cotacao_venda, cotacao_datahora=datatime_cotacao,
     param_date=refdate,
     error_msg=None, gen_msg='BCB API',
+    exchanger=None
   )
   return res_bcb_api
 
@@ -181,6 +188,7 @@ def pretry_print_api_list(res_bcb_api1_list):
   ptab = PrettyTable()
   ptab.field_names = ['Seq', 'cotacao_compra', 'cotacao_venda', 'cotacao_datahora',
                       'param_date', 'error_msg', 'gen_msg']
+  last_str_date = ''
   for i, res_api1_nt in enumerate(res_bcb_api1_list):
     seq = i + 1
     ptab.add_row([
@@ -192,7 +200,15 @@ def pretry_print_api_list(res_bcb_api1_list):
       res_api1_nt.error_msg,
       res_api1_nt.gen_msg
     ])
+    last_str_date = str(res_api1_nt.param_date)
   print(ptab)
+  datafolder_abspath = config.get_datafolder_abspath()
+  filename = 'exchange_rate_monthly_quotes_' + last_str_date + '.log'
+  datafile_abspath = os.path.join(datafolder_abspath, filename)
+  fp = open(datafile_abspath, 'w', encoding='utf8')
+  print('Writing datafile_abspath', datafile_abspath)
+  fp.write(str(ptab))
+  fp.close()
 
 
 def adhoc_test():

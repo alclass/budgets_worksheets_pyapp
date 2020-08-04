@@ -25,7 +25,7 @@ class ExchangeRateDate(Base):
   buyquote_as_int = Column(Integer, name='buyquote', nullable=True)  # DECIMAL(precision=4)
   sellquote_as_int = Column(Integer, name='sellquote', nullable=True)
   quotesdate = Column(Date, unique=True)
-  quotesdaytime = Column(Time)
+  quotesdaytime = Column(Time, nullable=True)
   infofrom = Column(String(10), default='BCB PTAX')
 
   created_at = Column(TIMESTAMP, default=datetime.datetime.now)  # utcnow() uses UTC (SaoPaulo timezone plus 3h)
@@ -41,7 +41,8 @@ class ExchangeRateDate(Base):
       self.quotesdate.day,
       self.quotesdaytime.hour,
       self.quotesdaytime.minute,
-      self.quotesdaytime.second
+      self.quotesdaytime.second,
+      self.quotesdaytime.microsecond
     )
 
   @quotesdatetime.setter
@@ -91,25 +92,24 @@ class ExchangeRateDate(Base):
     self.sellquote_as_int = int(sellquote_as_decimal * self.EXCHANGE_RATE_DECIMAL_TO_INTEGER)
 
   def __repr__(self):
-    outstr = '<ExRate %s/%s exchange rate q=%.4f on d=%s>' \
-             % (self.numerator_curr3, self.denominator_curr3, self.buyquote, self.quotesdate)
+    buyquote = 'w/i'
+    sellquote = 'w/i'
+    if self.buyquote is not None:
+      buyquote = '%.4f' % self.buyquote
+    if self.sellquote is not None:
+      sellquote = '%.4f' % self.sellquote
+    outstr = '<ExRate %s/%s buy=%s sell=%s on d=%s t=%s>' \
+             % (self.numerator_curr3, self.denominator_curr3, buyquote, sellquote, self.quotesdate, self.quotesdaytime)
     return outstr
 
 
 def ahdoc_test_insert_etc():
   session = con.Session()
-  quotesdate = dtfs.returns_date_or_today('2015-11-13')
+  quotesdate = dtfs.returns_date_or_today('2019-12-31')
   exrate = session.query(ExchangeRateDate).filter(ExchangeRateDate.quotesdate == quotesdate).first()
   if exrate is None:
-    print(quotesdate, 'exists in db')
-    exrate = ExchangeRateDate()
-    exrate.quotevalue = 3.4375
-    exrate.quotesdate = quotesdate
-    session.add(exrate)
-    session.commit()
+    print(quotesdate, 'does not exist in db')
   else:
-    exrate.quotevalue = exrate.quotevalue * 0.1
-    session.commit()
     print(quotesdate, 'exists in db')
   print(exrate)
   session.close()
