@@ -43,12 +43,20 @@ The API accepts a data in the format 'MM/DD/YYYY'. The returned dataHoraCotacao 
   '@odata.context': 'https://was-p.bcnet.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata$metadata#_CotacaoDolarDia',
   'value':[{'cotacaoCompra': 5.1641, 'cotacaoVenda': 5.1647, 'dataHoraCotacao': '2020-07-23 13:02:43.561'}]
 }
+
+When empty, it wraps up json within /* */:
+https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/CotacaoDolarDia
+/*{
+  "codigo" : 400,
+  "mensagem" : "The URI is malformed."
+}*/
 """
 import collections as coll
 import datetime
 import json
 import os
 import requests
+import time
 from prettytable import PrettyTable
 import config
 import fs.datefs.datefunctions as dtfs
@@ -64,7 +72,7 @@ bcb_api1_nt = coll.namedtuple('BCBAPI1DataStr',
 # 1) cotacao_compra is cotacaoCompra, 2) cotacao_venda is cotacaoVenda &  3) cotacao_datahora is dataHoraCotacao
 
 
-def call_api_bcb_cotacao_dolar_on_date(pdate):
+def call_api_bcb_cotacao_dolar_on_date(pdate, connection_error_raised=0):
   """
   This function calls an endpoint API from the Banco Central do Brasil web services.
   Consider it a PRIVATE function in the sense that it should not be called directly.
@@ -108,8 +116,12 @@ def call_api_bcb_cotacao_dolar_on_date(pdate):
     so that it can be changed from there.)
 
   :param pdate:
+  :param connection_error_raised:
   :return:
   """
+  if connection_error_raised > 10:
+    error_msg = 'connection_error_raised > 10 (%d)' % connection_error_raised
+    raise requests.exceptions.ConnectionError(error_msg)
   refdate = dtfs.returns_date_or_none(pdate)
   if refdate is None:
     pdatetime = datetime.datetime.now()
@@ -125,7 +137,15 @@ def call_api_bcb_cotacao_dolar_on_date(pdate):
   mmddyyyy = dtfs.convert_sep_or_datefields_position_for_ymdstrdate(refdate, tosep='/', targetposorder='mdy')
   url = url_base + url_quer_interpol % {'mmddyyyy': mmddyyyy}
   print('calling', url)
-  res = requests.get(url)
+  try:
+    res = requests.get(url)
+  except requests.exceptions.ConnectionError:
+    wait_in_sec = 3 + connection_error_raised
+    recurse_msg = '[Error for recurse] connection_error_raised ntimes=%d :: wait %d seconds' \
+                  % (connection_error_raised+1, wait_in_sec)
+    print(recurse_msg)
+    time.sleep(wait_in_sec)
+    return call_api_bcb_cotacao_dolar_on_date(pdate, connection_error_raised+1)
   if res.status_code != 200:
     error_msg = 'Error: HTTP Connection status received is not 200: res.status_code %d from the server; pdate = %s' \
                 % (res.status_code, str(refdate))

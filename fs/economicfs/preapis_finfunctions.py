@@ -18,6 +18,7 @@ class BRLUSDDailyQuotes:
 import datetime
 import logging
 import os
+import random
 import time
 from prettytable import PrettyTable
 import fs.datefs.datefunctions as dtfs
@@ -32,6 +33,10 @@ modlevelogfp = os.path.join(config.get_datafolder_abspath(), modlevelogfn)
 logging.basicConfig(filename=modlevelogfp, filemode='w', format='%(name)s %(levelname)s %(message)s')
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)  # DEBUG means it and all others levels will be logged
+
+
+def get_random_wait_seconds():
+  return random.randint(1, 8)
 
 
 def treat_error(named_tuple):
@@ -163,15 +168,15 @@ def batch_fetch_brl_usd_cotacoes_month_by_month(inidate, findate):
       if res_bcb_api1.gen_msg is not None and res_bcb_api1.gen_msg.lower().find('bcb api') > -1:
         do_wait = True
     if do_wait:
-      log_msg = '=== wait 1 sec === res_bcb_api1' + str(res_bcb_api1)
+      wait_in_seconds = get_random_wait_seconds()
+      log_msg = '=== wait %d seconds === res_bcb_api1 (%s)' % (wait_in_seconds, str(res_bcb_api1))
       print(log_msg)
       logger.info(log_msg)
-      time.sleep(1)
+      time.sleep(wait_in_seconds)
   apis.pretry_print_api_list(res_bcb_api1_list)
 
 
-def batch_fetch_brl_usd_cotacoes():
-  year = 2016
+def batch_fetch_brl_usd_cotacoes(year):
   today = datetime.date.today()
   yesterday = today - datetime.timedelta(days=1)
   for nmonth in range(1, 13):
@@ -186,9 +191,14 @@ def batch_fetch_brl_usd_cotacoes():
     batch_fetch_brl_usd_cotacoes_month_by_month(inidate, findate)
 
 
+def batch_years_fetch_brl_usd_cotacoes():
+  for year in range(1995, 2001):
+    batch_fetch_brl_usd_cotacoes(year)
+
+
 def process():
   # adhoc_test_ptab()
-  batch_fetch_brl_usd_cotacoes()
+  batch_years_fetch_brl_usd_cotacoes()
 
 
 if __name__ == "__main__":

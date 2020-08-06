@@ -79,11 +79,12 @@ def list_min_max(inidate, findate):
     if exchanger is None or exchanger.buyquote is None:
       continue
     minmax.find_min_max_n_dates(exchanger)
-  print (minmax)
+  print(minmax)
 
 
 def calculate_fraction_variation(n1, n2):
   return abs(n1-n2)/n1
+
 
 def calculate_var_inidate_to_findate(inidate, findate):
   """
@@ -134,25 +135,20 @@ def adhoc_test():
   print('sellincrease', form_percent_str(sellincrease))
 
 
+def list_min_max_for_years():
+  for year in range(2014, 2020):
+    inidate = '%d-01-01' % year
+    findate = '%d-12-31' % year
+    list_min_max(inidate, findate)
+
+
 def adhoc_test2():
-  inidate = '2016-01-01'
-  findate = '2016-12-31'
-  list_min_max(inidate, findate)
-  inidate = '2017-01-01'
-  findate = '2017-12-31'
-  list_min_max(inidate, findate)
-  inidate = '2018-01-01'
-  findate = '2018-12-31'
-  list_min_max(inidate, findate)
-  inidate = '2019-01-01'
-  findate = '2019-12-31'
-  list_min_max(inidate, findate)
-  inidate = '2020-01-01'
-  findate = '2020-05-31'
-  list_min_max(inidate, findate)
+  list_min_max_for_years()
+
 
 def process():
   adhoc_test2()
+
 
 if __name__ == "__main__":
   process()

@@ -4,7 +4,7 @@
 """
 import datetime
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String, Date, Time, TIMESTAMP
+from sqlalchemy import Column, Integer, Date, Time
 from sqlalchemy.sql.expression import asc
 import config
 import fs.datefs.datefunctions as dtfs
@@ -20,16 +20,20 @@ class ExchangeRateDate(Base):
   __tablename__ = 'daily_exchange_rates'
 
   id = Column(Integer, primary_key=True)
-  numerator_curr3 = Column(String(3), default=config.CURR_BRL)
-  denominator_curr3 = Column(String(3), default=config.CURR_USD)
+  # numerator_curr3 = Column(String(3), default=config.CURR_BRL)
+  # denominator_curr3 = Column(String(3), default=config.CURR_USD)
   buyquote_as_int = Column(Integer, name='buyquote', nullable=True)  # DECIMAL(precision=4)
   sellquote_as_int = Column(Integer, name='sellquote', nullable=True)
   quotesdate = Column(Date, unique=True)
   quotesdaytime = Column(Time, nullable=True)
-  infofrom = Column(String(10), default='BCB PTAX')
+  # infofrom = Column(String(10), default='BCB PTAX')
 
-  created_at = Column(TIMESTAMP, default=datetime.datetime.now)  # utcnow() uses UTC (SaoPaulo timezone plus 3h)
-  updated_at = Column(TIMESTAMP, nullable=True, onupdate=datetime.datetime.now)
+  # created_at = Column(TIMESTAMP, default=datetime.datetime.now)  # utcnow() uses UTC (SaoPaulo timezone plus 3h)
+  # updated_at = Column(TIMESTAMP, nullable=True, onupdate=datetime.datetime.now)
+
+  numerator_curr3 = config.CURR_BRL
+  denominator_curr3 = config.CURR_USD
+  infofrom = 'BCB PTAX'
 
   @property
   def quotesdatetime(self):
