@@ -73,7 +73,7 @@ def dbfetch_bcb_cotacao_compra_dolar_apifallback(pdate, recurse_pass=0):
   if exchanger:
     log_msg = 'Quote was in db. Returning it: %s' % str(exchanger)
     logger.info(log_msg)
-    print(log_msg)
+    # print(log_msg)
     res_bcb_api1 = apis.bcb_api1_nt(
       cotacao_compra=exchanger.buyquote, cotacao_venda=exchanger.sellquote, cotacao_datahora=exchanger.quotesdatetime,
       param_date=exchanger.quotesdate, error_msg=None, gen_msg='Fetched from db',
