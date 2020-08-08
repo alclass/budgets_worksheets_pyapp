@@ -10,6 +10,7 @@
 
 """
 import csv
+import datetime
 import os
 import xlsxwriter
 import fs.datefs.datefunctions as dtfs
@@ -63,6 +64,9 @@ class HistPrice:
       error_msg = "Invalid price's source date (%s) for class HistPrice." % str(self.source_date)
       raise ValueError(error_msg)
     self.target_date = dtfs.returns_date_or_today(self.target_date)
+    if self.target_date == datetime.date.today():
+      # prefer yesterday, for today's exchange rate depends on the hour rate is closed
+      self.target_date = self.target_date - datetime.timedelta(days=1)
     self.quotes_source_datetime = None
     self.quotes_target_datetime = None
 
@@ -321,11 +325,11 @@ def read_csv_n_get_triplehistprices():
   print('Reading input csv', datafolder_abspath, filepath)
   triplehistprices = []
   with open(filepath, newline='') as csvfp:
-    reader = csv.reader(csvfp)  # delimiter = '"' tab = True, sep = comma
+    reader = csv.reader(csvfp, delimiter='\t')  # delimiter = '"' tab = True, sep = comma
     for rowfieldvalues in reader:
       ddmmyyydotdate = rowfieldvalues[0]
-      commaprice =  rowfieldvalues[1]
-      saporder =  int(rowfieldvalues[2])
+      commaprice = rowfieldvalues[1]
+      saporder = int(rowfieldvalues[2])
       triplehistprice = TripleHistPrice(ddmmyyydotdate, commaprice, saporder)
       triplehistprices.append(triplehistprice)
   return triplehistprices

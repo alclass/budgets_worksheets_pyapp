@@ -1,19 +1,6 @@
 #!/usr/bin/env python3
 """
   docstring
-
-  bcb_api1_nt = coll.namedtuple('BCBAPI1DataStr', 'cotacao_compra cotacao_venda cotacao_datahora param_date error_msg')
-  # 'value': [{'cotacaoCompra': 5.1641, 'cotacaoVenda': 5.1647, 'dataHoraCotacao': '2020-07-23 13:02:43.561'}]
-
-class BRLUSDDailyQuotes:
-
-  def __init__(self, pdate):
-    self.pdate = pdate
-
-  def fetch(self):
-    if dtfs.is_date_weekend():
-      return False
-
 """
 import datetime
 import logging
@@ -60,6 +47,15 @@ def dbfetch_bcb_cotacao_compra_dolar_apifallback(pdate, recurse_pass=0):
   indate = dtfs.returns_date_or_none(pdate)
   if indate is None:
     return None
+  if indate == datetime.date.today():
+    # recurse one day back right away, today's quotes should be available after market
+    # (TO-DO: write a dedicated function for this)
+    log_msg = 'Date ' + str(indate) + ' is today (the rundate). Recursing without adding 1 to limit of 5 ' \
+              + str(recurse_pass)
+    logger.info(log_msg)
+    print(log_msg)
+    indate = indate - datetime.timedelta(days=1)
+    return dbfetch_bcb_cotacao_compra_dolar_apifallback(indate, recurse_pass)
   if dtfs.is_date_weekend(indate):
     log_msg = 'Date ' + str(indate) + ' is weekend. Recursing (limit to 5) ' + str(recurse_pass+1)
     logger.info(log_msg)
@@ -191,14 +187,14 @@ def batch_fetch_brl_usd_cotacoes(year):
     batch_fetch_brl_usd_cotacoes_month_by_month(inidate, findate)
 
 
-def batch_years_fetch_brl_usd_cotacoes():
-  for year in range(1995, 2001):
+def batch_years_fetch_brl_usd_cotacoes(iniyear, finyear):
+  for year in range(iniyear, finyear):
     batch_fetch_brl_usd_cotacoes(year)
 
 
 def process():
   # adhoc_test_ptab()
-  batch_years_fetch_brl_usd_cotacoes()
+  pass
 
 
 if __name__ == "__main__":
