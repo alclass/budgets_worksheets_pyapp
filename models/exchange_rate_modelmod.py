@@ -121,7 +121,8 @@ def ahdoc_test_insert_etc():
 
 def print_db():
   session = con.Session()
-  print('print_db =>')
+  print('print_db => Base.metadata.create_all(con.sqlalchemy_engine')
+  Base.metadata.create_all(con.sqlalchemy_engine)
   exrates = session.query(ExchangeRateDate). \
       order_by(asc(ExchangeRateDate.quotesdate)).\
       all()

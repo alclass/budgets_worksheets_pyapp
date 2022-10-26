@@ -194,6 +194,9 @@ def batch_years_fetch_brl_usd_cotacoes(iniyear, finyear):
 
 def process():
   # adhoc_test_ptab()
+  pdate = '2022-03-03'
+  bcb_api_nt = dbfetch_bcb_cotacao_compra_dolar_apifallback(pdate)
+  print(bcb_api_nt)
   pass
 
 

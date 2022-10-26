@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """
+batch_exchange_rate_fetcher_mod.py
   docstring
 """
+# import config
 import os
+import sys
 import xlsxwriter
 from prettytable import PrettyTable
 import fs.datefs.datefunctions as dtfs
@@ -55,23 +58,42 @@ def pretty_table_print_exchangerate_results(dt_exrt_n_dc_exchangerates):
   fp.close()
 
 
-def process_some_dates():
-  dates = []
+def process_some_dates(pdates):
   results = []
-  strdate = '2016-12-12'
-  pdate = dtfs.returns_date_or_today(strdate)
-  dates.append(pdate)
-  pdate = dtfs.returns_date_or_today()
-  dates.append(pdate)
-  for pdate in dates:
+  # strdate = '2016-12-12'
+  # pdate = dtfs.returns_date_or_today(strdate)
+  # dates.append(pdate)
+  # dates.append(pdate)
+  for pdate in pdates:
+    pdate = dtfs.returns_date_or_today(pdate)
     dt_exrt_n_dc = apis.call_api_bcb_cotacao_dolar_on_date(pdate)
     results.append(dt_exrt_n_dc)
-  pretty_table_print_exchangerate_results(results)
-  xlsxwrite_exchangerate_results(results)
+  # pretty_table_print_exchangerate_results(results)
+  # xlsxwrite_exchangerate_results(results)
+  return results
+
+
+def get_args():
+  pdates = []
+  for arg in sys.argv[1:]:
+    pdate = arg
+    pdates.append(pdate)
+  return pdates
+
+
+def convert_dates(pdates):
+  odates = []
+  for pdate in pdates:
+    odate = dtfs.returns_date_or_none(pdate)
+    odates.append(odate)
+  return odates
 
 
 def process():
-  process_some_dates()
+  pdates = convert_dates(get_args())
+  print(pdates)
+  results = process_some_dates(pdates)
+  print(results)
 
 
 if __name__ == "__main__":
