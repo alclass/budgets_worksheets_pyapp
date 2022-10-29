@@ -10,26 +10,6 @@ import fs.textfs.strfs as strfs
 import config
 
 
-def add_or_subtract_to_month(pdate, delta):
-  """
-  Ref https://stackoverflow.com/questions/3424899/whats-the-simplest-way-to-subtract-a-month-from-a-date-in-python
-
-  d = min(date.day, calendar.monthrange(y, m)[1])
-      or
-  d = min(date.day, [31,
-                     29 if y % 4 == 0 and not y % 400 == 0 else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1])
-
-  :param pdate:
-  :param delta:
-  :return:
-  """
-  m, y = (pdate.month + delta) % 12, pdate.year + (pdate.month + delta - 1) // 12
-  if not m:
-    m = 12
-  d = min(pdate.day, calendar.monthrange(y, m)[1])
-  return pdate.replace(day=d, month=m, year=y)
-
-
 def get_appsroot_abspath_for_filename_w_tstamp(filename):
   strdt = make_tstamp_for_filename()
   name, ext = os.path.splitext(filename)
@@ -266,6 +246,7 @@ def generate_daterange(pinidate, pfindate, accept_future=False):
       ongoingdate = ongoingdate - datetime.timedelta(days=1)
   return
 
+
 def get_daterange(pinidate, pfindate, accept_future=False):
   inidate = returns_date_or_today(pinidate)
   findate = returns_date_or_today(pfindate)
@@ -288,7 +269,6 @@ def get_daterange(pinidate, pfindate, accept_future=False):
       ongoingdate = ongoingdate - datetime.timedelta(days=1)
       daterange.append(ongoingdate)
   return daterange
-
 
 strdate_separators = ['-', '/', '.']
 
@@ -519,6 +499,26 @@ def adhoc_test():
   print('Finished')
   pdate = get_monthslastday_date('2020-7-3')
   print("get_monthslastday_date('2020-7-3')", pdate)
+
+
+def add_or_subtract_to_month(pdate, delta):
+  """
+  Ref https://stackoverflow.com/questions/3424899/whats-the-simplest-way-to-subtract-a-month-from-a-date-in-python
+
+  d = min(date.day, calendar.monthrange(y, m)[1])
+      or
+  d = min(date.day, [31,
+                     29 if y % 4 == 0 and not y % 400 == 0 else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1])
+
+  :param pdate:
+  :param delta:
+  :return:
+  """
+  m, y = (pdate.month + delta) % 12, pdate.year + (pdate.month + delta - 1) // 12
+  if not m:
+    m = 12
+  d = min(pdate.day, calendar.monthrange(y, m)[1])
+  return pdate.replace(day=d, month=m, year=y)
 
 
 def process():

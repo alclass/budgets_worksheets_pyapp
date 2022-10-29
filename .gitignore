@@ -5,6 +5,8 @@ venv/
 config.py
 *.bak
 */*.bak
+*.dat
+*/*.dat
 *.html
 */*.html
 *.ini
