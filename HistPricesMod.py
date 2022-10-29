@@ -318,20 +318,25 @@ def adhoc_test():
   print('-'*30)
 
 
-def read_csv_n_get_triplehistprices():
+def read_csv_n_get_triplehistprices(pdelimiter='\t'):
   filename = 'triplehistprices.csv'
   datafolder_abspath = config.get_datafolder_abspath()
   filepath = os.path.join(datafolder_abspath, filename)
   print('Reading input csv', datafolder_abspath, filepath)
   triplehistprices = []
   with open(filepath, newline='') as csvfp:
-    reader = csv.reader(csvfp, delimiter='\t')  # delimiter = '"' tab = True, sep = comma
+    reader = csv.reader(csvfp, delimiter=pdelimiter)  # delimiter = '"' tab = True, sep = comma
     for rowfieldvalues in reader:
-      ddmmyyydotdate = rowfieldvalues[0]
-      commaprice = rowfieldvalues[1]
-      saporder = int(rowfieldvalues[2])
-      triplehistprice = TripleHistPrice(ddmmyyydotdate, commaprice, saporder)
-      triplehistprices.append(triplehistprice)
+      try:
+        ddmmyyydotdate = rowfieldvalues[0]
+        commaprice = rowfieldvalues[1]
+        saporder = int(rowfieldvalues[2])
+        triplehistprice = TripleHistPrice(ddmmyyydotdate, commaprice, saporder)
+        triplehistprices.append(triplehistprice)
+      except IndexError as e:
+        if pdelimiter == ';':
+          raise IndexError(e)
+        return read_csv_n_get_triplehistprices(pdelimiter=';')
   return triplehistprices
 
 
