@@ -34,6 +34,10 @@ DEFAULT_DATESFILENAME = 'datesfile.dat'
 
 
 def transform_strdates_to_pydates(dates):
+  """
+  This function probably exists in package-module dtfs
+  (if so, refactor this)
+  """
   pydates = []
   for eachdate in dates:
     if eachdate.find('-') > -1:
@@ -61,6 +65,11 @@ def transform_strdates_to_pydates(dates):
 
 
 def get_variation_exchange_rate_from(pydate):
+  """
+  This function exists in package-module fin
+  (if so, refactor this)
+
+  """
   today = datetime.date.today()
   sql = 'SELECT exchangerate FROM exchangerates WHERE date=? and date=?;'
   tuplevalues = (pydate, today)
@@ -75,6 +84,10 @@ def get_variation_exchange_rate_from(pydate):
 
 
 def get_cpi_baselineindex_in_month(pydate):
+  """
+  This function must be ENCAPSULATED in package-module fin
+  (it's a TO-DO!)
+  """
   conn = cfg.get_connection()
   cursor = conn.cursor()
   seriesid = 'CUUR0000SA0'
