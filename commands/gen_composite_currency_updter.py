@@ -71,16 +71,23 @@ def get_variation_exchange_rate_from(pydate):
 
   """
   today = datetime.date.today()
+  variation = None
+  exrate_before = None
+  exrate_after = None
   sql = 'SELECT exchangerate FROM exchangerates WHERE date=? and date=?;'
   tuplevalues = (pydate, today)
   conn = cfg.get_connection()
   cursor = conn.cursor()
   rows = cursor.execute(sql, tuplevalues)
-  exrate_before = rows[0][0]
-  exrate_after = rows[0][1]
+  if rows:
+    try:
+      exrate_before = rows[0][0]
+      exrate_after = rows[0][1]
+      variation = (exrate_after - exrate_before) / exrate_before
+    except IndexError:
+      pass
   conn.close()
-  variation = (exrate_after - exrate_before) / exrate_before
-  return variation
+  return variation, exrate_before, exrate_after
 
 
 def get_cpi_baselineindex_in_month(pydate):
@@ -129,16 +136,16 @@ def get_last_available_cpi_baselineindex():
 
 def get_cpi_variation_from(pydate):
   ini_cpi_baselineindex = get_cpi_baselineindex_in_month(pydate)
-  fim_cpi_baselineindex, _ = get_last_available_cpi_baselineindex()
+  fim_cpi_baselineindex, refdate = get_last_available_cpi_baselineindex()  # second return is refdate
   cpi_variation = (fim_cpi_baselineindex - ini_cpi_baselineindex) / ini_cpi_baselineindex
-  return cpi_variation
+  return cpi_variation, ini_cpi_baselineindex, fim_cpi_baselineindex, refdate
 
 
 def calc_composite_money_indices(pydates):
   correction_indices = []
   for pydate in pydates:
     exchange_variation = get_variation_exchange_rate_from(pydate)
-    cpi_variation = get_cpi_variation_from(pydate)
+    cpi_variation, ini_cpi_baselineindex, fim_cpi_baselineindex, refdate = get_cpi_variation_from(pydate)
     correction_indice = exchange_variation * cpi_variation
     correction_indices.append(correction_indice)
   return correction_indices
@@ -159,7 +166,7 @@ def get_exchangerate_variation_from(pydate):
   res_bcb_api1 = fin.dbfetch_bcb_cotacao_compra_dolar_apifallback(today)
   last_exchangerate = res_bcb_api1.cotacao_venda
   exchangerate_variation = (last_exchangerate - first_exchangerate) / first_exchangerate
-  return exchangerate_variation
+  return exchangerate_variation, first_exchangerate, last_exchangerate
 
 
 def get_pydates_from_datafile():
@@ -177,12 +184,18 @@ def process_datesfile():
   pydates = get_pydates_from_datafile()
   output_list = []
   ptab = PrettyTable()
-  ptab.field_names = ['seq', 'date', 'cpi_var', 'exchange_var']
+  ptab.field_names = [
+    'seq', 'date', 'cpi_ini', 'cpi_fim', 'cpi_var',
+    'exchange_ini', 'exchange_fim', 'exchange_var'
+  ]
   for i, pydate in enumerate(pydates):
     seq = i + 1
-    cpi_variation = get_cpi_variation_from(pydate)
-    exchangerate_variation = get_exchangerate_variation_from(pydate)
-    output_tuple = (seq, pydate, cpi_variation, exchangerate_variation)
+    cpi_variation, cpi_ini, cpi_fim, _ = get_cpi_variation_from(pydate)
+    exchangerate_variation, exchange_ini, exchange_fim = get_exchangerate_variation_from(pydate)
+    output_tuple = (
+      seq, pydate, cpi_ini, cpi_fim, cpi_variation,
+      exchange_ini, exchange_fim, exchangerate_variation
+    )
     output_list.append(output_tuple)
     ptab.add_row(list(output_tuple))
   print(ptab)
