@@ -108,9 +108,13 @@ def get_cpi_baselineindex_in_month(pydate):
         seriesid = ? and refdate = ?;
   """
   cursor.execute(sql, tuplevalues)
-  baselineindex = cursor.fetchone()[0]
+  try:
+    baselineindex = cursor.fetchone()[0]
+  except TypeError:
+    baselineindex = None
   # print('first_baselineindex', first_baselineindex)
   conn.close()
+  # None may be returned
   return baselineindex
 
 
@@ -136,6 +140,8 @@ def get_last_available_cpi_baselineindex():
 
 def get_cpi_variation_from(pydate):
   ini_cpi_baselineindex = get_cpi_baselineindex_in_month(pydate)
+  if ini_cpi_baselineindex is None:
+    return None, None, None, None
   fim_cpi_baselineindex, refdate = get_last_available_cpi_baselineindex()  # second return is refdate
   cpi_variation = (fim_cpi_baselineindex - ini_cpi_baselineindex) / ini_cpi_baselineindex
   return cpi_variation, ini_cpi_baselineindex, fim_cpi_baselineindex, refdate
