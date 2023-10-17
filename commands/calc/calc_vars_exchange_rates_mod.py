@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import sys
 import models.exrate.exchange_rate_modelmod as mmod
-from fs import db as con
+import fs.db.conn_sa as confs
 import fs.economicfs.preapis_finfunctions as preapi
 import fs.datefs.datefunctions as dtfs
 
@@ -72,7 +72,7 @@ buy_var = %(buy_variation).2f & sell_var = %(sell_variation).2f
 
 
 def list_min_max(inidate, findate):
-  session = con.Session()
+  session = confs.get_sa_session_handler()
   minmax = MinMax()
   for pdate in dtfs.generate_daterange(inidate, findate):
     exchanger = session.query(mmod.ExchangeRateDate).filter(mmod.ExchangeRateDate.quotesdate == pdate).first()

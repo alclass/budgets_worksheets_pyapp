@@ -8,9 +8,9 @@ import datetime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, Date, Time
 from sqlalchemy.sql.expression import asc
-import settings
+import settings as sett
 import fs.datefs.datefunctions as dtfs
-from fs import db as con
+import fs.db.conn_sa as consa
 
 Base = declarative_base()
 
@@ -33,8 +33,8 @@ class ExchangeRateDate(Base):
   # created_at = Column(TIMESTAMP, default=datetime.datetime.now)  # utcnow() uses UTC (SaoPaulo timezone plus 3h)
   # updated_at = Column(TIMESTAMP, nullable=True, onupdate=datetime.datetime.now)
 
-  numerator_curr3 = config.CURR_BRL
-  denominator_curr3 = settings.CURR_USD
+  numerator_curr3 = sett.CURR_BRL
+  denominator_curr3 = sett.CURR_USD
   infofrom = 'BCB PTAX'
 
   @property
@@ -122,14 +122,16 @@ def ahdoc_test_insert_etc():
 
 
 def print_db():
-  session = con.Session()
   print('print_db => Base.metadata.create_all(con.sqlalchemy_engine')
-  Base.metadata.create_all(con.sqlalchemy_engine)
+  sqlalchemy_engine = consa.get_sa_engine()
+  Base.metadata.create_all(sqlalchemy_engine)
+  sessionhandler = consa.get_sa_session_handler()
+  session = sessionhandler()
   exrates = session.query(ExchangeRateDate). \
       order_by(asc(ExchangeRateDate.quotesdate)).\
       all()
-  for exrate in exrates:
-    print(exrate)
+  for i, exrate in enumerate(exrates):
+    print(i+1, exrate)
   print('Total records =', len(exrates))
 
 

@@ -12,11 +12,11 @@ import fs.datefs.datefunctions as dtfs
 import fs.economicfs.apis_finfunctions as apis
 import models.exrate.exchange_rate_modelmod as exmod
 from fs.textfs import strfs
-import settings
+import settings as sett
 
 _, modlevelogfn = os.path.split(__file__)
 modlevelogfn = str(datetime.date.today()) + '_' + modlevelogfn[:-3] + '.log'
-modlevelogfp = os.path.join(settings.get_datafolder_abspath(), modlevelogfn)
+modlevelogfp = os.path.join(sett.get_datafolder_abspath(), modlevelogfn)
 logging.basicConfig(filename=modlevelogfp, filemode='w', format='%(name)s %(levelname)s %(message)s')
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)  # DEBUG means it and all others levels will be logged
@@ -62,7 +62,7 @@ def dbfetch_bcb_cotacao_compra_dolar_apifallback(pdate, recurse_pass=0):
     print(log_msg)
     indate = indate - datetime.timedelta(days=1)
     return dbfetch_bcb_cotacao_compra_dolar_apifallback(indate, recurse_pass+1)
-  session = exmod.con.Session()
+  session = exmod.consa.get_sa_session()
   exchanger = session.query(exmod.ExchangeRateDate).\
       filter(exmod.ExchangeRateDate.quotesdate == indate).\
       first()
@@ -89,8 +89,8 @@ def dbfetch_bcb_cotacao_compra_dolar_apifallback(pdate, recurse_pass=0):
     return treat_error(res_bcb_api1)
   exchanger = exmod.ExchangeRateDate()
   session.add(exchanger)
-  exchanger.numerator_curr3 = settings.CURR_BRL
-  exchanger.denominator_curr3 = config.CURR_USD
+  exchanger.numerator_curr3 = sett.CURR_BRL
+  exchanger.denominator_curr3 = sett.CURR_USD
   buyquote = res_bcb_api1.cotacao_compra
   if buyquote is not None:
     exchanger.buyquote = buyquote
