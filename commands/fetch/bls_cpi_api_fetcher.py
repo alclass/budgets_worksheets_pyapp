@@ -1,29 +1,20 @@
 #!/usr/bin/env python3
 """
-bls_cpis_from_file_to_db.py
+bls_cpi_api_fetcher.py
 Script to fetch BLS CPI (Consumer Price Index) data
-
 Based on:
   www.bls.gov/developers/api_python.html
+  webpage:
+  https://data.bls.gov/timeseries/CUUR0000SA0
+  shows a year-month table with the CPI_US indices
 """
-import config as cfg
+import settings as cfg
 import requests
 import json
 import prettytable
 BLS_URL = 'https://api.bls.gov/publicAPI/v1/timeseries/data/'
 m_headers = {'Content-type': 'application/json'}
 DICTKEY_SERIESID_K = 'seriesID'
-
-def db_schema():
-  sql = '''
-  create table econ_indices (
-    id int
-    idxcode string
-    refdate
-    baselineindex
-  )
-  '''
-
 
 
 def write_series_pprint_as_file(pprint_filename, pprint_dump):
@@ -72,8 +63,8 @@ def fetch(p_data, p_headers):
 m_data = json.dumps(
   {
     'seriesid': ['CUUR0000SA0', 'SUUR0000SA0'],
-    'startyear': '2021',
-    'endyear': '2022'
+    'startyear': '2011',
+    'endyear': '2024'
   }
 )
 

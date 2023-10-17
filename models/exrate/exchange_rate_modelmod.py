@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 """
+exchange_rate_modelmod.py
+
   docstring
 """
 import datetime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, Date, Time
 from sqlalchemy.sql.expression import asc
-import config
+import settings
 import fs.datefs.datefunctions as dtfs
-import models.conn_sa as con
+from fs import db as con
 
 Base = declarative_base()
 
@@ -32,7 +34,7 @@ class ExchangeRateDate(Base):
   # updated_at = Column(TIMESTAMP, nullable=True, onupdate=datetime.datetime.now)
 
   numerator_curr3 = config.CURR_BRL
-  denominator_curr3 = config.CURR_USD
+  denominator_curr3 = settings.CURR_USD
   infofrom = 'BCB PTAX'
 
   @property

@@ -17,7 +17,7 @@ import fs.datefs.datefunctions as dtfs
 import fs.economicfs.preapis_finfunctions as prefs
 import fs.economicfs.financefunctions as finfs
 import fs.numberfs.tableaufunctions as tblfs
-import config
+import settings
 
 
 class HistPrice:

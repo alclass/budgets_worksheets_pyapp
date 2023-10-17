@@ -3,7 +3,7 @@
 insert_exchangerates_into_db.py
 """
 import datetime
-import config as cfg
+import settings as cfg
 import fs.economicfs.preapis_finfunctions as fin
 
 def fetch_exchangerate_thru_api(pydate):

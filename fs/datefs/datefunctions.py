@@ -7,7 +7,7 @@ import collections as coll
 import datetime
 import os
 import fs.textfs.strfs as strfs
-import config
+import settings
 
 
 def get_appsroot_abspath_for_filename_w_tstamp(filename):
@@ -18,7 +18,7 @@ def get_appsroot_abspath_for_filename_w_tstamp(filename):
     filename.replace('  ', ' ')
   else:
     filename = name + '_' + strdt + ext
-  return config.get_appsroot_abspath_for_filename(filename)
+  return settings.get_appsroot_abspath_for_filename(filename)
 
 
 def split_date_n_time_from_datetime(pdatetime):
@@ -113,7 +113,7 @@ def get_datafolder_abspath_for_filename_w_tstamp(filename):
     filename.replace('  ', ' ')
   else:
     filename = name + '_' + strdt + ext
-  datafolder_abspath = config.get_datafolder_abspath()
+  datafolder_abspath = settings.get_datafolder_abspath()
   filepath = os.path.join(datafolder_abspath, filename)
   return filepath
 

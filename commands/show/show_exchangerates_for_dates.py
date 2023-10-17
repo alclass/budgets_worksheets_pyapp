@@ -10,7 +10,7 @@ The output text contains:
 - in the second the day-to-day 'sell quotes" *
   * 'cotação de venda' do par de moedas
 """
-import commands.gen_composite_currency_updter as composite
+import commands.show.gen_composite_currency_updter as composite
 import fs.economicfs.preapis_finfunctions as fin
 
 

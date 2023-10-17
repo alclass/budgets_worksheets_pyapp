@@ -58,7 +58,7 @@ import os
 import requests
 import time
 from prettytable import PrettyTable
-import config
+import settings
 import fs.datefs.datefunctions as dtfs
 
 url_base = 'https://olinda.bcb.gov.br/olinda/servico/PTAX/' \
@@ -112,7 +112,7 @@ def call_api_bcb_cotacao_dolar_on_date(pdate, connection_error_raised=0):
 
   The caller can also check where a date is a weekend day or a holiday in Brasil and
     in that case the max tries constant can very well be 0, ie, no retries.
-  (This constant can be placed in config.py at the app's root folder,
+  (This constant can be placed in settings.py at the app's root folder,
     so that it can be changed from there.)
 
   :param pdate:

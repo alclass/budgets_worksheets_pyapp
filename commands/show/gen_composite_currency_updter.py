@@ -27,7 +27,7 @@ EOF
 The output will be the money correcting/updating indices
 """
 import datetime
-import config as cfg
+import settings as cfg
 import fs.economicfs.preapis_finfunctions as fin
 from prettytable import PrettyTable
 DEFAULT_DATESFILENAME = 'datesfile.dat'

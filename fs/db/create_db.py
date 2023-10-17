@@ -2,7 +2,7 @@
 """
 create_db.py
 """
-import config as cfg
+import settings as cfg
 
 sql_create_table_cpis = """
 CREATE TABLE IF NOT EXISTS cpi_indices (

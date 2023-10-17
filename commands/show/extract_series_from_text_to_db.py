@@ -2,7 +2,7 @@
 """
 extract_series_from_text_to_db.py
 """
-import config as cfg
+import settings as cfg
 
 
 def gen_filenames():

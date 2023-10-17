@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import sys
-import models.exchange_rate_modelmod as mmod
-import models.conn_sa as con
+import models.exrate.exchange_rate_modelmod as mmod
+from fs import db as con
 import fs.economicfs.preapis_finfunctions as preapi
 import fs.datefs.datefunctions as dtfs
 

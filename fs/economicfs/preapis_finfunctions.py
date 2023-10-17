@@ -10,13 +10,13 @@ import time
 from prettytable import PrettyTable
 import fs.datefs.datefunctions as dtfs
 import fs.economicfs.apis_finfunctions as apis
-import models.exchange_rate_modelmod as exmod
+import models.exrate.exchange_rate_modelmod as exmod
 from fs.textfs import strfs
-import config
+import settings
 
 _, modlevelogfn = os.path.split(__file__)
 modlevelogfn = str(datetime.date.today()) + '_' + modlevelogfn[:-3] + '.log'
-modlevelogfp = os.path.join(config.get_datafolder_abspath(), modlevelogfn)
+modlevelogfp = os.path.join(settings.get_datafolder_abspath(), modlevelogfn)
 logging.basicConfig(filename=modlevelogfp, filemode='w', format='%(name)s %(levelname)s %(message)s')
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)  # DEBUG means it and all others levels will be logged
@@ -89,7 +89,7 @@ def dbfetch_bcb_cotacao_compra_dolar_apifallback(pdate, recurse_pass=0):
     return treat_error(res_bcb_api1)
   exchanger = exmod.ExchangeRateDate()
   session.add(exchanger)
-  exchanger.numerator_curr3 = config.CURR_BRL
+  exchanger.numerator_curr3 = settings.CURR_BRL
   exchanger.denominator_curr3 = config.CURR_USD
   buyquote = res_bcb_api1.cotacao_compra
   if buyquote is not None:

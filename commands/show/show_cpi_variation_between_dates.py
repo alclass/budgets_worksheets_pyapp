@@ -10,7 +10,7 @@ This scripts fetches both exchange rates and CPI indices.
 The purpose is to generate an output with day to day
   composite money financial update indices.
 """
-import commands.gen_composite_currency_updter as composite
+import commands.show.gen_composite_currency_updter as composite
 import fs.datefs.datefunctions as dtfs
 import sys
 
