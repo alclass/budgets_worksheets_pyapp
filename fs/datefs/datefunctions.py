@@ -60,7 +60,7 @@ def convert_datetime_to_date_or_none(pdatetime):
 def convert_strdatetime_to_datetime_or_none(strdatetime):
   if strdatetime is None:
     return None
-  if type(strdatetime) == datetime.datetime:
+  if isinstance(strdatetime, datetime.datetime):
     return strdatetime
   strdatetime = str(strdatetime)
   pp = strdatetime.split(' ')
@@ -90,7 +90,7 @@ def convert_strdatetime_to_datetime_or_none(strdatetime):
     hh = int(strhh)
     mi = int(strmi)
     ss = int(strss)
-    mmm = 1000*int(strmmm)
+    mmm = 1000 * int(strmmm)
   except ValueError:
     pass
   pdatetime = datetime.datetime(
@@ -143,7 +143,7 @@ def get_date_or_previous_monday_to_friday(pdate, max_recurse=0):
     return None
   if is_date_weekend(indate):
     previous_date = indate - datetime.timedelta(days=1)
-    return get_date_or_previous_monday_to_friday(previous_date, max_recurse+1)
+    return get_date_or_previous_monday_to_friday(previous_date, max_recurse + 1)
   return indate
 
 
@@ -225,9 +225,9 @@ def generate_daterange(pinidate, pfindate, accept_future=False):
   findate = returns_date_or_today(pfindate)
   today = datetime.date.today()
   if not accept_future:
-    if inidate > today and findate <= today:
+    if inidate > today >= findate:
       inidate = today
-    elif findate > today and inidate <= today:
+    elif findate > today >= inidate:
       findate = today
     elif inidate > today and findate > today:
       return None
@@ -269,6 +269,7 @@ def get_daterange(pinidate, pfindate, accept_future=False):
       ongoingdate = ongoingdate - datetime.timedelta(days=1)
       daterange.append(ongoingdate)
   return daterange
+
 
 strdate_separators = ['-', '/', '.']
 
@@ -411,7 +412,7 @@ def convert_yyyymmdd_strdate_to_dtdate_or_today(strdate):
 
 
 def make_tstamp_for_filename(dtime=None):
-  if dtime is None or type(dtime) != datetime.datetime:
+  if dtime is None or isinstance(dtime, datetime.datetime):
     dtime = datetime.datetime.now()
   strdt = str(dtime)
   strdt = strdt.split('.')[0]
@@ -424,7 +425,7 @@ def make_tstamp_for_filename(dtime=None):
 def convert_yyyymmdd_strdate_to_dtdate_or_none(strdate):
   if strdate is None:
     return None
-  if type(strdate) != str:
+  if str != type(strdate):
     try:
       _, _, _ = strdate.year, strdate.month, strdate.day
       return strdate  # though it's not a str, it has the three attributes year, month and day
@@ -468,8 +469,8 @@ def convert_date_to_mmddyyyy_str_or_today(pdate):
 def convert_date_to_mmddyyyy_str_or_none(pdate):
   if pdate is None:
     return None
-  indate = pdate  # copy.copy() not needed to protect side-effect against pdate
-  if type(indate) == str:
+  indate = pdate  # copy.copy() not needed to protect side effect against pdate
+  if str == type(indate):
     indate = convert_yyyymmdd_strdate_to_dtdate_or_none(indate)
     if indate is None:
       return None
@@ -486,11 +487,11 @@ def adhoc_test():
   print('Generate', findate, inidate)
   for pdate in generate_daterange(findate, inidate):
     print(pdate)
-  print('-'*30)
+  print('-' * 30)
   print('Get', inidate, findate)
   for pdate in get_daterange(inidate, findate):
     print(pdate)
-  print('-'*30)
+  print('-' * 30)
   inidate = '2021-1-1'
   findate = '2021-1-5'
   print('Generate', findate, inidate)

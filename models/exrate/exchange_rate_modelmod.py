@@ -110,7 +110,7 @@ class ExchangeRateDate(Base):
 
 
 def ahdoc_test_insert_etc():
-  session = con.Session()
+  session = consa.get_sa_session()
   quotesdate = dtfs.returns_date_or_today('2019-12-31')
   exrate = session.query(ExchangeRateDate).filter(ExchangeRateDate.quotesdate == quotesdate).first()
   if exrate is None:
