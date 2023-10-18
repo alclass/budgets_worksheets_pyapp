@@ -1,14 +1,70 @@
 #!/usr/bin/env python3
 """
-show_cpis.py
+calc_monet_corr.py
 """
 import argparse
 import datetime
 import sqlite3
-# import fs.db.conn_sa as consa
-import settings as sett
+import fs.economicfs.preapis_finfunctions as fin
+import commands.show.gen_composite_currency_updter as compo  # compo.get_cpi_baselineindex_in_month()
 import models.CPIs as cpis
-DEFAULT_SERIESID = cpis.DEFAULT_SERIESID
+import settings as sett
+import fs.datefs.dategenerators as gendt
+# import fs.db.conn_sa as consa
+
+
+def get_connection():
+  return sqlite3.connect(sett.get_sqlite_appsdata_filepath())
+
+
+def calc_monet_corr_between_dates(dateini, datefim):
+  rateini = fin.dbfetch_bcb_cotacao_compra_dolar_apifallback(dateini)
+  if rateini is None:
+    print(dateini, 'did not find rate')
+    return
+  ratefim = fin.dbfetch_bcb_cotacao_compra_dolar_apifallback(datefim)
+  if ratefim is None:
+    print(datefim, 'did not find rate')
+    return
+  rate_var = (ratefim.venda - rateini.venda) / rateini.venda
+  cpi_ini = compo.get_cpi_baselineindex_in_month(dateini)
+  cpi_fim = compo.get_cpi_baselineindex_in_month(datefim)
+  cpi_var = (cpi_fim - cpi_ini) / cpi_ini
+  var_composite = (1 + rate_var) * (1 + cpi_var)
+  return var_composite
+
+
+def get_most_recent_cpi_date():
+  sql = """
+  SELECT * from cpi_indices
+  ORDER BY refmonthdate DESC LIMIT 1;
+  """
+  conn = get_connection()
+  conn.row_factory = sqlite3.Row
+  cursor = conn.cursor()
+  cursor.execute(sql)
+  rows = cursor.fetchall()
+  for row in rows:
+    dictrow = dict(row)
+    cpi = cpis.CPIDatum.instantiate_from_dict(dictrow)
+    print(cpi)
+  conn.close()
+  return cpi
+
+
+def calc_monet_corr_between_refmonthdates_n_mostrecent(refmonthdate):
+  datefim = get_most_recent_cpi_date()
+  for pdate in gendt.gen_daily_dates_for_refmonth(refmonthdate):
+    dateini = pdate
+    calc_monet_corr_between_dates(dateini, datefim)
+
+def find_seriesid_by_serieschar(serieschar):
+  if serieschar == 'C':
+    return 'CUUR0000SA0'
+  elif serieschar == 'S':
+    return 'SUUR0000SA0'
+  else:
+    return DEFAULT_SERIESID
 
 
 def read_yearrange_from_db(yearini, yearfim, serieschar=None):
@@ -17,7 +73,7 @@ def read_yearrange_from_db(yearini, yearfim, serieschar=None):
   rows = session.execute(sql, tuplevalues)
   session.close()
   """
-  seriesid = cpis.find_seriesid_by_serieschar(serieschar)
+  seriesid = find_seriesid_by_serieschar(serieschar)
   sql = """SELECT * from cpi_indices
     WHERE
       seriesid= ? and
@@ -34,9 +90,9 @@ def read_yearrange_from_db(yearini, yearfim, serieschar=None):
   conn.row_factory = sqlite3.Row  # for returning rows as dict
   cursor = conn.cursor()
   fetchobj = cursor.execute(sql, tuplevalues)
-  data = cpis.CPIData()
+  data = CPIData()
   for dictrow in fetchobj:
-    cpi = cpis.CPIDatum.instantiate_from_dict(dictrow)
+    cpi = CPIDatum.instantiate_from_dict(dictrow)
     data.append(cpi)
   print(data)
 
@@ -67,7 +123,7 @@ def get_args_via_argparse():
     help="the ending date in date range for finding daily exchange rate quotes",
   )
   parser.add_argument(
-    '-rm', '--refmonth', type=str, nargs='?',
+    '-rm', '--refmonth', type=str, nargs=1,
     help="the month as the date range for finding daily exchange rate quotes",
   )
   parser.add_argument(
@@ -97,7 +153,10 @@ def get_args_via_argparse():
   args = parser.parse_args()
   print('args =>', args)
   if args.refmonth is not None:
-    pass
+    # return calc_monet_corr_between_dates(args.refmonth)
+    refmonthdate = args.refmonth[0]
+    print('argparse refmonthdate', refmonthdate)
+    return calc_monet_corr_between_refmonthdates_n_mostrecent(refmonthdate)
   if args.year is not None:
     pass
   if args.yearrange is not None:

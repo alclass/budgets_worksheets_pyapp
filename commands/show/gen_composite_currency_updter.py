@@ -105,7 +105,7 @@ def get_cpi_baselineindex_in_month(pydate):
   sql = """
     SELECT baselineindex FROM cpi_indices
       WHERE
-        seriesid = ? and refdate = ?;
+        seriesid = ? and refmonthdate = ?;
   """
   cursor.execute(sql, tuplevalues)
   try:

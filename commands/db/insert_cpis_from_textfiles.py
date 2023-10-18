@@ -27,7 +27,7 @@ def create_table_if_not_exists():
   sql = """
   CREATE TABLE IF NOT EXISTS cpi_indices (
     seriesid varchar(12) NOT NULL,
-    refdate date NOT NULL,
+    refmonthdate date NOT NULL,
     baselineindex real NOT NULL,
     created_at datetime,
     modified_at datetime,
