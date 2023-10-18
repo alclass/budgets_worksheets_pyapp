@@ -29,6 +29,8 @@ The combination above will display all quotes from May 20, 2023, to August 14, 2
        The system repeats the last one available when such dates are requested.
        Example: if Sunday's quotes are requested, Friday's one, if available, are output.
 """
+import calendar
+import datetime
 # import datetime
 import sys
 import commands.show.gen_composite_currency_updter as composite
@@ -45,20 +47,59 @@ def show_exchangerates_between_dates():
     print(str(pdate), bcb_api_nt.cotacao_venda)
 
 
-def show_exchangerates_for_rangedate(date_ini, date_fim):
-  for i, pdate in enumerate(gendt.gen_daily_dates_for_daterange(date_ini, date_fim)):
+def show_exchangerates_for_rangedate(date_ini, date_fim, decrescent=False):
+  for i, pdate in enumerate(gendt.gen_daily_dates_for_daterange(date_ini, date_fim, decrescent)):
+    bcb_api_nt = fin.dbfetch_bcb_cotacao_compra_dolar_apifallback(pdate)
+    if bcb_api_nt:
+      print(i+1, pdate, '|', bcb_api_nt.cotacao_venda)
+    else:
+      print(i+1, pdate, '| no quote')
+
+
+def show_exchangerates_for_refmonth(p_refmonthdate, decrescent=False):
+  refmonthdate = gendt.make_refmonth_from_str_or_none(p_refmonthdate)
+  date_ini = datetime.date(year=refmonthdate.year, month=refmonthdate.month, day=1)
+  _, monthslastday = calendar.monthrange(year=refmonthdate.year, month=refmonthdate.month)
+  date_fim = datetime.date(year=refmonthdate.year, month=refmonthdate.month, day=monthslastday)
+  return show_exchangerates_for_rangedate(date_ini, date_fim, decrescent)
+
+
+def show_exchangerates_for_last_month(decrescent=False):
+  for i, pdate in enumerate(gendt.gen_daily_dates_for_last_month(decrescent)):
     bcb_api_nt = fin.dbfetch_bcb_cotacao_compra_dolar_apifallback(pdate)
     print(i+1, pdate, '|', bcb_api_nt.cotacao_venda)
 
 
-def show_exchangerates_for_last_month():
-  for i, pdate in enumerate(gendt.gen_daily_dates_for_last_month(decrescent=True)):
+def show_exchangerates_for_yearrange(yearini, yearfim=None, decrescent=False):
+  if yearini is None:
+    print('year ini %d not valid' % yearini)
+    return
+  if yearfim is None:
+    today = datetime.date.today()
+    yearfim = today.year
+  try:
+    yearini = int(yearini)
+    yearfim = int(yearfim)
+  except ValueError:
+    scrmsg = 'year range not valid (%s, %s)' % (str(yearini), str(yearfim))
+    print(scrmsg)
+    return
+  scrmsg = 'year range (%s, %s)' % (str(yearini), str(yearfim))
+  print(scrmsg)
+  for year in range(yearini, yearfim+1):
+    for i, pdate in enumerate(gendt.gen_daily_dates_for_year(year, decrescent)):
+      bcb_api_nt = fin.dbfetch_bcb_cotacao_compra_dolar_apifallback(pdate)
+      print(i+1, pdate, '|', bcb_api_nt.cotacao_venda)
+
+
+def show_exchangerates_for_year(year, decrescent=False):
+  for i, pdate in enumerate(gendt.gen_daily_dates_for_year(year, decrescent)):
     bcb_api_nt = fin.dbfetch_bcb_cotacao_compra_dolar_apifallback(pdate)
     print(i+1, pdate, '|', bcb_api_nt.cotacao_venda)
 
 
-def show_exchangerates_for_current_year():
-  for i, pdate in enumerate(gendt.gen_daily_dates_for_current_year(decrescent=True)):
+def show_exchangerates_for_current_year(decrescent=False):
+  for i, pdate in enumerate(gendt.gen_daily_dates_for_current_year(decrescent)):
     bcb_api_nt = fin.dbfetch_bcb_cotacao_compra_dolar_apifallback(pdate)
     print(i+1, pdate, '|', bcb_api_nt.cotacao_venda)
 
@@ -101,6 +142,14 @@ def get_args_via_argparse():
     help="days since the beginning of the current year as the date range for finding daily exchange rate quotes",
   )
   parser.add_argument(
+    '-y', '--year', type=int, nargs=1,
+    help="year as the date range for finding daily exchange rate quotes",
+  )
+  parser.add_argument(
+    '-yr', '--yearrange', type=int, nargs=2,
+    help="year range (ini, fim) as the date range for finding daily exchange rate quotes",
+  )
+  parser.add_argument(
       '-rdf', '--readdatefile', action='store_true',
       help="marker/signal for inputting the dates from the conventioned datefile located in the app's data folder",
   )
@@ -110,6 +159,16 @@ def get_args_via_argparse():
   )
   args = parser.parse_args()
   print('args =>', args)
+  if args.refmonth is not None:
+    return show_exchangerates_for_refmonth(args.refmonth)
+  if args.year is not None:
+    year = args.year[0]
+    return show_exchangerates_for_year(year)
+  if args.yearrange is not None:
+    yearini = args.yearrange[0]
+    yearfim = args.yearrange[1]
+    return show_exchangerates_for_yearrange(yearini, yearfim)
+    # print(yearini, yearfim)
 
 
 def get_args():

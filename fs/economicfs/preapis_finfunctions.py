@@ -47,21 +47,24 @@ def dbfetch_bcb_cotacao_compra_dolar_apifallback(pdate, recurse_pass=0):
   indate = dtfs.returns_date_or_none(pdate)
   if indate is None:
     return None
-  if indate == datetime.date.today():
+  today = datetime.date.today()
+  if indate >= today:
+    # log_msg = 'Date ' + str(indate) + ' is today (the rundate). Recursing without adding 1 to limit of 5 ' \
+    #         + str(recurse_pass)
+    # logger.info(log_msg)
+    # print(log_msg)
+    # indate = indate - datetime.timedelta(days=1)
+    # return dbfetch_bcb_cotacao_compra_dolar_apifallback(indate, recurse_pass)
+    print('Date in the future. Please, reenter dates up to the moment.')
+    return None
+  if dtfs.is_date_weekend(indate):
+    log_msg = 'Date ' + str(indate) + ' is weekend. Recursing (limit to 5) ' + str(recurse_pass + 1)
+    logger.info(log_msg)
+    print(log_msg)
+    indate = indate - datetime.timedelta(days=1)
+    return dbfetch_bcb_cotacao_compra_dolar_apifallback(indate, recurse_pass + 1)
     # recurse one day back right away, today's quotes should be available after market
     # (TO-DO: write a dedicated function for this)
-    log_msg = 'Date ' + str(indate) + ' is today (the rundate). Recursing without adding 1 to limit of 5 ' \
-              + str(recurse_pass)
-    logger.info(log_msg)
-    print(log_msg)
-    indate = indate - datetime.timedelta(days=1)
-    return dbfetch_bcb_cotacao_compra_dolar_apifallback(indate, recurse_pass)
-  if dtfs.is_date_weekend(indate):
-    log_msg = 'Date ' + str(indate) + ' is weekend. Recursing (limit to 5) ' + str(recurse_pass+1)
-    logger.info(log_msg)
-    print(log_msg)
-    indate = indate - datetime.timedelta(days=1)
-    return dbfetch_bcb_cotacao_compra_dolar_apifallback(indate, recurse_pass+1)
   session = exmod.consa.get_sa_session()
   exchanger = session.query(exmod.ExchangeRateDate).\
       filter(exmod.ExchangeRateDate.quotesdate == indate).\

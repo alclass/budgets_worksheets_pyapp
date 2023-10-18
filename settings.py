@@ -52,6 +52,13 @@ def get_datafolder_abspath():
 
 
 def get_exchange_rate_sqlite_filepath():
+  """
+  DEPRECATED (@see the one below)
+  """
+  return os.path.join(get_apps_data_abspath(), SQLITE_FILENAME_DEFAULT)
+
+
+def get_sqlite_appsdata_filepath():
   return os.path.join(get_apps_data_abspath(), SQLITE_FILENAME_DEFAULT)
 
 

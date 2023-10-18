@@ -63,10 +63,11 @@ def fetch(p_data, p_headers):
 m_data = json.dumps(
   {
     'seriesid': ['CUUR0000SA0', 'SUUR0000SA0'],
-    'startyear': '2011',
+    'startyear': '2021',
     'endyear': '2024'
   }
 )
+
 
 def process():
   fetch(m_data, m_headers)

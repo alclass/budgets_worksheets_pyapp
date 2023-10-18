@@ -65,9 +65,12 @@ def gen_daily_dates_for_refmonth_or_lastmonth(refmonthdate, decrescent=False):
   return gen_daily_dates_for_refmonth(refmonthdate, decrescent)
 
 
-def make_refmonth_from_str_or_none(str_refmonth):
+def make_refmonth_from_str_or_none(str_or_date_refmonth):
+  if isinstance(str_or_date_refmonth, datetime.date):
+    return str_or_date_refmonth
   try:
-    refmonth = str(str_refmonth)
+    # None will be "caught" here
+    refmonth = str(str_or_date_refmonth)
     pp = refmonth.split('-')
     year = int(pp[0])
     month = int(pp[1])
@@ -96,6 +99,18 @@ def gen_daily_dates_for_refmonth(refmonthdate, decrescent=False):
     return gen_decrescent_daily_dates_within(startpoint, finishpoint)
   startpoint = firstdateinmonth
   finishpoint = lastdateinmonth
+  return gen_crescent_daily_dates_within(startpoint, finishpoint)
+
+
+def gen_daily_dates_for_year(pyear, decrescent=False):
+  firstdayinyear = datetime.date(year=pyear, month=1, day=1)
+  lastdayinyear = datetime.date(year=pyear, month=12, day=31)
+  if decrescent:
+    startpoint = lastdayinyear
+    finishpoint = firstdayinyear
+    return gen_decrescent_daily_dates_within(startpoint, finishpoint)
+  startpoint = firstdayinyear
+  finishpoint = lastdayinyear
   return gen_crescent_daily_dates_within(startpoint, finishpoint)
 
 
