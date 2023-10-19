@@ -72,7 +72,7 @@ buy_var = %(buy_variation).2f & sell_var = %(sell_variation).2f
 
 
 def list_min_max(inidate, findate):
-  session = confs.get_sa_session_handler()
+  session = confs.get_sa_session()
   minmax = MinMax()
   for pdate in dtfs.generate_daterange(inidate, findate):
     exchanger = session.query(mmod.ExchangeRateDate).filter(mmod.ExchangeRateDate.quotesdate == pdate).first()

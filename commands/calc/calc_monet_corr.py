@@ -7,7 +7,7 @@ import datetime
 import sqlite3
 import fs.economicfs.preapis_finfunctions as fin
 import commands.show.gen_composite_currency_updter as compo  # compo.get_cpi_baselineindex_in_month()
-import models.CPIs as cpis
+import models.cpis as cps
 import settings as sett
 import fs.datefs.dategenerators as gendt
 # import fs.db.conn_sa as consa
@@ -44,9 +44,10 @@ def get_most_recent_cpi_date():
   cursor = conn.cursor()
   cursor.execute(sql)
   rows = cursor.fetchall()
+  cpi = None
   for row in rows:
     dictrow = dict(row)
-    cpi = cpis.CPIDatum.instantiate_from_dict(dictrow)
+    cpi = cps.CPIDatum.instantiate_from_dict(dictrow)
     print(cpi)
   conn.close()
   return cpi
@@ -58,13 +59,14 @@ def calc_monet_corr_between_refmonthdates_n_mostrecent(refmonthdate):
     dateini = pdate
     calc_monet_corr_between_dates(dateini, datefim)
 
+
 def find_seriesid_by_serieschar(serieschar):
   if serieschar == 'C':
     return 'CUUR0000SA0'
   elif serieschar == 'S':
     return 'SUUR0000SA0'
   else:
-    return DEFAULT_SERIESID
+    return cps.DEFAULT_SERIESID
 
 
 def read_yearrange_from_db(yearini, yearfim, serieschar=None):
@@ -90,9 +92,9 @@ def read_yearrange_from_db(yearini, yearfim, serieschar=None):
   conn.row_factory = sqlite3.Row  # for returning rows as dict
   cursor = conn.cursor()
   fetchobj = cursor.execute(sql, tuplevalues)
-  data = CPIData()
+  data = cps.CPIData()
   for dictrow in fetchobj:
-    cpi = CPIDatum.instantiate_from_dict(dictrow)
+    cpi = cps.CPIDatum.instantiate_from_dict(dictrow)
     data.append(cpi)
   print(data)
 
@@ -123,6 +125,7 @@ def get_args_via_argparse():
     help="the ending date in date range for finding daily exchange rate quotes",
   )
   parser.add_argument(
+    # example -rm "2023-04"
     '-rm', '--refmonth', type=str, nargs=1,
     help="the month as the date range for finding daily exchange rate quotes",
   )
