@@ -7,7 +7,7 @@ import datetime
 import sqlite3
 # import fs.db.conn_sa as consa
 import settings as sett
-import models.cpis as cpis
+import models.finindices.cpis as cpis
 DEFAULT_SERIESID = cpis.DEFAULT_SERIESID
 
 

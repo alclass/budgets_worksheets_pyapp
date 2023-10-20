@@ -18,6 +18,36 @@ import datetime
 from dateutil.relativedelta import relativedelta
 
 
+def make_date_from_str(strdate):
+  if strdate is None:
+    return None
+  try:
+    strdate = str(strdate)
+    pp = strdate.split('-')
+    year = int(pp[0])
+    month = int(pp[1])
+    day = int(pp[2])
+    refmonthdate = datetime.date(year=year, month=month, day=day)
+    return refmonthdate
+  except (IndexError, ValueError):
+    pass
+  return None
+
+def make_refmonth_from_str(strdate):
+  if strdate is None:
+    return None
+  try:
+    strdate = str(strdate)
+    pp = strdate.split('-')
+    year = int(pp[0])
+    month = int(pp[1])
+    refmonthdate = datetime.date(year=year, month=month, day=1)
+    return refmonthdate
+  except (IndexError, ValueError):
+    pass
+  return None
+
+
 def gen_decrescent_daily_dates_within(startpoint, finishpoint):
   current_date = copy.copy(startpoint)
   while current_date >= finishpoint:
