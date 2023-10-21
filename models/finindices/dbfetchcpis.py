@@ -3,7 +3,10 @@
 dbfetchcpis.py
   contains helper function for fetching CPI data from db
 """
+import datetime
 import sqlite3
+import settings as sett
+import models.finindices.cpis as cps
 
 
 def get_connection():
@@ -57,7 +60,7 @@ def read_yearrange_from_db(yearini, yearfim, serieschar=None):
   rows = session.execute(sql, tuplevalues)
   session.close()
   """
-  seriesid = find_seriesid_by_serieschar(serieschar)
+  seriesid = cps.find_seriesid_by_serieschar(serieschar)
   sql = """SELECT * from cpi_indices
     WHERE
       seriesid= ? and

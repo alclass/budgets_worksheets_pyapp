@@ -33,6 +33,7 @@ def make_date_from_str(strdate):
     pass
   return None
 
+
 def make_refmonth_from_str(strdate):
   if strdate is None:
     return None
@@ -46,6 +47,19 @@ def make_refmonth_from_str(strdate):
   except (IndexError, ValueError):
     pass
   return None
+
+
+def convert_strdatelist_to_datelist(strdatelist):
+  datelist = []
+  for strdate in strdatelist:
+    if isinstance(strdate, datetime.date):
+      datelist.append(strdate)
+      continue
+    pdate = make_date_from_str(strdate)
+    if pdate is None:
+      continue
+    datelist.append(pdate)
+  return datelist
 
 
 def gen_decrescent_daily_dates_within(startpoint, finishpoint):
@@ -165,9 +179,14 @@ def adhoc_test():
   refmonth = make_refmonth_from_str_or_none('2023-5')
   for i, pdate in enumerate(gen_daily_dates_for_refmonth(refmonth)):
     print(i+1, pdate)
-  """
   for i, pdate in enumerate(gen_daily_dates_for_current_year()):
     print(i+1, pdate)
+  """
+  strdatelist = ["2023-05-20", "2023-06-21"]
+  print(strdatelist)
+  datelist = convert_strdatelist_to_datelist(strdatelist)
+  print('convert_strdatelist_to_datelist(strdatelist)')
+  print(datelist)
 
 
 def process():

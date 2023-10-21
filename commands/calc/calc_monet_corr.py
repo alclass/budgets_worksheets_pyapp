@@ -12,7 +12,7 @@ This protocol consists of multiplying two variations, ie:
 
 Let's see an example: suppose one want to find the monet corr between 2023-05-15 and 2022-10-25.
 
-The CPI used here is a monthly index and it takes more than one month, in relation to a month, to be known.
+The CPI used here is a monthly index, and it takes more than one month, in relation to a month, to be known.
 So the system searches the following indices:
 
 for 2022-10-25, it fetches the CPI(2022-08), this is called "M-2", ie, two months before
@@ -39,14 +39,12 @@ As commented above, other variations/combinations may be implemented here in the
 """
 import argparse
 import datetime
-import sqlite3
 import fs.economicfs.preapis_finfunctions as fin
 import commands.show.gen_composite_currency_updter as compo  # for compo.get_cpi_baselineindex_in_month()
-import models.finindices.cpis as cps
-import settings as sett
+# import models.finindices.cpis as cps
+import models.exrate.exratefetch as exrf  # for exr.find_most_recent_exrate()
 import fs.datefs.dategenerators as gendt  # for make_refmonth_date_from_str
 from dateutil.relativedelta import relativedelta
-# import fs.db.conn_sa as consa
 
 
 class MonetCorrCalculator:
@@ -65,19 +63,20 @@ class MonetCorrCalculator:
   def treat_dates(self):
     if self.dateini is None:
       error_msg = 'Error: dateini is None.'
-      raise ValueError
+      raise ValueError(error_msg)
     if not isinstance(self.dateini, datetime.date):
       self.dateini = gendt.make_date_from_str(self.dateini)
       if self.dateini is None:
         error_msg = 'Error: dateini (%s) is not valid.' % self.dateini
+        raise ValueError(error_msg)
     if self.datefim is None:
       error_msg = 'Error: datefim is None.'
-      raise ValueError
+      raise ValueError(error_msg)
     if not isinstance(self.datefim, datetime.date):
       self.datefim = gendt.make_date_from_str(self.datefim)
       if self.datefim is None:
         error_msg = 'Error: datefim (%s) is not valid.' % self.datefim
-        raise ValueError
+        raise ValueError(error_msg)
 
   @property
   def refmonthini(self):
@@ -135,10 +134,10 @@ class MonetCorrCalculator:
       return None
     if self._exrate_ini is None:
       bcb = fin.dbfetch_bcb_cotacao_compra_dolar_apifallback(self.dateini)
-      if bcb is None or bcb.venda is None:
+      if bcb is None or bcb.cotacao_venda is None:
         self.calculation_not_possible = True
         return None
-      self._exrate_ini = bcb.venda
+      self._exrate_ini = bcb.cotacao_venda
     return self._exrate_ini
 
   @property
@@ -147,10 +146,10 @@ class MonetCorrCalculator:
       return None
     if self._exrate_fim is None:
       bcb = fin.dbfetch_bcb_cotacao_compra_dolar_apifallback(self.datefim)
-      if bcb is None or bcb.venda is None:
+      if bcb is None or bcb.cotacao_venda is None:
         self.calculation_not_possible = True
         return None
-      self._exrate_fim = bcb.venda
+      self._exrate_fim = bcb.cotacao_venda
     return self._exrate_ini
 
   @property
@@ -162,7 +161,7 @@ class MonetCorrCalculator:
         variation_1 = (self.cpi_fim - self.cpi_ini) / self.cpi_ini
         variation_2 = (self.exrate_fim - self.exrate_ini) / self.exrate_ini
         self._monetcorr_multiplier = (1 + variation_1) * (1 + variation_2)
-      except (NameError, ValueError):
+      except (NameError, ValueError, TypeError):
         self.calculation_not_possible = True
     return self._monetcorr_multiplier
 
@@ -183,6 +182,24 @@ class MonetCorrCalculator:
     return outstr
 
 
+def calc_monet_corr_between_2_dates(date1, date2):
+  """
+
+  """
+  mcc = MonetCorrCalculator(dateini=date1, datefim=date2)
+  print(date1, date2, 'monetcorr_multiplier', mcc.monetcorr_multiplier)
+
+
+def calc_monet_corr_between_datelist_n_mostrecent(datelist):
+  """
+
+  """
+  datelist = gendt.convert_strdatelist_to_datelist(datelist)
+  most_recent_date = exrf.find_most_recent_exrate_date()
+  for pdate in datelist:
+    calc_monet_corr_between_2_dates(pdate, most_recent_date)
+
+
 def get_args_via_argparse():
   """
   https://realpython.com/command-line-interfaces-python-argparse/
@@ -201,6 +218,14 @@ def get_args_via_argparse():
   parser.add_argument(
     '-f', '--fim', metavar='date_fim', type=str, nargs='?',
     help="the ending date in date range for finding daily exchange rate quotes",
+  )
+  parser.add_argument(
+    '-cmc', '--calc-monet-corr', metavar='twodates', type=str, nargs=2,
+    help="the ending date in date range for finding daily exchange rate quotes",
+  )
+  parser.add_argument(
+    '-dl', '--datelist', metavar='datelist', type=str, nargs='+',
+    help="datelist for finding daily exchange rate quotes one by one",
   )
   parser.add_argument(
     # example -rm "2023-04"
@@ -237,30 +262,39 @@ def get_args_via_argparse():
     # return calc_monet_corr_between_dates(args.refmonth)
     refmonthdate = args.refmonth[0]
     print('argparse refmonthdate', refmonthdate)
-    return calc_monet_corr_between_refmonthdates_n_mostrecent(refmonthdate)
+    return calc_monet_corr_between_datelist_n_mostrecent(refmonthdate)
   if args.year is not None:
     pass
   return args
 
 
 def adhoctest():
+  """
+  -dl "2023-05-20" "2023-06-21"
+  calc_monet_corr_between_datelist_n_mostrecent(args.datelist)
   yearini = 2020
   yearfim = 2022
   # read_yearrange_from_db(yearini, yearfim)
+  calc_monet_corr_between_datelist_n_mostrecent(args.datelist)
+  """
+  args = get_args_via_argparse()
+  twodates = args.calc_monet_corr
+  calc_monet_corr_between_2_dates(twodates[0], twodates[1])
 
 
 def process():
   """
-  """
-  args = get_args_via_argparse()
   dateini = args.ini
   datefim = args.fim
   calc = MonetCorrCalculator(dateini, datefim)
   print(calc)
+  args = get_args_via_argparse()
+  calc_monet_corr_between_datelist_n_mostrecent(args.datelist)
+  """
 
 
 if __name__ == '__main__':
   """
-  adhoctest()
-  """
   process()
+  """
+  adhoctest()

@@ -16,8 +16,8 @@ SQLITE_FILENAME_DEFAULT = 'exchange_n_indices.sqlite'
 
 try:
   import local_settings as ls
-  NONDEFAULT_DATA_FOLDERPATH = ls.DATA_FOLDERPATH
-except (ImportError, NameError):
+  NONDEFAULT_DATA_FOLDERPATH = os.path.abspath(ls.DATA_FOLDERPATH)
+except (ImportError, NameError, TypeError):
   pass
 
 
@@ -29,6 +29,8 @@ def get_connection(sqlitefilename=None):
 
 
 def get_apps_root_abspath():
+  if NONDEFAULT_DATA_FOLDERPATH is not None:
+    return NONDEFAULT_DATA_FOLDERPATH
   thisfile_abspath = __file__
   apps_root_abspath, _ = os.path.split(thisfile_abspath)
   if apps_root_abspath == '.':
