@@ -77,6 +77,11 @@ class MonetCorrCalculator:
       if self.datefim is None:
         error_msg = 'Error: datefim (%s) is not valid.' % self.datefim
         raise ValueError(error_msg)
+    if self.dateini > self.datefim:
+      # swap positions
+      tmpdate = self.dateini
+      self.dateini = self.datefim
+      self.datefim = tmpdate
 
   @property
   def refmonthini(self):
@@ -279,7 +284,16 @@ def adhoctest():
   """
   args = get_args_via_argparse()
   twodates = args.calc_monet_corr
-  calc_monet_corr_between_2_dates(twodates[0], twodates[1])
+  try:
+    return calc_monet_corr_between_2_dates(twodates[0], twodates[1])
+  except (IndexError, TypeError):
+    # if twodates is None or not subscriptable; TypeError is raised
+    # if twodates, subscriptable, doesn't have at least 2 elements; IndexError is raised
+    scrmsg = (
+        'Missing argument: twodates must contain two dates from the command line parameter.'
+        ' It cames as [%s]' % str(twodates)
+    )
+    print(scrmsg)
 
 
 def process():

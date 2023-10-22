@@ -3,11 +3,61 @@
   docstring
 """
 import calendar
+from dateutil.relativedelta import relativedelta
 import collections as coll
 import datetime
 import os
 import fs.textfs.strfs as strfs
 import settings
+WEEKEND_PREVIOUS_DATE_MAX_RECURSE = 41  # go back up to 31 days (a month) plus 10
+WEEKDAYS3LETTER = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+
+
+def is_date_valid(pdate):
+  if isinstance(pdate, datetime.date):
+    return True
+  return False
+
+
+def adjust_date_if_str(pdate):
+  if isinstance(pdate, datetime.date):
+    return pdate
+  return convert_strdate_to_date_or_none(pdate)
+
+
+def transform_strdatelist_to_datelist(strdatelist):
+  outlist = []
+  for strdate in strdatelist:
+    pdate = adjust_date_if_str(strdate)
+    if pdate is not None:
+      outlist.append(pdate)
+  return outlist
+
+
+def transform_strdates_sep_by_blank_to_datelist(strdatelist):
+  datelist = strdatelist.split(' ')
+  outlist = []
+  for strdate in datelist:
+    pdate = adjust_date_if_str(strdate)
+    if pdate is not None:
+      outlist.append(pdate)
+  return outlist
+
+
+def adjust_datelist_if_str(datelist):
+  if datelist is None:
+    return None
+  try:
+    tmpdatelist = list(datelist)
+    if len(tmpdatelist[0]) == 1:
+      # if datelist was a string, the list function will generate of list of "chars"
+      raise TypeError
+    return transform_strdatelist_to_datelist(tmpdatelist)
+  except TypeError:
+    pass
+  # at this point, datelist is not subscriptable, ie list(datelist) raised TypeError
+  # however, if it's a string, dates in there should be separated by blank (sort of convention, not by another char)
+  return transform_strdates_sep_by_blank_to_datelist(datelist)
 
 
 def get_appsroot_abspath_for_filename_w_tstamp(filename):
@@ -53,6 +103,23 @@ def convert_datetime_to_date_or_none(pdatetime):
   try:
     return datetime.date(pdatetime.year, pdatetime.month, pdatetime.day)
   except AttributeError:
+    pass
+  return None
+
+
+def convert_strdate_to_date_or_none(strdate):
+  if strdate is None:
+    return None
+  if isinstance(strdate, datetime.date):
+    return strdate
+  try:
+    strdate = str(strdate)
+    pp = strdate.split('-')
+    year = int(pp[0])
+    month = int(pp[1])
+    day = int(pp[2])
+    return datetime.date(year=year, month=month, day=day)
+  except (IndexError, ValueError):
     pass
   return None
 
@@ -132,7 +199,18 @@ def is_date_weekend(pdate):
   return None
 
 
-WEEKEND_PREVIOUS_DATE_MAX_RECURSE = 41  # go back up to 31 days (a month) plus 10
+def get_weekday3letter_from_date(pdate):
+  """
+  # previously:
+  # weekday = calendar.weekday(year=indate.year, month=indate.month, day=indate.day)  # _ is days in month
+  # currently:
+  # weekday can be obtained directly from date (instead of calling calendar.weekday(date)
+  """
+  indate = returns_date_or_none(pdate)
+  if indate is None:
+    return None
+  weekday = indate.weekday()
+  return WEEKDAYS3LETTER[weekday]
 
 
 def get_date_or_previous_monday_to_friday(pdate, max_recurse=0):
@@ -147,14 +225,24 @@ def get_date_or_previous_monday_to_friday(pdate, max_recurse=0):
   return indate
 
 
-def get_monthslastday_date(pdate):
+def get_monthslastday_date_via_calendar(pdate):
+  indate = returns_date_or_none(pdate)
+  if indate is None:
+    return None
+  _, n_days_in_month = calendar.monthrange(year=indate.year, month=indate.month)  # _ is the first weekday in month
+  return datetime.date(year=indate.year, month=indate.month, day=n_days_in_month)
+
+
+def get_monthslastday_date_via_addition(pdate):
   indate = returns_date_or_none(pdate)
   if indate is None:
     return None
   if indate.day > 1:
-    indate = datetime.date(indate.year, indate.month, 1)
-  next_month_date = add_or_subtract_to_month(indate, 1)
-  monthslastday_date = next_month_date - datetime.timedelta(days=1)
+    date_set_on_first_day_of_month = datetime.date(indate.year, indate.month, 1)
+  else:
+    date_set_on_first_day_of_month = indate
+  date_on_first_day_of_next_month = date_set_on_first_day_of_month + relativedelta(months=1)
+  monthslastday_date = date_on_first_day_of_next_month - relativedelta(days=1)
   return monthslastday_date
 
 
@@ -362,14 +450,25 @@ def return_strdate_in_fields_order_if_good_or_none(strdate, sep, posorder):
   return None, None
 
 
-def transform_date_to_other_order_fields_n_sep(pdate, sep, targetposorder):
+def transform_date_to_other_order_fields_n_sep_or_none(pdate, tosep='/', targetposorder='dmy'):
+  if pdate is None:
+    return None
+  if isinstance(pdate, datetime.date):
+    return transform_date_to_other_order_fields_n_sep(pdate, tosep, targetposorder)
+  pdate = convert_strdate_to_date_or_none(pdate)
+  if isinstance(pdate, datetime.date):
+    return transform_date_to_other_order_fields_n_sep(pdate, tosep, targetposorder)
+  return None
+
+
+def transform_date_to_other_order_fields_n_sep(pdate, tosep, targetposorder):
   """
     Consider this function private, ie,
     strdate should already have been tested a good strdate,
     which is good in caller convert_sep_or_datefields_position_for_ymdstrdate()
 
   :param pdate:
-  :param sep:
+  :param tosep:
   :param targetposorder:
   :return:
   """
@@ -382,7 +481,7 @@ def transform_date_to_other_order_fields_n_sep(pdate, sep, targetposorder):
   y = pdate.year
   m = str(pdate.month).zfill(2)
   d = str(pdate.day).zfill(2)
-  odict = {'y': y, 'm': m, 'd': d, 'sep': sep}
+  odict = {'y': y, 'm': m, 'd': d, 'sep': tosep}
   if targetposorder == 'ymd':
     odate = '%(y)s%(sep)s%(m)s%(sep)s%(d)s' % odict
     return odate
@@ -481,29 +580,10 @@ def convert_date_to_mmddyyyy_str_or_none(pdate):
   return mmddyyyy
 
 
-def adhoc_test():
-  inidate = '2020-1-1'
-  findate = '2020-1-5'
-  print('Generate', findate, inidate)
-  for pdate in generate_daterange(findate, inidate):
-    print(pdate)
-  print('-' * 30)
-  print('Get', inidate, findate)
-  for pdate in get_daterange(inidate, findate):
-    print(pdate)
-  print('-' * 30)
-  inidate = '2021-1-1'
-  findate = '2021-1-5'
-  print('Generate', findate, inidate)
-  for pdate in generate_daterange(findate, inidate):
-    print(pdate)
-  print('Finished')
-  pdate = get_monthslastday_date('2020-7-3')
-  print("get_monthslastday_date('2020-7-3')", pdate)
-
-
 def add_or_subtract_to_month(pdate, delta):
   """
+  DEPRECATED: use instead relativedelta from dateutils.relativedelta
+
   Ref https://stackoverflow.com/questions/3424899/whats-the-simplest-way-to-subtract-a-month-from-a-date-in-python
 
   d = min(date.day, calendar.monthrange(y, m)[1])
@@ -522,9 +602,49 @@ def add_or_subtract_to_month(pdate, delta):
   return pdate.replace(day=d, month=m, year=y)
 
 
+def adhoc_test2():
+  today = datetime.date.today()
+  weekday = today.weekday()
+  print(today, 'weekday =>', weekday, get_weekday3letter_from_date(today))
+  strdate = transform_date_to_other_order_fields_n_sep_or_none(today)
+  print(strdate)
+  # adjust_datelist_if_str(datelist)
+  datelist = "2023-01-11 2022-10-1"
+  print('input datelist', datelist)
+  datelist = adjust_datelist_if_str(datelist)
+  print('output datelist', datelist)
+
+
+def adhoc_test():
+  inidate = '2020-1-1'
+  findate = '2020-1-5'
+  print('Generate', findate, inidate)
+  for pdate in generate_daterange(findate, inidate):
+    print(pdate)
+  print('-' * 30)
+  print('Get', inidate, findate)
+  for pdate in get_daterange(inidate, findate):
+    print(pdate)
+  print('-' * 30)
+  inidate = '2021-1-1'
+  findate = '2021-1-5'
+  print('Generate', findate, inidate)
+  for pdate in generate_daterange(findate, inidate):
+    print(pdate)
+  print('Finished')
+  pdate = get_monthslastday_date_via_calendar('2020-7-3')
+  print("get_monthslastday_date_via_calendar('2020-7-3')", pdate)
+
+
 def process():
-  adhoc_test()
+  """
+
+  """
+  pass
 
 
 if __name__ == "__main__":
+  """
   process()
+  """
+  adhoc_test2()

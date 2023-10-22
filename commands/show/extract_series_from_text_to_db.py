@@ -49,7 +49,7 @@ def insert_into_db(tuplerecords):
   cursor = conn.cursor()
   for tuplerecord in tuplerecords:
     # seriesid, strdate, baselineindex = tuplerecord
-    sql = 'INSERT INTO cpi_indices (seriesid, refdate, baselineindex) values (?, ?, ?);'
+    sql = 'INSERT OR IGNORE INTO cpi_indices (seriesid, refmonthdate, baselineindex) values (?, ?, ?);'
     ins = cursor.execute(sql, tuplerecord)
     print('Inserting', ins, tuplerecord)
   print('DB-Committing')

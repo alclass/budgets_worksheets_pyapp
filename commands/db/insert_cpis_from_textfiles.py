@@ -66,7 +66,7 @@ class Insertor:
 
   @property
   def fields_with_parentheses(self):
-    return '(seriesid, refdate, baselineindex, created_at, modified_at)'
+    return '(seriesid, refmonthdate, baselineindex, created_at, modified_at)'
 
   @property
   def questionmarks(self):

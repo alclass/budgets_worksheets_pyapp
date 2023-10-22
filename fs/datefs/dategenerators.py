@@ -79,6 +79,11 @@ def gen_crescent_daily_dates_within(startpoint, finishpoint):
 
 
 def gen_daily_dates_for_daterange(date_ini, date_fim, decrescent=False):
+  try:
+    date_ini = make_date_from_str(date_ini)
+    date_fim = make_date_from_str(date_fim)
+  except TypeError:
+    return []
   if decrescent:
     startpoint = date_fim
     finishpoint = date_ini
@@ -168,6 +173,64 @@ def gen_daily_dates_for_current_year(decrescent=False):
   startpoint = firstdayinyear
   finishpoint = today
   return gen_crescent_daily_dates_within(startpoint, finishpoint)
+
+
+def gen_daily_dates_for_yearrange(yearini, yearfim=None, decrescent=False):
+  """
+  generates a list of years in-between yearini and yearfim
+  obs:
+    1 this method version applies a default for yearfim
+    2 this method version works "for the future", ie for dates above today
+  """
+  if yearini is None or not isinstance(yearini, int):
+    return []
+  # for defaulting yearfim
+  today = datetime.date.today()
+  if yearfim is None:
+    yearfim = today.year
+  if yearini > yearfim:
+    tmpyear = yearfim
+    yearini = yearfim
+    yearfim = tmpyear
+  for year in range(yearini, yearfim+1):
+    for pdate in gen_daily_dates_for_year(year, decrescent):
+      yield pdate
+
+
+def gen_daily_dates_for_yearrange_uptotoday(yearini, yearfim, decrescent=False):
+  """
+  generates a list of years in-between yearini and yearfim
+  obs:
+    1 this method version does not apply a default for yearfim
+    2 this method version does not work "for the future", ie for dates above today
+  """
+  if yearini is None or not isinstance(yearini, int):
+    return []
+  if yearfim is None or not isinstance(yearini, int):
+    return []
+  if yearini > yearfim:
+    tmpyear = yearfim
+    yearini = yearfim
+    yearfim = tmpyear
+  today = datetime.date.today()
+  if yearini > today.year:
+    return []
+  cutoff_date = None
+  last_date_in_year = datetime.date(year=today.year, month=12, day=31)
+  if yearfim > today.year:
+    cutoff_date = today
+  elif yearfim == today.year and today != last_date_in_year:
+    cutoff_date = today
+  if cutoff_date is None:
+    # conditions are "obeyed", just transfer to the other generator method
+    return gen_daily_dates_for_yearrange(yearini, yearfim, decrescent)
+  # use the cutoff scheme with the iteration/generation
+  for pdate in gen_daily_dates_for_yearrange(yearini, yearfim, decrescent):
+    if pdate > cutoff_date:
+      # here ends the iteration/generation with yield
+      return
+    yield pdate
+  return
 
 
 def adhoc_test():

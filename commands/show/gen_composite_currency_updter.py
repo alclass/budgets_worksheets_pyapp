@@ -27,6 +27,7 @@ EOF
 The output will be the money correcting/updating indices
 """
 import datetime
+from dateutil.relativedelta import relativedelta
 import settings as cfg
 import fs.economicfs.preapis_finfunctions as fin
 from prettytable import PrettyTable
@@ -90,18 +91,21 @@ def get_variation_exchange_rate_from(pydate):
   return variation, exrate_before, exrate_after
 
 
-def get_cpi_baselineindex_in_month(pydate):
+def get_cpi_baselineindex_in_month(pdate):
   """
   This function must be ENCAPSULATED in package-module fin
-  (it's a TO-DO!)
+  The input pdate is transformed to a M-2 date ie month minus 2
   """
+  if pdate is None:
+    return None
   conn = cfg.get_connection()
   cursor = conn.cursor()
   seriesid = 'CUUR0000SA0'
-  year = pydate.year
-  month = pydate.month
-  refdate = datetime.date(year, month, 1)
-  tuplevalues = (seriesid, refdate)
+  # make M-2
+  refmonthdate = pdate + relativedelta(months=-2)
+  # adjust day=1
+  refmonthdate = datetime.date(year=refmonthdate.year, month=refmonthdate.month, day=1)
+  tuplevalues = (seriesid, refmonthdate)
   sql = """
     SELECT baselineindex FROM cpi_indices
       WHERE
@@ -119,23 +123,27 @@ def get_cpi_baselineindex_in_month(pydate):
 
 
 def get_last_available_cpi_baselineindex():
+  """
+  It searches for index by the most recent refmonthdate
+  returns both the index and the most recent refmonthdate
+  """
   conn = cfg.get_connection()
   cursor = conn.cursor()
   seriesid = 'CUUR0000SA0'
   sql = """
-    SELECT baselineindex, refdate FROM cpi_indices
+    SELECT baselineindex, refmonthdate FROM cpi_indices
       WHERE
         seriesid = ? 
       ORDER BY
-        refdate DESC
+        refmonthdate DESC
       LIMIT 1;
   """
   cursor.execute(sql, (seriesid, ))
   retval = cursor.fetchone()
   baselineindex = retval[0]
-  refdate = retval[1]
+  mostrecent_refmonthdate = retval[1]
   conn.close()
-  return baselineindex, refdate
+  return baselineindex, mostrecent_refmonthdate
 
 
 def get_cpi_variation_from(pydate):
@@ -169,9 +177,13 @@ def get_exchangerate_variation_from(pydate):
   res_bcb_api1 = fin.dbfetch_bcb_cotacao_compra_dolar_apifallback(pydate)
   first_exchangerate = res_bcb_api1.cotacao_venda
   today = datetime.date.today()
-  res_bcb_api1 = fin.dbfetch_bcb_cotacao_compra_dolar_apifallback(today)
-  last_exchangerate = res_bcb_api1.cotacao_venda
-  exchangerate_variation = (last_exchangerate - first_exchangerate) / first_exchangerate
+  yesterday = today - relativedelta(days=1)
+  res_bcb_api1 = fin.dbfetch_bcb_cotacao_compra_dolar_apifallback(yesterday)
+  exchangerate_variation = None
+  last_exchangerate = None
+  if res_bcb_api1:
+    last_exchangerate = res_bcb_api1.cotacao_venda
+    exchangerate_variation = (last_exchangerate - first_exchangerate) / first_exchangerate
   return exchangerate_variation, first_exchangerate, last_exchangerate
 
 
@@ -192,15 +204,16 @@ def process_datesfile():
   ptab = PrettyTable()
   ptab.field_names = [
     'seq', 'date', 'cpi_ini', 'cpi_fim', 'cpi_var',
-    'exchange_ini', 'exchange_fim', 'exchange_var'
+    'exchange_ini', 'exchange_fim', 'exchange_var', 'multiplier',
   ]
   for i, pydate in enumerate(pydates):
     seq = i + 1
     cpi_variation, cpi_ini, cpi_fim, _ = get_cpi_variation_from(pydate)
     exchangerate_variation, exchange_ini, exchange_fim = get_exchangerate_variation_from(pydate)
+    multiplier = (1 + cpi_variation) * (1 + exchangerate_variation)
     output_tuple = (
       seq, pydate, cpi_ini, cpi_fim, cpi_variation,
-      exchange_ini, exchange_fim, exchangerate_variation
+      exchange_ini, exchange_fim, exchangerate_variation, multiplier
     )
     output_list.append(output_tuple)
     ptab.add_row(list(output_tuple))

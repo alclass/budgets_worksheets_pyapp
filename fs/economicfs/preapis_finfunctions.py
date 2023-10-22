@@ -182,7 +182,7 @@ def batch_fetch_brl_usd_cotacoes(year):
     inidate = datetime.date(year, nmonth, 1)
     if inidate >= yesterday:
       break
-    findate = dtfs.get_monthslastday_date(inidate)
+    findate = dtfs.get_monthslastday_date_via_calendar(inidate)
     if findate > yesterday:
       break
     log_msg = 'ini=%s fin=%s batch_fetch_brl_usd_cotacoes()'

@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """
+commands/fetch/bls_cpi_api_fetcher.py
+
 bls_cpi_api_fetcher.py
-Script to fetch BLS CPI (Consumer Price Index) data
+  Script to fetch BLS CPI (Consumer Price Index) data
+
 Based on:
   www.bls.gov/developers/api_python.html
   webpage:

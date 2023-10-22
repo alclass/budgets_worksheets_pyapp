@@ -18,7 +18,7 @@ def get_args():
   return datelist
 
 
-def process():
+def adhoctest():
   datelist = get_args()
   for argdate in datelist:
     res_bcb_api1 = prefs.dbfetch_bcb_cotacao_compra_dolar_apifallback(argdate)
@@ -28,6 +28,10 @@ def process():
   pdate = '2020-03-31'
   res_bcb_api1 = prefs.dbfetch_bcb_cotacao_compra_dolar_apifallback(pdate)
   print(res_bcb_api1)
+
+
+def process():
+  pass
 
 
 if __name__ == "__main__":
