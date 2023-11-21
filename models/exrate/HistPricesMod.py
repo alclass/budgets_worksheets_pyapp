@@ -2,7 +2,7 @@
 """
   docstring
 
-  bcb_api1_nt = coll.namedtuple(
+  namedtuple_bcb_api1 = coll.namedtuple(
     'BCBAPI1DataStr',
     'cotacao_compra cotacao_venda cotacao_datahora param_date error_msg gen_msg exchanger'
   )
@@ -14,7 +14,7 @@ import datetime
 import os
 import xlsxwriter
 import fs.datefs.datefunctions as dtfs
-import fs.economicfs.preapis_finfunctions as prefs
+import fs.economicfs.bcb_cotacao_fetcher_from_db_or_api as prefs
 import fs.economicfs.financefunctions as finfs
 import fs.numberfs.tableaufunctions as tblfs
 import settings

@@ -6,10 +6,10 @@ The purpose is to generate an output with day to day
   composite money financial update indices.
 
 Usage:
-  $gen_composite_currency_updter.py <text file with dates>
+  $gen_composite_currency_updter.py <text file with dateadhoctests>
 
 Input parameter:
-  <text file with dates> is the filename of a data file with set of dates
+  <text file with dateadhoctests> is the filename of a data file with set of dateadhoctests
   date1, date2, ..., dateN
 
 Output:
@@ -29,7 +29,7 @@ The output will be the money correcting/updating indices
 import datetime
 from dateutil.relativedelta import relativedelta
 import settings as cfg
-import fs.economicfs.preapis_finfunctions as fin
+import fs.economicfs.bcb_cotacao_fetcher_from_db_or_api as fin
 from prettytable import PrettyTable
 DEFAULT_DATESFILENAME = 'datesfile.dat'
 
@@ -167,7 +167,7 @@ def calc_composite_money_indices(pydates):
 
 def get_exchangerate_variation_from(pydate):
   """
-    res_bcb_api1 = apis.bcb_api1_nt(
+    namedtuple_res_bcb_api1 = apis.namedtuple_bcb_api1(
       cotacao_compra=exchanger.buyquote,
       cotacao_venda=exchanger.sellquote,
       cotacao_datahora=exchanger.quotesdatetime,

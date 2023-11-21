@@ -6,7 +6,7 @@
   3) -- procdaterange=<dtini,dtfim>      |     fetches brl/usd exchange rate quotes for daterange <dtini,dtfim>
 """
 import sys
-import fs.economicfs.preapis_finfunctions as prefs
+import fs.economicfs.bcb_cotacao_fetcher_from_db_or_api as prefs
 
 
 def get_args():

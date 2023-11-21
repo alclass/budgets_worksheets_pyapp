@@ -2,7 +2,7 @@
 """
 gen_composite_currency_updter.py
 
-This script reads a dates data (text) file inside the app's data folder,
+This script reads a dateadhoctests data (text) file inside the app's data folder,
   fetches CPI index mapping to month-date and outputs a 2-column data text.
 
 The output text contains:

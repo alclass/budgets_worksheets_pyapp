@@ -56,7 +56,7 @@ def adjust_datelist_if_str(datelist):
   except TypeError:
     pass
   # at this point, datelist is not subscriptable, ie list(datelist) raised TypeError
-  # however, if it's a string, dates in there should be separated by blank (sort of convention, not by another char)
+  # however, if it's a string, dateadhoctests in there should be separated by blank (sort of convention, not by another char)
   return transform_strdates_sep_by_blank_to_datelist(datelist)
 
 
@@ -114,7 +114,8 @@ def convert_strdate_to_date_or_none(strdate):
     return strdate
   try:
     strdate = str(strdate)
-    pp = strdate.split('-')
+    ppp = strdate.split(' ')
+    pp = ppp[0].split('-')
     year = int(pp[0])
     month = int(pp[1])
     day = int(pp[2])
@@ -266,6 +267,17 @@ def prepare_datelist_uniq_n_in_desc_order(datelist):
     od.update({d: 1})
   datelist = list(od.keys())
   return sort_datelist_desc(datelist)
+
+
+def make_date_or_none(pdate):
+  return convert_strdate_to_date_or_none(pdate)
+
+
+def make_date_or_today(pdate=None):
+  pdate = convert_strdate_to_date_or_none()
+  if pdate is None:
+    return datetime.date.today()
+  return pdate
 
 
 def sort_datelist_desc(daterange):

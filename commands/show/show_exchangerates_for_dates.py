@@ -2,13 +2,13 @@
 """
 show_exchangerates_for_dates.py
 
-This script reads dates (either input from terminal or from a datefile in the app's data folder)
+This script reads dateadhoctests (either input from terminal or from a datefile in the app's data folder)
   and fetches its corresponding exchange rate quotes.
 For the time being, it only finds and prints BRL (reais) /USD (dollars) exchange rate quotes.
   It's planned other combinations (one currency to another currency) to be implemented in the future.
 
 The output text contains:
-  - in the first column the input dates and
+  - in the first column the input dateadhoctests and
   - in the second the day-to-day 'sell quotes *
     * 'cotação de venda' do par de moedas
 
@@ -26,7 +26,7 @@ $show_exchangerates_for_dates.py -ini=2023-05-20 -fim=2023-08-14
 The combination above will display all quotes from May 20, 2023, to August 14, 2023
 
   Obs: weekends and hollidays do not have quotes.
-       The system repeats the last one available when such dates are requested.
+       The system repeats the last one available when such dateadhoctests are requested.
        Example: if Sunday's quotes are requested, Friday's one, if available, are output.
 """
 import calendar
@@ -34,7 +34,7 @@ import datetime
 # import datetime
 import sys
 import commands.show.gen_composite_currency_updter as composite
-import fs.economicfs.preapis_finfunctions as fin
+import fs.economicfs.bcb_cotacao_fetcher_from_db_or_api as fin
 import fs.datefs.dategenerators as gendt
 import fs.datefs.datefunctions as dtfs
 import argparse
@@ -151,7 +151,7 @@ def get_args_via_argparse():
   )
   parser.add_argument(
       '-rdf', '--readdatefile', action='store_true',
-      help="marker/signal for inputting the dates from the conventioned datefile located in the app's data folder",
+      help="marker/signal for inputting the dateadhoctests from the conventioned datefile located in the app's data folder",
   )
   parser.add_argument(
     '-cp', '--currencypair', type=str, nargs=1, default='brl/usd',

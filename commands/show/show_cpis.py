@@ -84,11 +84,11 @@ def get_args_via_argparse():
   )
   parser.add_argument(
     '-rdf', '--readdatefile', action='store_true',
-    help="marker/signal for inputting the dates from the conventioned datefile located in the app's data folder",
+    help="marker/signal for inputting the dateadhoctests from the conventioned datefile located in the app's data folder",
   )
   parser.add_argument(
     '-s', '--serieschar', choices=["C", "S"], default="C",
-    help="marker/signal for inputting the dates from the conventioned datefile located in the app's data folder",
+    help="marker/signal for inputting the dateadhoctests from the conventioned datefile located in the app's data folder",
   )
   parser.add_argument(
     '-cp', '--currencypair', type=str, nargs=1, default='brl/usd',

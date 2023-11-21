@@ -6,7 +6,7 @@ from dateutil.relativedelta import relativedelta
 """
 import argparse
 import datetime
-import fs.economicfs.preapis_finfunctions as fin
+import fs.economicfs.bcb_cotacao_fetcher_from_db_or_api as fin
 import fs.datefs.dategenerators as gendt
 import fs.datefs.datefunctions as dtfs
 # import settings as sett
@@ -54,7 +54,7 @@ def get_args_via_argparse():
   )
   parser.add_argument(
     '-rdf', '--readdatefile', action='store_true',
-    help="marker/signal for inputting the dates from the conventioned datefile located in the app's data folder",
+    help="marker/signal for inputting the dateadhoctests from the conventioned datefile located in the app's data folder",
   )
   parser.add_argument(
     '-cp', '--currencypair', type=str, nargs=1, default='brl/usd',

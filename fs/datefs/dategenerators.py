@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
 dategenerators.py
-  contains generator functions for dates.
+  contains generator functions for dateadhoctests.
 Example of one such functions:
   => gen_dates_for_last_month()
-  A generator function that returns all day-dates for last month
+  A generator function that returns all day-dateadhoctests for last month
     (relative to the system's current date)
 
 import os
@@ -130,9 +130,16 @@ def make_refmonth_from_str_or_none(str_or_date_refmonth):
   return None
 
 
+def get_list_gen_daily_dates_for_refmonth(refmonthdate, decrescent=False):
+  outlist = []
+  for pdate in gen_daily_dates_for_refmonth(refmonthdate, decrescent):
+    outlist.append(pdate)
+  return outlist
+
+
 def gen_daily_dates_for_refmonth(refmonthdate, decrescent=False):
   bakrefmonth = copy.copy(refmonthdate)
-  if type(refmonthdate) != datetime.date:
+  if not isinstance(refmonthdate, datetime.date):
     refmonthdate = make_refmonth_from_str_or_none(refmonthdate)
   if refmonthdate is None:
     error_msg = 'Error: refmonth is None or not a refmonth (%s) in gen_daily_dates_for_refmonth()' % str(bakrefmonth)
@@ -151,6 +158,13 @@ def gen_daily_dates_for_refmonth(refmonthdate, decrescent=False):
   return gen_crescent_daily_dates_within(startpoint, finishpoint)
 
 
+def get_list_gen_daily_dates_for_year(pyear, decrescent=False):
+  outlist = []
+  for pdate in gen_daily_dates_for_year(pyear, decrescent):
+    outlist.append(pdate)
+  return outlist
+
+
 def gen_daily_dates_for_year(pyear, decrescent=False):
   firstdayinyear = datetime.date(year=pyear, month=1, day=1)
   lastdayinyear = datetime.date(year=pyear, month=12, day=31)
@@ -161,6 +175,13 @@ def gen_daily_dates_for_year(pyear, decrescent=False):
   startpoint = firstdayinyear
   finishpoint = lastdayinyear
   return gen_crescent_daily_dates_within(startpoint, finishpoint)
+
+
+def get_list_gen_daily_dates_for_current_year(decrescent=False):
+  outlist = []
+  for pdate in gen_daily_dates_for_current_year(decrescent):
+    outlist.append(pdate)
+  return outlist
 
 
 def gen_daily_dates_for_current_year(decrescent=False):
@@ -180,7 +201,7 @@ def gen_daily_dates_for_yearrange(yearini, yearfim=None, decrescent=False):
   generates a list of years in-between yearini and yearfim
   obs:
     1 this method version applies a default for yearfim
-    2 this method version works "for the future", ie for dates above today
+    2 this method version works "for the future", ie for dateadhoctests above today
   """
   if yearini is None or not isinstance(yearini, int):
     return []
@@ -202,7 +223,7 @@ def gen_daily_dates_for_yearrange_uptotoday(yearini, yearfim, decrescent=False):
   generates a list of years in-between yearini and yearfim
   obs:
     1 this method version does not apply a default for yearfim
-    2 this method version does not work "for the future", ie for dates above today
+    2 this method version does not work "for the future", ie for dateadhoctests above today
   """
   if yearini is None or not isinstance(yearini, int):
     return []

@@ -2,7 +2,7 @@
 import sys
 import models.exrate.exchange_rate_modelmod as mmod
 import fs.db.conn_sa as confs
-import fs.economicfs.preapis_finfunctions as preapi
+import fs.economicfs.bcb_cotacao_fetcher_from_db_or_api as preapi
 import fs.datefs.datefunctions as dtfs
 
 

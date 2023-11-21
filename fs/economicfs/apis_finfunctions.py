@@ -67,7 +67,7 @@ url_quer_interpol = "?@dataCotacao='%(mmddyyyy)s'&$top=100&$format=json"
 
 API_CALL_COTACAO_MAX_PREVIOUS_DAY_TRIES = 8
 
-bcb_api1_nt = coll.namedtuple('BCBAPI1DataStr',
+namedtuple_bcb_api1 = coll.namedtuple('BCBAPI1DataStr',
                               'cotacao_compra cotacao_venda cotacao_datahora param_date error_msg gen_msg exchanger')
 # 1) cotacao_compra is cotacaoCompra, 2) cotacao_venda is cotacaoVenda &  3) cotacao_datahora is dataHoraCotacao
 
@@ -78,7 +78,7 @@ def call_api_bcb_cotacao_dolar_on_date(pdate, connection_error_raised=0):
   Consider it a PRIVATE function in the sense that it should not be called directly.
 
   The call should be done to:
-    preapis_finfunctions.dbfetch_bcb_cotacao_compra_dolar_apifallback()
+    preapis_finfunctions.dbfetch_bcb_cotacao_dolar_or_apifallback()
 
   This is necessary for the following reasons:
     1) the entrance function (in preapis) filters out weekend days (that do not have quotes);
@@ -126,7 +126,7 @@ def call_api_bcb_cotacao_dolar_on_date(pdate, connection_error_raised=0):
   if refdate is None:
     pdatetime = datetime.datetime.now()
     error_msg = 'Given date (%s) is None' % str(pdate)
-    res_bcb_api = bcb_api1_nt(
+    res_bcb_api = namedtuple_bcb_api1(
       cotacao_compra=None, cotacao_venda=None, cotacao_datahora=pdatetime,
       param_date=pdate,
       error_msg=error_msg, gen_msg=None,
@@ -151,7 +151,7 @@ def call_api_bcb_cotacao_dolar_on_date(pdate, connection_error_raised=0):
                 % (res.status_code, str(refdate))
     pdatetime = datetime.datetime.now()
     print(error_msg, pdatetime)
-    res_bcb_api = bcb_api1_nt(
+    res_bcb_api = namedtuple_bcb_api1(
       cotacao_compra=None, cotacao_venda=None, cotacao_datahora=pdatetime,
       param_date=refdate,
       error_msg=error_msg, gen_msg=None,
@@ -167,7 +167,7 @@ def call_api_bcb_cotacao_dolar_on_date(pdate, connection_error_raised=0):
     datatime_cotacao = dtfs.convert_date_to_datetime_or_none(refdate)
     gen_msg = 'BCB API day with no quotes'
     print(gen_msg, refdate, datatime_cotacao)
-    res_bcb_api = bcb_api1_nt(
+    res_bcb_api = namedtuple_bcb_api1(
       cotacao_compra=None, cotacao_venda=None, cotacao_datahora=datatime_cotacao,
       param_date=refdate,
       error_msg=None, gen_msg=gen_msg,
@@ -177,7 +177,7 @@ def call_api_bcb_cotacao_dolar_on_date(pdate, connection_error_raised=0):
   if len(valuedict) == 0:
     # maybe this case never happens and it's the above case when holidays or weekend days happen
     datatime_cotacao = dtfs.convert_date_to_datetime_or_none(refdate)
-    res_bcb_api = bcb_api1_nt(
+    res_bcb_api = namedtuple_bcb_api1(
       cotacao_compra=None, cotacao_venda=None, cotacao_datahora=datatime_cotacao,
       param_date=refdate,
       error_msg=None, gen_msg='BCB API len(valuedict) = 0',
@@ -189,7 +189,7 @@ def call_api_bcb_cotacao_dolar_on_date(pdate, connection_error_raised=0):
   cotacao_venda = valuedict['cotacaoVenda']
   data_hora_cotacao = valuedict['dataHoraCotacao']
   datatime_cotacao = dtfs.convert_strdatetime_to_datetime_or_none(data_hora_cotacao)
-  res_bcb_api = bcb_api1_nt(
+  res_bcb_api = namedtuple_bcb_api1(
     cotacao_compra=cotacao_compra, cotacao_venda=cotacao_venda, cotacao_datahora=datatime_cotacao,
     param_date=refdate,
     error_msg=None, gen_msg='BCB API',
@@ -200,7 +200,7 @@ def call_api_bcb_cotacao_dolar_on_date(pdate, connection_error_raised=0):
 
 def pretry_print_api_list(res_bcb_api1_list):
   """
-  bcb_api1_nt = coll.namedtuple('BCBAPI1DataStr', 'cotacao_compra cotacao_venda cotacao_datahora param_date error_msg')
+  namedtuple_bcb_api1 = coll.namedtuple('BCBAPI1DataStr', 'cotacao_compra cotacao_venda cotacao_datahora param_date error_msg')
 
   :param res_bcb_api1_list:
   :return:

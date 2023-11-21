@@ -1,50 +1,11 @@
-#!/usr/bin/env python3
-"""
-  docstring
-"""
-import datetime
-import logging
-import os
-import random
-import time
-from prettytable import PrettyTable
-import fs.datefs.datefunctions as dtfs
-import fs.economicfs.apis_finfunctions as apis
-import models.exrate.exchange_rate_modelmod as exmod
-from fs.textfs import strfs
-import settings as sett
-
-_, modlevelogfn = os.path.split(__file__)
-modlevelogfn = str(datetime.date.today()) + '_' + modlevelogfn[:-3] + '.log'
-modlevelogfp = os.path.join(sett.get_datafolder_abspath(), modlevelogfn)
-logging.basicConfig(filename=modlevelogfp, filemode='w', format='%(name)s %(levelname)s %(message)s')
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)  # DEBUG means it and all others levels will be logged
-
-
-def get_random_wait_seconds():
-  return random.randint(1, 8)
-
-
-def treat_error(named_tuple):
-  log_msg = 'Error named_tuple ' + str(named_tuple)
-  logger.info(log_msg)
-  print(log_msg)
-  try:
-    print(named_tuple.error_msg)
-  except AttributeError:
-    pass
-  return named_tuple
-
-
-def dbfetch_bcb_cotacao_compra_dolar_apifallback(pdate, recurse_pass=0):
+def dbfetch_bcb_cotacao_dolar_or_apifallback(self, recurse_pass=0):
   """
   First look up local sqlite-db, if not found, fallback to its corresponding API call
   """
   if recurse_pass > 5:
     print('recurse_pass > 5 |', recurse_pass)
     return None
-  indate = dtfs.returns_date_or_none(pdate)
+  indate = dtfs.returns_date_or_none(self.date)
   if indate is None:
     return None
   today = datetime.date.today()
@@ -54,8 +15,8 @@ def dbfetch_bcb_cotacao_compra_dolar_apifallback(pdate, recurse_pass=0):
     # logger.info(log_msg)
     # print(log_msg)
     # indate = indate - datetime.timedelta(days=1)
-    # return dbfetch_bcb_cotacao_compra_dolar_apifallback(indate, recurse_pass)
-    print('Date in the future. Please, reenter dates up to the moment.')
+    # return dbfetch_bcb_cotacao_dolar_or_apifallback(indate, recurse_pass)
+    print('Date in the future. Please, reenter dateadhoctests up to the moment.')
     return None
   if dtfs.is_date_weekend(indate):
     log_msg = 'Date ' + str(indate) + ' is weekend. Recursing (limit to 5) ' + str(recurse_pass + 1)
@@ -66,14 +27,14 @@ def dbfetch_bcb_cotacao_compra_dolar_apifallback(pdate, recurse_pass=0):
     # recurse one day back right away, today's quotes should be available after market
     # (TO-DO: write a dedicated function for this)
   session = exmod.consa.get_sa_session()
-  exchanger = session.query(exmod.ExchangeRateDate).\
-      filter(exmod.ExchangeRateDate.quotesdate == indate).\
-      first()
+  exchanger = session.query(exmod.ExchangeRateDate). \
+    filter(exmod.ExchangeRateDate.quotesdate == indate). \
+    first()
   if exchanger:
     log_msg = 'Quote was in db. Returning it: %s' % str(exchanger)
     logger.info(log_msg)
     # print(log_msg)
-    res_bcb_api1 = apis.bcb_api1_nt(
+    res_bcb_api1 = apis.namedtuple_bcb_api1(
       cotacao_compra=exchanger.buyquote, cotacao_venda=exchanger.sellquote, cotacao_datahora=exchanger.quotesdatetime,
       param_date=exchanger.quotesdate, error_msg=None, gen_msg='Fetched from db',
       exchanger=exchanger
@@ -81,7 +42,7 @@ def dbfetch_bcb_cotacao_compra_dolar_apifallback(pdate, recurse_pass=0):
     session.close()
     if exchanger.buyquote is None and exchanger.sellquote is None:
       indate = indate - datetime.timedelta(days=1)
-      return dbfetch_bcb_cotacao_compra_dolar_apifallback(indate, recurse_pass+1)
+      return dbfetch_bcb_cotacao_compra_dolar_apifallback(indate, recurse_pass + 1)
     return res_bcb_api1
   res_bcb_api1 = apis.call_api_bcb_cotacao_dolar_on_date(indate)
   log_msg = str(res_bcb_api1)
@@ -89,7 +50,7 @@ def dbfetch_bcb_cotacao_compra_dolar_apifallback(pdate, recurse_pass=0):
   print(log_msg)
   if res_bcb_api1 and res_bcb_api1.error_msg is not None:
     session.close()
-    return treat_error(res_bcb_api1)
+    return log_error_namedtuple(res_bcb_api1)
   exchanger = exmod.ExchangeRateDate()
   session.add(exchanger)
   exchanger.numerator_curr3 = sett.CURR_BRL
@@ -113,15 +74,6 @@ def dbfetch_bcb_cotacao_compra_dolar_apifallback(pdate, recurse_pass=0):
   session.close()
   return res_bcb_api1
 
-
-def add_exchanger_to_res_bcb_api_namedtuple(exchanger, p_namedtuple):
-  return apis.bcb_api1_nt(
-    cotacao_compra=p_namedtuple.cotacao_compra, cotacao_venda=p_namedtuple.cotacao_venda,
-    cotacao_datahora=p_namedtuple.cotacao_datahora,
-    param_date=p_namedtuple.param_date,
-    error_msg=p_namedtuple.error_msg, gen_msg=p_namedtuple.gen_msg,
-    exchanger=exchanger
-  )
 
 
 def adhoc_test1():
@@ -162,13 +114,13 @@ def batch_fetch_brl_usd_cotacoes_month_by_month(inidate, findate):
     print(pdate, '-'*30)
     res_bcb_api1 = dbfetch_bcb_cotacao_compra_dolar_apifallback(pdate)
     do_wait = False
-    if type(res_bcb_api1) == apis.bcb_api1_nt:
+    if type(res_bcb_api1) == apis.namedtuple_bcb_api1:
       res_bcb_api1_list.append(res_bcb_api1)
       if res_bcb_api1.gen_msg is not None and res_bcb_api1.gen_msg.lower().find('bcb api') > -1:
         do_wait = True
     if do_wait:
       wait_in_seconds = get_random_wait_seconds()
-      log_msg = '=== wait %d seconds === res_bcb_api1 (%s)' % (wait_in_seconds, str(res_bcb_api1))
+      log_msg = '=== wait %d seconds === namedtuple_res_bcb_api1 (%s)' % (wait_in_seconds, str(res_bcb_api1))
       print(log_msg)
       logger.info(log_msg)
       time.sleep(wait_in_seconds)
@@ -193,15 +145,3 @@ def batch_fetch_brl_usd_cotacoes(year):
 def batch_years_fetch_brl_usd_cotacoes(iniyear, finyear):
   for year in range(iniyear, finyear):
     batch_fetch_brl_usd_cotacoes(year)
-
-
-def process():
-  # adhoc_test_ptab()
-  pdate = '2022-03-03'
-  bcb_api_nt = dbfetch_bcb_cotacao_compra_dolar_apifallback(pdate)
-  print(bcb_api_nt)
-  pass
-
-
-if __name__ == "__main__":
-  process()

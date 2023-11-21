@@ -23,7 +23,7 @@ The CPI, with rare exception, is a growing series. The increase is given by:
  variation_1 = ( CPI(2023-03) - CPI(2022-08) ) / CPI(2022-08)
 
 The second variation, as informed above, is related to the exchange rate of currencies.
-  So the same dates as above, we have:
+  So the same dateadhoctests as above, we have:
 
  variation_2 = BRL_USD(2023-05-15) - BRL_USD(2022-10-25) / BRL_USD(2022-10-25)
 
@@ -39,7 +39,7 @@ As commented above, other variations/combinations may be implemented here in the
 """
 import argparse
 import datetime
-import fs.economicfs.preapis_finfunctions as fin
+import fs.economicfs.bcb_cotacao_fetcher_from_db_or_api as fin
 import commands.show.gen_composite_currency_updter as compo  # for compo.get_cpi_baselineindex_in_month()
 # import models.finindices.cpis as cps
 import models.exrate.exratefetch as exrf  # for exr.find_most_recent_exrate()
@@ -251,11 +251,11 @@ def get_args_via_argparse():
   )
   parser.add_argument(
     '-rdf', '--readdatefile', action='store_true',
-    help="marker/signal for inputting the dates from the conventioned datefile located in the app's data folder",
+    help="marker/signal for inputting the dateadhoctests from the conventioned datefile located in the app's data folder",
   )
   parser.add_argument(
     '-s', '--serieschar', choices=["C", "S"], default="C",
-    help="marker/signal for inputting the dates from the conventioned datefile located in the app's data folder",
+    help="marker/signal for inputting the dateadhoctests from the conventioned datefile located in the app's data folder",
   )
   parser.add_argument(
     '-cp', '--currencypair', type=str, nargs=1, default='brl/usd',
@@ -290,7 +290,7 @@ def adhoctest():
     # if twodates is None or not subscriptable; TypeError is raised
     # if twodates, subscriptable, doesn't have at least 2 elements; IndexError is raised
     scrmsg = (
-        'Missing argument: twodates must contain two dates from the command line parameter.'
+        'Missing argument: twodates must contain two dateadhoctests from the command line parameter.'
         ' It cames as [%s]' % str(twodates)
     )
     print(scrmsg)
