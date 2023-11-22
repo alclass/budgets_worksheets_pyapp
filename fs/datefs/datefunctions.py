@@ -44,6 +44,34 @@ def transform_strdates_sep_by_blank_to_datelist(strdatelist):
   return outlist
 
 
+def make_refmonthdate_or_none(refmonthdate=None):
+  if refmonthdate is None:
+    return None
+  if isinstance(refmonthdate, datetime.date):
+    if refmonthdate.day == 1:
+      return refmonthdate
+    return datetime.date(year=refmonthdate.year, month=refmonthdate.month, day=1)
+  try:
+    refmonthdate = str(refmonthdate).strip(' \t\r\n')
+    ppp = refmonthdate.split(' ')
+    pp = ppp[0].split('-')
+    year = int(pp[0])
+    month = int(pp[1])
+    return datetime.date(year=year, month=month, day=1)
+  except (AttributeError, TypeError, ValueError):
+    pass
+  return None
+
+
+def make_refmonthdate_or_current(refmonthdate=None):
+  refmonthdate = make_refmonthdate_or_none(refmonthdate)
+  if isinstance(refmonthdate, datetime.date):
+    return refmonthdate
+  today = datetime.date.today()
+  current_refmonthdate = datetime.date(year=today.year, month=today.month, day=1)
+  return current_refmonthdate
+
+
 def adjust_datelist_if_str(datelist):
   if datelist is None:
     return None

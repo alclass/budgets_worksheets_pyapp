@@ -48,6 +48,81 @@ def example1():
   print(args.func(*args.operands))
 
 
+def get_args_via_argparse():
+  """
+  https://realpython.com/command-line-interfaces-python-argparse/
+  One Example:
+    parser.add_argument("--veggies", nargs="+")
+    parser.add_argument("--fruits", nargs="*")
+      $ python cooking.py --veggies pepper tomato --fruits apple banana
+    parser.add_argument("--size", choices=["S", "M", "L", "XL"], default="M")
+    my_parser.add_argument("--weekday", type=int, choices=range(1, 8))
+  """
+  parser = argparse.ArgumentParser(description="Obtain Arguments")
+  parser.add_argument(
+    '-i', '--ini', metavar='date_ini', type=str, nargs='?',
+    help="the beginning date in date range for finding daily exchange rate quotes",
+  )
+  parser.add_argument(
+    '-f', '--fim', metavar='date_fim', type=str, nargs='?',
+    help="the ending date in date range for finding daily exchange rate quotes",
+  )
+  parser.add_argument(
+    '-cmc', '--calc-monet-corr', metavar='twodates', type=str, nargs=2,
+    help="the ending date in date range for finding daily exchange rate quotes",
+  )
+  parser.add_argument(
+    '-dl', '--datelist', metavar='datelist', type=str, nargs='+',
+    help="datelist for finding daily exchange rate quotes one by one",
+  )
+  parser.add_argument(
+    # example -rm "2023-04"
+    '-rm', '--refmonth', type=str, nargs=1,
+    help="the month as the date range for finding daily exchange rate quotes",
+  )
+  parser.add_argument(
+    '-cy', '--current-year', action='store_true',
+    help="days since the beginning of the current year as the date range for finding daily exchange rate quotes",
+  )
+  parser.add_argument(
+    '-y', '--year', type=int, nargs=1,
+    help="year as the date range for finding daily exchange rate quotes",
+  )
+  parser.add_argument(
+    '-yr', '--yearrange', type=int, nargs=2,
+    help="year range (ini, fim) as the date range for finding daily exchange rate quotes",
+  )
+  parser.add_argument(
+    '-rdf', '--readdatefile', action='store_true',
+    help="marker/signal for inputting the dates from the conventioned datefile located in the app's data folder",
+  )
+  parser.add_argument(
+    '-s', '--serieschar', choices=["C", "S"], default="C",
+    help="marker/signal for inputting the dates from the conventioned datefile located in the app's data folder",
+  )
+  parser.add_argument(
+    '-cp', '--currencypair', type=str, nargs=1, default='brl/usd',
+    help="for specifying the currency pair ratio that corresponds to the output quotes (default 'brl/usd')",
+  )
+  args = parser.parse_args()
+  print('args =>', args)
+  if args.refmonth is not None:
+    # return calc_monet_corr_between_dates(args.refmonth)
+    refmonthdate = args.refmonth[0]
+    print('argparse refmonthdate', refmonthdate)
+    return functionref(refmonthdate)
+  if args.year is not None:
+    pass
+  return args
+
+
+def functionref(refmonthdate):
+  """
+  Temporary
+  """
+  return refmonthdate
+
+
 def process():
   """
     $ python calc.py add 3 8

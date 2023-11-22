@@ -174,7 +174,9 @@ class BCBCotacaoFetcher:
         return None  # upon returning, it will pop out another date or terminate
       return namedtuple_cotacao
     # connection error
-    error_msg = 'Nothing returned from the API call. Either connection is broken or remote server is down.'
+    error_msg = 'Nothing returned from the API call after looking up back %s days.\n' % self.dates_stack_size
+    error_msg += 'Either connection is broken or remote server is down.\n'
+    error_msg += 'Start date is [%s]' % self.date
     raise ConnectionError(error_msg)
 
   def pop_dates_n_try_find_cotacao(self):
