@@ -14,13 +14,8 @@ import sys
 """
 import argparse
 import datetime
-import os
-from prettytable import PrettyTable
-import xlsxwriter
 import fs.datefs.datefunctions as dtfs
 import fs.datefs.dategenerators as gendt
-import fs.economicfs.apis_finfunctions as apis
-import fs.numberfs.tableaufunctions as tblfs
 import fs.economicfs.bcb_cotacao_fetcher_from_db_or_api as bcbfetch  # bcbfetch.BCBCotacaoFetcher
 
 
@@ -71,11 +66,25 @@ def get_args():
 class Dispatcher:
 
   def __init__(self, args):
+    self.func = None
     self.args = args
     self.n_rolls = 0
+    self.n_funcapply = 0
     self.today = datetime.date.today()
 
-  def roll_dates(self, plist):
+  def apply(self, plist):
+    """
+    error_msg = "Error: Paramenter function 'func' has been given to Dispatch."
+    raise ValueError(error_msg)
+    """
+    self.n_funcapply += 1
+    if self.func is not None:
+      return self.func(plist)
+    # default
+    func = self._roll_dates
+    return func(plist)
+
+  def _roll_dates(self, plist):
     """
     """
     for pdate in plist:
@@ -100,13 +109,13 @@ class Dispatcher:
       if datefim > self.today:
         datefim = self.today
       plist = gendt.gen_daily_dates_for_daterange(dateini, datefim)
-      return self.roll_dates(plist)
+      return self.apply(plist)
     if self.args.datelist:
       plist = self.args.datelist
       plist = map(lambda d: dtfs.make_date_or_none(d), plist)
       plist = filter(lambda d: d is not None, plist)
       plist = sorted(filter(lambda d: d <= self.today, plist))
-      return self.roll_dates(plist)
+      return self.apply(plist)
     if self.args.refmonthdate:
       refmonthdate = self.args.refmonthdate[0]
       refmonthdate = dtfs.make_refmonthdate_or_none(refmonthdate)
@@ -114,14 +123,14 @@ class Dispatcher:
         print("refmonthdate is None ie it's invalid. Returning.")
         return 0
       plist = gendt.gen_daily_dates_for_refmonth(refmonthdate)
-      return self.roll_dates(plist)
+      return self.apply(plist)
     if self.args.date:
       pdate = self.args.date
       plist = [pdate]
-      return self.roll_dates(plist)
+      return self.apply(plist)
     if self.args.today:
       plist = [self.today]
-      return self.roll_dates(plist)
+      return self.apply(plist)
 
 
 def process():
