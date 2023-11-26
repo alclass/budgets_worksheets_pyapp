@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import os, pathlib
 import xlsxwriter
-import fs.economicfs.financefunctions as finfs
+import fs.economicfs.bcb_financefunctions as finfs
 
 def generate_xlsx():
   pass

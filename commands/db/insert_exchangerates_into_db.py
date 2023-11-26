@@ -6,7 +6,7 @@ from dateutil.relativedelta import relativedelta
 """
 import argparse
 import datetime
-import fs.economicfs.bcb_cotacao_fetcher_from_db_or_api as fin
+import fs.economicfs.bcb.bcb_cotacao_fetcher_from_db_or_api as fin
 import fs.datefs.dategenerators as gendt
 import fs.datefs.datefunctions as dtfs
 # import settings as sett

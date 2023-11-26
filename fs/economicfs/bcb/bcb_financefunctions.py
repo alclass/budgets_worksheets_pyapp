@@ -13,7 +13,7 @@
 import collections as coll
 import datetime
 import fs.datefs.datefunctions as dtfs
-import fs.economicfs.apis_finfunctions as apis
+import fs.economicfs.bcb_api_finfunctions as apis
 
 MonetCorrNT = coll.namedtuple(
   'MonetCorrNamedTuple',

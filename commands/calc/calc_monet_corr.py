@@ -37,19 +37,20 @@ monet_corr_multiplier = (1 + variation_1) * (1 + variation_2)
 As commented above, other variations/combinations may be implemented here in the future.
 
 """
-import argparse
 import datetime
-import fs.economicfs.bcb_cotacao_fetcher_from_db_or_api as fin
-import commands.show.gen_composite_currency_updter as compo  # for compo.get_cpi_baselineindex_in_month()
-# import models.finindices.cpis as cps
-import models.exrate.exratefetch as exrf  # for exr.find_most_recent_exrate()
+import pandas as pd
+import fs.datefs.datefunctions as dtfs
 import fs.datefs.dategenerators as gendt  # for make_refmonth_date_from_str
 from dateutil.relativedelta import relativedelta
+import fs.economicfs.bcb.bcb_cotacao_fetcher_from_db_or_api as ftchr  # ftchr.BCBCotacaoFetcher
+import fs.datefs.argparse as ap  # ap.get_args
+import commands.fetch.bls_cpis_from_file_to_db as cpi  # cpi.get_cpi_baselineindex_for_refmonth
+# for compo.get_cpi_baselineindex_for_refmonth()
+# import commands.show.show_table_with_variations_from_filedates_vs_mostrecent as compo
 
 
 class MonetCorrCalculator:
   def __init__(self, dateini, datefim):
-    self.calculation_not_possible = False
     self.dateini = dateini
     self.datefim = datefim
     self.treat_dates()
@@ -59,6 +60,11 @@ class MonetCorrCalculator:
     self._exrate_fim = None
     self._monetcorr_multiplier = None
     self.calc_monet_corr_multiplier_between_dates()
+
+  def are_four_values_available(self):
+    if self.cpi_ini and self.cpi_fim and self.exrate_ini and self.exrate_fim:
+      return True
+    return False
 
   def treat_dates(self):
     if self.dateini is None:
@@ -113,68 +119,80 @@ class MonetCorrCalculator:
 
   @property
   def cpi_ini(self):
-    if self.calculation_not_possible:
-      return None
     if self._cpi_ini is None:
-      self._cpi_ini = compo.get_cpi_baselineindex_in_month(self.dateini_m2)
+      self._cpi_ini = cpi.get_cpi_baselineindex_for_refmonth(self.dateini_m2)
       if self._cpi_ini is None:
-        self.calculation_not_possible = True
         return None
     return self._cpi_ini
 
   @property
   def cpi_fim(self):
-    if self.calculation_not_possible:
-      return None
     if self._cpi_fim is None:
-      self._cpi_fim = compo.get_cpi_baselineindex_in_month(self.datefim_m2)
+      self._cpi_fim = cpi.get_cpi_baselineindex_for_refmonth(self.datefim_m2)
       if self._cpi_fim is None:
-        self.calculation_not_possible = True
         return None
     return self._cpi_fim
 
   @property
   def exrate_ini(self):
-    if self.calculation_not_possible:
-      return None
-    if self._exrate_ini is None:
+    """
       bcb = fin.dbfetch_bcb_cotacao_compra_dolar_apifallback(self.dateini)
-      if bcb is None or bcb.cotacao_venda is None:
-        self.calculation_not_possible = True
+    """
+    if self._exrate_ini is None:
+      bcb = ftchr.BCBCotacaoFetcher(pdate=self.dateini)
+      if bcb is None or bcb.namedtuple_cotacao is None:
         return None
-      self._exrate_ini = bcb.cotacao_venda
+      if bcb.namedtuple_cotacao.cotacao_venda is None:
+        return None
+      self._exrate_ini = bcb.namedtuple_cotacao.cotacao_venda
     return self._exrate_ini
 
   @property
   def exrate_fim(self):
-    if self.calculation_not_possible:
-      return None
-    if self._exrate_fim is None:
+    """
       bcb = fin.dbfetch_bcb_cotacao_compra_dolar_apifallback(self.datefim)
-      if bcb is None or bcb.cotacao_venda is None:
-        self.calculation_not_possible = True
+    """
+    if self._exrate_fim is None:
+      bcb = ftchr.BCBCotacaoFetcher(pdate=self.datefim)
+      if bcb is None or bcb.namedtuple_cotacao is None:
         return None
-      self._exrate_fim = bcb.cotacao_venda
-    return self._exrate_ini
+      if bcb.namedtuple_cotacao.cotacao_venda is None:
+        return None
+      self._exrate_fim = bcb.namedtuple_cotacao.cotacao_venda
+    return self._exrate_fim
 
   @property
   def monetcorr_multiplier(self):
-    if self.calculation_not_possible:
+    if self._monetcorr_multiplier is not None:
+      return self._monetcorr_multiplier
+    if not self.are_four_values_available():
       return None
-    if self._monetcorr_multiplier is None:
-      try:
-        variation_1 = (self.cpi_fim - self.cpi_ini) / self.cpi_ini
-        variation_2 = (self.exrate_fim - self.exrate_ini) / self.exrate_ini
-        self._monetcorr_multiplier = (1 + variation_1) * (1 + variation_2)
-      except (NameError, ValueError, TypeError):
-        self.calculation_not_possible = True
+    self._monetcorr_multiplier = self.calc_monet_corr_multiplier_between_dates()
     return self._monetcorr_multiplier
 
   def calc_monet_corr_multiplier_between_dates(self):
     """
-    Calling property monetcorr_multiplier will start all attribute vars setting
     """
-    _ = self.monetcorr_multiplier
+    variation_1 = (self.cpi_fim - self.cpi_ini) / self.cpi_ini
+    variation_2 = (self.exrate_fim - self.exrate_ini) / self.exrate_ini
+    multiplier = (1 + variation_1) * (1 + variation_2)
+    return multiplier
+
+  def gen_rowdict(self):
+    parcel1 = f"({self.cpi_fim:.4f}-{self.cpi_ini:.4f})/{self.cpi_ini:.4f}"
+    parcel2 = f"({self.exrate_fim:.4f}-{self.exrate_ini:.4f})/{self.exrate_ini:.4f}"
+    formula = f"=(1+{parcel1})*(1+{parcel2})"
+    _ = formula
+    outdict = {
+      'dt_i': self.dateini,
+      'cpi_i': self.cpi_ini,
+      'exr_i': self.exrate_ini,
+      'dt_f': self.datefim,
+      'cpi_f': self.cpi_fim,
+      'exr_f': self.exrate_fim,
+      'mult': self.monetcorr_multiplier,
+    }
+    return outdict
 
   def get_tuplelist(self):
     return [(attr, value) for attr, value in self.__dict__.items() if not callable(attr)]
@@ -187,90 +205,33 @@ class MonetCorrCalculator:
     return outstr
 
 
-def calc_monet_corr_between_2_dates(date1, date2):
-  """
+class DoubleDateMonetCorr:
+  def __init__(self, refdate=None):
+    self.refdate = dtfs.make_date_or_today(refdate)
+    self.dictlist = []
+    self.df = pd.DataFrame(columns=['dt_i',  'cpi_i', 'exr_i', 'dt_f', 'cpi_f', 'exr_f', 'mult'])
 
-  """
-  mcc = MonetCorrCalculator(dateini=date1, datefim=date2)
-  print(date1, date2, 'monetcorr_multiplier', mcc.monetcorr_multiplier)
+  def calc_monetcorr_bw_date_n_ref(self, otherdate):
+    """
 
+    """
+    date1 = otherdate
+    date2 = self.refdate
+    mcc = MonetCorrCalculator(dateini=date1, datefim=date2)
+    nrows = self.df.shape[0]
+    print(date1, date2, 'nrows', nrows, 'monetcorr_multiplier', mcc.monetcorr_multiplier)
+    pdict = mcc.gen_rowdict()
+    self.dictlist.append(pdict)
 
-def calc_monet_corr_between_datelist_n_mostrecent(datelist):
-  """
+  def calc_monetcorr_bw_datelist_n_refdate(self, datelist):
+    """
 
-  """
-  datelist = gendt.convert_strdatelist_to_datelist(datelist)
-  most_recent_date = exrf.find_most_recent_exrate_date()
-  for pdate in datelist:
-    calc_monet_corr_between_2_dates(pdate, most_recent_date)
-
-
-def get_args_via_argparse():
-  """
-  https://realpython.com/command-line-interfaces-python-argparse/
-  One Example:
-    parser.add_argument("--veggies", nargs="+")
-    parser.add_argument("--fruits", nargs="*")
-      $ python cooking.py --veggies pepper tomato --fruits apple banana
-    parser.add_argument("--size", choices=["S", "M", "L", "XL"], default="M")
-    my_parser.add_argument("--weekday", type=int, choices=range(1, 8))
-  """
-  parser = argparse.ArgumentParser(description="Obtain Arguments")
-  parser.add_argument(
-    '-i', '--ini', metavar='date_ini', type=str, nargs='?',
-    help="the beginning date in date range for finding daily exchange rate quotes",
-  )
-  parser.add_argument(
-    '-f', '--fim', metavar='date_fim', type=str, nargs='?',
-    help="the ending date in date range for finding daily exchange rate quotes",
-  )
-  parser.add_argument(
-    '-cmc', '--calc-monet-corr', metavar='twodates', type=str, nargs=2,
-    help="the ending date in date range for finding daily exchange rate quotes",
-  )
-  parser.add_argument(
-    '-dl', '--datelist', metavar='datelist', type=str, nargs='+',
-    help="datelist for finding daily exchange rate quotes one by one",
-  )
-  parser.add_argument(
-    # example -rm "2023-04"
-    '-rm', '--refmonth', type=str, nargs=1,
-    help="the month as the date range for finding daily exchange rate quotes",
-  )
-  parser.add_argument(
-    '-cy', '--current-year', action='store_true',
-    help="days since the beginning of the current year as the date range for finding daily exchange rate quotes",
-  )
-  parser.add_argument(
-    '-y', '--year', type=int, nargs=1,
-    help="year as the date range for finding daily exchange rate quotes",
-  )
-  parser.add_argument(
-    '-yr', '--yearrange', type=int, nargs=2,
-    help="year range (ini, fim) as the date range for finding daily exchange rate quotes",
-  )
-  parser.add_argument(
-    '-rdf', '--readdatefile', action='store_true',
-    help="marker/signal for inputting the dateadhoctests from the conventioned datefile located in the app's data folder",
-  )
-  parser.add_argument(
-    '-s', '--serieschar', choices=["C", "S"], default="C",
-    help="marker/signal for inputting the dateadhoctests from the conventioned datefile located in the app's data folder",
-  )
-  parser.add_argument(
-    '-cp', '--currencypair', type=str, nargs=1, default='brl/usd',
-    help="for specifying the currency pair ratio that corresponds to the output quotes (default 'brl/usd')",
-  )
-  args = parser.parse_args()
-  print('args =>', args)
-  if args.refmonth is not None:
-    # return calc_monet_corr_between_dates(args.refmonth)
-    refmonthdate = args.refmonth[0]
-    print('argparse refmonthdate', refmonthdate)
-    return calc_monet_corr_between_datelist_n_mostrecent(refmonthdate)
-  if args.year is not None:
-    pass
-  return args
+    """
+    datelist = gendt.convert_strdatelist_to_datelist(datelist)
+    for pdate in datelist:
+      self.calc_monetcorr_bw_date_n_ref(pdate)
+    self.df = pd.DataFrame(self.dictlist)
+    print(self.df.to_string())
 
 
 def adhoctest():
@@ -282,18 +243,20 @@ def adhoctest():
   # read_yearrange_from_db(yearini, yearfim)
   calc_monet_corr_between_datelist_n_mostrecent(args.datelist)
   """
-  args = get_args_via_argparse()
-  twodates = args.calc_monet_corr
+  args = ap.get_args()
+  print(args)
   try:
-    return calc_monet_corr_between_2_dates(twodates[0], twodates[1])
-  except (IndexError, TypeError):
-    # if twodates is None or not subscriptable; TypeError is raised
-    # if twodates, subscriptable, doesn't have at least 2 elements; IndexError is raised
-    scrmsg = (
-        'Missing argument: twodates must contain two dateadhoctests from the command line parameter.'
-        ' It cames as [%s]' % str(twodates)
-    )
-    print(scrmsg)
+    dateini = dtfs.make_date_or_none(args.ini[0])
+    datefim = dtfs.make_date_or_none(args.fim[0])
+    print('i', dateini, 'f', datefim)
+    mcc = MonetCorrCalculator(dateini, datefim)
+    mcc.calc_monet_corr_multiplier_between_dates()
+    print(mcc.monetcorr_multiplier)
+    series = mcc.gen_rowdict()
+    print(series)
+  # twodates = args.calc_monet_corr
+  except (AttributeError, IndexError, TypeError):
+    print('No argument processed.')
 
 
 def process():
@@ -305,10 +268,16 @@ def process():
   args = get_args_via_argparse()
   calc_monet_corr_between_datelist_n_mostrecent(args.datelist)
   """
+  args = ap.get_args()
+  print(args)
+  double = DoubleDateMonetCorr()
+  dispatcher = ap.Dispatcher(args)
+  dispatcher.func = double.calc_monetcorr_bw_datelist_n_refdate
+  dispatcher.dispatch()
 
 
 if __name__ == '__main__':
   """
-  process()
-  """
   adhoctest()
+  """
+  process()

@@ -18,8 +18,8 @@ import logging
 import os
 import random
 import fs.datefs.datefunctions as dtfs
-import fs.economicfs.apis_finfunctions as apis
-import fs.economicfs.fetchfunctions as fetchfs  # fetchfs.add_exchanger_to_res_bcb_api_namedtuple()
+import fs.economicfs.bcb.bcb_api_finfunctions as apis
+import fs.economicfs.bcb.bcb_fetchfunctions as fetchfs  # fetchfs.add_exchanger_to_res_bcb_api_namedtuple()
 import settings as sett
 _, modlevelogfn = os.path.split(__file__)
 modlevelogfn = str(datetime.date.today()) + '_' + modlevelogfn[:-3] + '.log'

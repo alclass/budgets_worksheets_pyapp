@@ -33,8 +33,8 @@ import calendar
 import datetime
 # import datetime
 import sys
-import commands.show.gen_composite_currency_updter as composite
-import fs.economicfs.bcb_cotacao_fetcher_from_db_or_api as fin
+import commands.show.show_table_with_variations_from_filedates_vs_mostrecent as composite
+import fs.economicfs.bcb.bcb_cotacao_fetcher_from_db_or_api as fin
 import fs.datefs.dategenerators as gendt
 import fs.datefs.datefunctions as dtfs
 import argparse

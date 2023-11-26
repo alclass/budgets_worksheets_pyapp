@@ -302,7 +302,7 @@ def make_date_or_none(pdate):
 
 
 def make_date_or_today(pdate=None):
-  pdate = convert_strdate_to_date_or_none()
+  pdate = convert_strdate_to_date_or_none(pdate)
   if pdate is None:
     return datetime.date.today()
   return pdate
@@ -640,6 +640,37 @@ def add_or_subtract_to_month(pdate, delta):
     m = 12
   d = min(pdate.day, calendar.monthrange(y, m)[1])
   return pdate.replace(day=d, month=m, year=y)
+
+
+def transform_strdates_to_pydates(dates):
+  """
+  This function probably exists in package-module dtfs
+  (if so, refactor this)
+  """
+  pydates = []
+  for eachdate in dates:
+    if eachdate.find('-') > -1:
+      pp = eachdate.split('-')
+      dateorder = 'ymd'
+    elif eachdate.find('/') > -1:
+      pp = eachdate.split('/')
+      dateorder = 'dmy'
+    else:
+      continue
+    try:
+      if dateorder == 'ymd':
+        year = int(pp[0])
+        month = int(pp[1])
+        day = int(pp[2])
+      else:
+        day = int(pp[0])
+        month = int(pp[1])
+        year = int(pp[2])
+      pydate = datetime.date(year, month, day)
+      pydates.append(pydate)
+    except (ValueError, IndexError) as _:
+      continue
+  return pydates
 
 
 def adhoc_test2():

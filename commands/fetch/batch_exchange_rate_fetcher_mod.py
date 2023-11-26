@@ -16,7 +16,7 @@ import argparse
 import datetime
 import fs.datefs.datefunctions as dtfs
 import fs.datefs.dategenerators as gendt
-import fs.economicfs.bcb_cotacao_fetcher_from_db_or_api as bcbfetch  # bcbfetch.BCBCotacaoFetcher
+import fs.economicfs.bcb.bcb_cotacao_fetcher_from_db_or_api as bcbfetch  # bcbfetch.BCBCotacaoFetcher
 
 
 def convert_dates(pdates):

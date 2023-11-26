@@ -78,6 +78,10 @@ def gen_crescent_daily_dates_within(startpoint, finishpoint):
   return
 
 
+def gen_date_range_ini_to_fim(date_ini, date_fim, decrescent=False):
+  return gen_daily_dates_for_daterange(date_ini, date_fim, decrescent)
+
+
 def gen_daily_dates_for_daterange(date_ini, date_fim, decrescent=False):
   try:
     date_ini = make_date_from_str(date_ini)

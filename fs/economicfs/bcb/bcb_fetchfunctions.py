@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-fs/economicfs/fetchfunctions.py
+fs/economicfs/bcb_fetchfunctions.py
 """
 import datetime
 import logging
 import os
 import settings as sett
-import fs.economicfs.apis_finfunctions as apis
+import fs.economicfs.bcb.bcb_api_finfunctions as apis
 import fs.datefs.datefunctions as dtfs
 import models.exrate.exchange_rate_modelmod as exmod
 import fs.textfs.logfunctions as logfs  # logfs.log_error_namedtuple

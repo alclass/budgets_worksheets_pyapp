@@ -13,17 +13,16 @@ Input is available as:
 import config
 import sys
 """
-import argparse
 import datetime
 import os
 import pandas
 from prettytable import PrettyTable
 import xlsxwriter
 import fs.datefs.datefunctions as dtfs
-import fs.datefs.dategenerators as gendt
-import fs.economicfs.apis_finfunctions as apis
+import fs.datefs.argparse as ap
+import fs.economicfs.bcb.bcb_api_finfunctions as apis
 import fs.numberfs.tableaufunctions as tblfs
-import fs.economicfs.bcb_cotacao_fetcher_from_db_or_api as bcbfetch  # bcbfetch.BCBCotacaoFetcher
+import fs.economicfs.bcb.bcb_cotacao_fetcher_from_db_or_api as bcbfetch  # bcbfetch.BCBCotacaoFetcher
 
 
 def convert_dates(pdates):
@@ -58,7 +57,7 @@ class Lister:
     cellref = tblfs.move_cell_along_columns(cellref, 1)
     worksheet.write(cellref, 'data câmbio')
     cellref = tblfs.move_cell_along_tableau(cellref, -3, 1)
-    for i, dt_exrt_n_dc in enumerate(dt_exrt_n_dc_exchangerates):
+    for i, dt_exrt_n_dc in enumerate(self.cotacao_namedtuplelist):
       pdate, exchange_rate, data_cotacao = dt_exrt_n_dc
       seq = i + 1
       worksheet.write(cellref, seq)
@@ -109,21 +108,7 @@ class Lister:
     self.cotacao_namedtuplelist = []
     today = datetime.date.today()
     for pdate in self.dates:
-      idate = dtfs.make_date_or_none(pdate)
-      if idate is None:
-        print('date is None', str(pdate))
-        continue
-      if idate > today:
-        print('date', idate, 'is greater than today ', today)
-        continue
-      fetcher = bcbfetch.BCBCotacaoFetcher(idate)
-      namedtuple_cotacao = fetcher.namedtuple_cotacao
-      if not isinstance(namedtuple_cotacao, apis.namedtuple_bcb_api1):
-        print('namedtuple_cotacao is not type apis.namedtuple_bcb_api1')
-        print(fetcher)
-        continue
-      # dt_exrt_n_dc = apis.call_api_bcb_cotacao_dolar_on_date(pdate)
-      self.cotacao_namedtuplelist.append(namedtuple_cotacao)
+      self.cotacao_namedtuplelist.append(self.cotacao_namedtuplelist)
 
   def create_df(self):
     tripledictlist = [
@@ -144,107 +129,44 @@ class Lister:
     # self.pretty_table_print_exchangerate_results()
 
 
-class Dispatcher:
-
-  def __init__(self, args):
-    self.args = args
-    self.n_rolls = 0
-    self.today = datetime.date.today()
-    self.dates = []
-
-  def roll_dates(self, plist):
-    """
-    """
-    for pdate in plist:
-      if pdate > self.today:
-        print('Cannot process pdate %s is greater than today %s' % (pdate, self.today))
-        continue
-      self.n_rolls += 1
-      print(self.n_rolls, 'Rolling date', pdate)
-      self.dates.append(pdate)
-    return self.n_rolls
-
-  def dispatch(self):
-    if self.args.daterange:
-      dateini = dtfs.make_date_or_none(self.args.daterange[0])
-      datefim = dtfs.make_date_or_none(self.args.daterange[1])
-      if dateini is None or datefim is None:
-        print('dateini is None or datefim is None. Returning.')
-        return 0
-      if dateini > self.today:
-        return 0
-      if datefim > self.today:
-        datefim = self.today
-      plist = gendt.gen_daily_dates_for_daterange(dateini, datefim)
-      return self.roll_dates(plist)
-    if self.args.datelist:
-      plist = self.args.datelist
-      plist = map(lambda d: dtfs.make_date_or_none(d), plist)
-      plist = filter(lambda d: d is not None, plist)
-      plist = sorted(filter(lambda d: d <= self.today, plist))
-      return self.roll_dates(plist)
-    if self.args.refmonthdate:
-      refmonthdate = self.args.refmonthdate[0]
-      refmonthdate = dtfs.make_refmonthdate_or_none(refmonthdate)
-      if refmonthdate is None:
-        print("refmonthdate is None ie it's invalid. Returning.")
-        return 0
-      plist = gendt.gen_daily_dates_for_refmonth(refmonthdate)
-      return self.roll_dates(plist)
-    if self.args.date:
-      pdate = self.args.date
-      plist = [pdate]
-      return self.roll_dates(plist)
-    if self.args.today:
-      plist = [self.today]
-      return self.roll_dates(plist)
+def process_date_n_return_bcbnamedtuple(pdate):
+  today = datetime.date.today()
+  idate = dtfs.make_date_or_none(pdate)
+  if idate is None:
+    print('date is None', str(pdate))
+    return None
+  if idate > today:
+    print('date', idate, 'is greater than today ', today)
+    print('date', idate, 'is greater than today ', today)
+    return None
+  print('Instantiating bcbfetch with', pdate)
+  fetcher = bcbfetch.BCBCotacaoFetcher(idate)
+  namedtuple_cotacao = fetcher.namedtuple_cotacao
+  try:
+    print(pdate, 'cotação venda =',  namedtuple_cotacao.cotacao_venda, 'ref', namedtuple_cotacao.param_date)
+  except AttributeError:
+    print('cotacao not found in object.')
+  # this is API direct, ie doesn't look up db => bcbnamedtuple = apis.call_api_bcb_cotacao_dolar_on_date(pdate)
+  return namedtuple_cotacao
 
 
-def get_args():
-  """
-  pdates = []
-  for arg in sys.argv[1:]:
-    pdate = arg
-    pdates.append(pdate)
-  return pdates
-
-  """
-  parser = argparse.ArgumentParser()
-  parser.add_argument(
-    '-d', '--date', metavar='date', type=str, nargs=1,
-    help="a date in format yyyy-mm-dd for input to the script",
-  )
-  parser.add_argument(
-    '-t', '--today', action="store_true",
-    help="a date in format yyyy-mm-dd for input to the script",
-  )
-  parser.add_argument(
-    '-rmd', '--refmonthdate', metavar='refmonthdate', type=str, nargs=1,
-    help="a refmonthdate in format yyyy-mm for input to the script",
-  )
-  parser.add_argument(
-    '-dl', '--datelist', metavar='datelist', type=str, nargs='+',
-    help="a datelist each one in format yyyy-mm-dd separated by a space (gap/blank) for input to the script",
-  )
-  parser.add_argument(
-    '-dr', '--daterange', metavar='daterange', type=str, nargs=2,
-    help="a daterange has two dates, each in format yyyy-mm-dd, "
-         "and represents all days in-between dateini and datefim for input to the script",
-  )
-  args = parser.parse_args()
-  print('args =>', args)
-  return args
+def process_dates(datelist):
+  for pdate in datelist:
+    process_date_n_return_bcbnamedtuple(pdate)
 
 
 def process():
   """
-  """
-  args = get_args()
-  print('Dispatching', args)
-  dispatcher = Dispatcher(args)
-  dispatcher.dispatch()
   lister = Lister(dispatcher.dates)
   lister.process()
+  """
+  args = ap.get_args()
+  print('Dispatching', args)
+  dispatcher = ap.Dispatcher(args)
+  dispatcher.func = process_dates
+  dispatcher.dispatch()
+  datelist = dispatcher.datelist
+  print('datelist', datelist)
 
 
 if __name__ == "__main__":

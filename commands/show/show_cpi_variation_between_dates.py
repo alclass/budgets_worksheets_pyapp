@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-gen_composite_currency_updter.py
+show_table_with_variations_from_filedates_vs_mostrecent.py
 
 This script reads a dateadhoctests data (text) file inside the app's data folder,
   fetches CPI index mapping to month-date and outputs a 2-column data text.
@@ -12,7 +12,7 @@ The purpose is to generate an output with day to day
 """
 import datetime
 from dateutil.relativedelta import relativedelta
-import commands.show.gen_composite_currency_updter as composite
+import commands.show.show_table_with_variations_from_filedates_vs_mostrecent as composite
 import fs.datefs.datefunctions as dtfs
 import sys
 
@@ -23,11 +23,11 @@ def show_variation_between_dates(ini_date, fim_date):
     fim_cpi_baselineindex, lastdate = composite.get_last_available_cpi_baselineindex()
     lastdate = fim_date
   """
-  ini_cpi_baselineindex = composite.get_cpi_baselineindex_in_month(ini_date)
+  ini_cpi_baselineindex = composite.get_cpi_baselineindex_for_refmonth(ini_date)
   print(ini_date, 'ini_cpi_baselineindex', ini_cpi_baselineindex)
   if fim_date is None:
     return None
-  fim_cpi_baselineindex = composite.get_cpi_baselineindex_in_month(fim_date)
+  fim_cpi_baselineindex = composite.get_cpi_baselineindex_for_refmonth(fim_date)
   print(fim_date, 'fim_cpi_baselineindex', fim_cpi_baselineindex)
   cpi_variation = None
   try:

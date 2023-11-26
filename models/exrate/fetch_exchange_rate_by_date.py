@@ -5,7 +5,7 @@ models/exrate/fetch_exchange_rate_by_date.py
 """
 import datetime
 import sys
-import fs.economicfs.bcb_cotacao_fetcher_from_db_or_api as prefs
+import fs.economicfs.bcb.bcb_cotacao_fetcher_from_db_or_api as prefs
 
 
 def get_args():

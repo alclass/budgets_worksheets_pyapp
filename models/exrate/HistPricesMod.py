@@ -15,7 +15,7 @@ import os
 import xlsxwriter
 import fs.datefs.datefunctions as dtfs
 import fs.economicfs.bcb_cotacao_fetcher_from_db_or_api as prefs
-import fs.economicfs.financefunctions as finfs
+import fs.economicfs.bcb_financefunctions as finfs
 import fs.numberfs.tableaufunctions as tblfs
 import settings
 
