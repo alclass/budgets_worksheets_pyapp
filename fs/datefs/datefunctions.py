@@ -99,6 +99,63 @@ def get_appsroot_abspath_for_filename_w_tstamp(filename):
   return settings.get_appsroot_abspath_for_filename(filename)
 
 
+def get_decade_year_tenmultiplebased_from_or_current(pdate=None):
+  """
+  Examples:
+    input: 2023-mm-dd, output: 2020
+    input: None, output: 2020 (notice that at the time of this writing, year = 2023)
+    input: 2010-mm-dd, output: 2010
+  """
+  if pdate is None:
+    pdate = datetime.date.today()
+  if not isinstance(pdate, datetime.date):
+    pdate = make_date_or_today(pdate)
+  year = pdate.year
+  decade_year = year // 10 * 10
+  return decade_year
+
+
+def get_decade_year_tenmultiplebased_from_or_none(pdate=None):
+  """
+  Examples:
+    input: 2023-mm-dd, output: 2020
+    input: None, output: None (see also variation of this method which has a default)
+    input: 2010-mm-dd, output: 2010
+  """
+  if pdate is None:
+    return None
+  pdate = make_date_or_today(pdate)
+  if not isinstance(pdate, datetime.date):
+    return None
+  return get_decade_year_tenmultiplebased_from_or_current(pdate)
+
+
+def get_first_date_in_decade_year_tenmultiplebased_from_or_current(pdate=None):
+  """
+  Examples:
+    input: 2023-mm-dd, output: 2020-01-01
+    input: None, output: 2020-01-01 (notice that at the time of this writing, year = 2023)
+    input: 2010-mm-dd, output: 2010-01-01
+  """
+  year = get_decade_year_tenmultiplebased_from_or_current(pdate)
+  # the above function either returns an int (datetime.date.year) or raises an exception there
+  # ie year is "never" None here
+  return datetime.date(year=year, month=1, day=1)
+
+
+def get_first_date_in_decade_year_tenmultiplebased_from_or_none(pdate=None):
+  """
+  Examples:
+    input: 2023-mm-dd, output: 2020-01-01
+    input: None, output: None (see also variation of this method which has a default)
+    input: 2010-mm-dd, output: 2010-01-01
+  """
+  year = get_decade_year_tenmultiplebased_from_or_none(pdate)
+  if year is None:
+    return None
+  return datetime.date(year=year, month=1, day=1)
+
+
 def split_date_n_time_from_datetime(pdatetime):
   if pdatetime is None:
     return None, None

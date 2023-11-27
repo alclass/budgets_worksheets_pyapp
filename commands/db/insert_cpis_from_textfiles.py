@@ -1,20 +1,46 @@
 #!/usr/bin/env python3
 """
 insert_cpis_from_textfiles.py
+  inserts CPI data from textfiles to a database.
 
+At the time of this writing, database is Sqlite.
+
+The pretty-print input CPI data file is like so:
 +-------------+------+--------+---------+-----------+
 |   seriesID  | year | period |  value  | footnotes |
 +-------------+------+--------+---------+-----------+
 | CUUR0000SA0 | 2023 |  M09   | 307.789 |           |
 | CUUR0000SA0 | 2023 |  M08   | 307.026 |           |
-| CUUR0000SA0 | 2023 |  M07   | 305.691 |           |
+(...)
+
+Notes on the table fragment above and the overall CPI data fetching strategy:
+
+Notes on the table:
+
+ => The 'period' column means the month in year, ie, for examples:
+  M09 above is month 9 or September,
+  M08 above is month 8 or August;
+ => the 'value' column contains the accumulated CPI itself;
+
+Notes on the overall CPI data fetching strategy:
+
+ => the pretty-print is file-written by the REST API fetcher at
+    commands.fetch.bls_cpi_api_fetcher.CPIFetcher;
+ => indirectly, commands.fetch.verify_n_update_local_cpi_db.Verifier
+    checks if more than one refmonth has elapsed so that CPIFetcher may be called
+    aiming to find newly added monthy CPI indices.
 """
 import datetime
+import glob
 import os
 import sqlite3
 import settings as sett
-cuur_ending = 'CUUR0000SA0.dat'
-suur_ending = 'SUUR0000SA0.dat'
+import fs.os.osfunctions as osfs
+curseriesid = 'CUUR0000SA0'
+surseriesid = 'SUUR0000SA0'
+seriesfile_dotext = '.dat'
+cur_ending = f'{curseriesid}.prettyprint{seriesfile_dotext}'
+sur_ending = f'{surseriesid}.prettyprint{seriesfile_dotext}'
 
 
 def get_conn():
@@ -90,19 +116,26 @@ class Insertor:
     conn = get_conn()
     cursor = conn.cursor()
     retval = cursor.execute(sql, self.tuplevalues)
-    self.n_inserted += 1
-    print(self.n_inserted+1, retval, '=>', sql)
     if retval.rowcount == 1:
       self.n_inserted += 1
       print(self.n_inserted, 'inserted & committing')
       conn.commit()
     conn.close()
 
+  def __str__(self):
+    bool_ins = self.n_inserted > 0
+    outstr = f"Sqlite inserted={bool_ins} {self.year}/{self.month:02} => cpi="
+    outstr += f"{self.baselineindex} @ {self.seriesid}"
+    return outstr
+
 
 def insert_cpis_from_file(filepath):
   lines = open(filepath).readlines()
+  seq = 0
+  total_insert = 0
+  last_seriesid = None
   for line in lines:
-    print(line)
+    # print(line)
     values = line.split('|')
     values = filter(lambda e: e not in ['', '\n'], values)
     values = list(filter(lambda e: not e.startswith('   '), values))
@@ -118,28 +151,35 @@ def insert_cpis_from_file(filepath):
       month = int(monthstr)
       bindex = values[3]
       # print('month, year, bindex, seriesid', seriesid, year, month, bindex)
+      seq += 1
       ins = Insertor(seriesid, year, month, bindex)
       ins.insert()
+      print(seq, ins)
+      total_insert += ins.n_inserted
+      last_seriesid = seriesid
     except (IndexError, ValueError):
       pass
+  print('Total inserted', total_insert, 'seriesid', last_seriesid)
 
 
-def get_files_in_folder():
+def get_prettyprint_cpi_series_data_filepaths_in_folder():
   datafolderpath = sett.get_apps_data_abspath()
-  entries = os.listdir(datafolderpath)
-  # TO-DO verify only files fileentries = filter(lambda e: os.path.isfile(e)))
-  print(datafolderpath)
-  currfiles = sorted(filter(lambda e: e.endswith(cuur_ending), entries))
-  surrfiles = sorted(filter(lambda e: e.endswith(suur_ending), entries))
-  print(currfiles)
-  print(surrfiles)
-  allfilenames = currfiles + surrfiles
-  filepaths = sorted(map(lambda e: os.path.join(datafolderpath, e), allfilenames))
+  ospaths = glob.glob(datafolderpath + '/*' + seriesfile_dotext)
+  # sorted() is required because map/filter/etc consume the iterable making it empty for another time
+  fileentries = sorted(filter(lambda e: os.path.isfile(e), ospaths))
+  curfilepaths = sorted(filter(lambda e: e.endswith(cur_ending), fileentries))
+  surfilepaths = sorted(filter(lambda e: e.endswith(sur_ending), fileentries))
+  filepaths = curfilepaths + surfilepaths
+  osfs.print_filenames_from_filepaths(filepaths, datafolderpath)
   return filepaths
 
 
+def adhoctest():
+  pass
+
+
 def process():
-  filepaths = get_files_in_folder()
+  filepaths = get_prettyprint_cpi_series_data_filepaths_in_folder()
   for filepath in filepaths:
     insert_cpis_from_file(filepath)
 

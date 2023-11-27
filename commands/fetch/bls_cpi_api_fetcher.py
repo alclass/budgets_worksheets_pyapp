@@ -4,125 +4,154 @@ commands/fetch/bls_cpi_api_fetcher.py
   fetches BLS CPI (Consumer Price Index) monthly index data for the known series available
     ie ['CUUR0000SA0', 'SUUR0000SA0']
 
-The API available here is an open one, ie it's not necessary to authenticate into it.
-Another script in this system reads the data files recorded and insert the data into a sqlite db.
-In a nutshell, this system (this script and the ones accompanying) fetches API data
-  and buffers (or caches) them locally.
-
-Based on:
-  www.bls.gov/developers/api_python.html
-  Example:
-    https://data.bls.gov/timeseries/CUUR0000SA0
-      shows a year-month table with the CPI_US indices
 """
 import copy
 import datetime
+import os.path
 import time
 import settings as cfg
-import requests
-import json
-import prettytable
-BLS_URL = 'https://api.bls.gov/publicAPI/v1/timeseries/data/'
-m_headers = {'Content-type': 'application/json'}
-DICTKEY_SERIESID_K = 'seriesID'
+import commands.fetch.cpi_rest_api_fetcher_functions as ftchfs  # .fetch_json_response_w_restapi_reqdictdata
+# import fs.datefs.datefunctions as dtfs
 
 
-def save_series_pprint_as_file(pprint_filename, pprint_dump):
-  pprint_outfile = cfg.get_datafile_abspath_in_app(pprint_filename)
-  output = open(pprint_outfile, 'w')
-  print('Closing output file for series', pprint_filename)
-  print(pprint_outfile)
-  output.write(pprint_dump.get_string())
-  output.close()
+class RestApiJsonRequestParamMaker:
+
+  from_year = 2020
+  to_year = 2023
+  default_seriesidlist = ['CUUR0000SA0', 'SUUR0000SA0']
+  cpi_restapi_datadict_modelparam = {
+    'seriesid': default_seriesidlist,
+    'startyear': str(from_year),
+    'endyear': str(to_year)
+  }
+
+  def __init__(self, from_year=None, to_year=None, seriesidlist=None):
+    self.from_year = from_year
+    self.to_year = to_year
+    self.today = datetime.date.today()
+    self.treat_years()
+    self.seriesidlist = seriesidlist  # conditional TO-DO: improve this attribute when new info about it is found
+    self._restapi_reqdatadict = None
+
+  def treat_years(self):
+    if self.to_year is None:
+      self.to_year = self.today.year
+    # if year is not int-liked-typed a ValueError exception will be raised
+    self.to_year = int(self.to_year)
+    if self.from_year is None:
+      # (formerly) self.from_year = dtfs.get_decade_year_tenmultiplebased_from_or_current()
+      # if from_year is missing, probable cenario is to search for a newly added monthly index
+      self.from_year = self.to_year
+    self.from_year = int(self.from_year)
+    if self.to_year > self.today.year:
+      self.to_year = self.today.year
+    if self.from_year > self.to_year:
+      error_msg = (f"Error: from-year {self.from_year} is greater than to-year {self.to_year}"
+                   f" or currentyear {self.today.year} in class CPIFetcher.")
+      raise ValueError(error_msg)
+
+  @property
+  def restapi_reqdatadict(self):
+    if self._restapi_reqdatadict is not None:
+      return self._restapi_reqdatadict
+    self._restapi_reqdatadict = copy.copy(self.cpi_restapi_datadict_modelparam)
+    self._restapi_reqdatadict['startyear'] = str(self.from_year)
+    self._restapi_reqdatadict['endyear'] = str(self.to_year)
+    # there is already a default seriesid list in the restapi_reqdatadict
+    # only change it if it's been given from __init__()
+    if self.seriesidlist is not None:
+      self.seriesidlist = list(self.seriesidlist)
+      self._restapi_reqdatadict['seriesid'] = self.seriesidlist
+    return self._restapi_reqdatadict
+
+  def __str__(self):
+    seriesidlist = self.seriesidlist or self.default_seriesidlist
+    outstr = f"""RestApiJsonRequestParamMaker:
+    today = {self.today}
+    from year = {self.from_year}
+    to year = {self.to_year}
+    series id list = {seriesidlist}
+    """
+    return outstr
 
 
 class CPIFetcher:
 
   DEFAULT_JSON_OUTFILENAME = 'bls_cpi.json'
-  cpi_api_modeldatadict = {
-    'seriesid': ['CUUR0000SA0', 'SUUR0000SA0'],
-    'startyear': '2021',
-    'endyear': '2024'
-  }
 
-  def __init__(self, uptoyear=None):
+  def __init__(self, from_year=None, to_year=None, seriesidlist=None):
+    self.jsonreq = RestApiJsonRequestParamMaker(from_year, to_year, seriesidlist)
+    self.processing_duration = None
     self.response_json_data = None
-    self.series_files_save = []
-    self.runduration = None
-    self.today = datetime.date.today()
-    self.year = uptoyear
-    self.treat_year()
-    self.api_datadict = copy.copy(self.cpi_api_modeldatadict)
-    self.api_datadict['endyear'] = str(self.year)
-
-  def treat_year(self):
-    if self.year is None:
-      self.year = self.today.year
-      return
-    # if year is not int-liked-typed a ValueError exception will be raised
-    self.year = int(self.year)
+    self.seriesidlist = seriesidlist
+    self.series_jsondumpfiles_saved = []
+    self._json_outfilename = None
 
   @property
-  def json_outfile(self):
-    _json_outfile = cfg.get_datafile_abspath_in_app(self.DEFAULT_JSON_OUTFILENAME)
-    return _json_outfile
+  def from_year(self):
+    return self.jsonreq.from_year
 
-  @staticmethod
-  def get_pprint_dump_filename(seriesid):
-    return seriesid + '.dat'
+  @property
+  def to_year(self):
+    return self.jsonreq.to_year
+
+  @property
+  def today(self):
+    return self.jsonreq.today
+
+  @property
+  def restapi_reqdatadict(self):
+    return self.jsonreq.restapi_reqdatadict
+
+  @property
+  def json_outfilename(self):
+    if self._json_outfilename is None:
+      self._json_outfilename = self.DEFAULT_JSON_OUTFILENAME
+    return self._json_outfilename
+
+  @json_outfilename.setter
+  def json_outfilename(self, filename):
+    self._json_outfilename = filename
+
+  @property
+  def json_outfilepath(self):
+    _json_outfilepath = cfg.get_datafile_abspath_in_app(self.json_outfilename)
+    return _json_outfilepath
 
   def dump_n_save_res_per_series(self):
-    for series in self.response_json_data['Results']['series']:
-      pprint_dump = prettytable.PrettyTable(
-        [DICTKEY_SERIESID_K, 'year', 'period', 'value', 'footnotes']
-      )
-      seriesid = series[DICTKEY_SERIESID_K]
-      pprint_dump_filename = self.get_pprint_dump_filename(seriesid)
-      for item in series['data']:
-        year = item['year']
-        period = item['period']
-        value = item['value']
-        footnotes = ''
-        for footnote in item['footnotes']:
-          if footnote:
-            footnotes = footnotes + footnote['text'] + ','
-        if 'M01' <= period <= 'M12':
-          pprint_dump.add_row(
-            [seriesid, year, period, value, footnotes[0:-1]]
-          )    # ends items (in each series) looping
-      self.series_files_save.append(pprint_dump_filename)
-      save_series_pprint_as_file(pprint_dump_filename, pprint_dump)
+    self.series_jsondumpfiles_saved = ftchfs.dump_n_save_json_response_per_each_series_inside_data(
+      self.response_json_data, folderpath=None, startyear=self.from_year, endyear=self.to_year
+    )
 
   def write_json_api_request_as_file(self):
-    print('Writing json file [', self.DEFAULT_JSON_OUTFILENAME, "] inside app's data folder")
-    print(self.json_outfile)
-    with open(self.json_outfile, 'w') as f:
-      json.dump(self.response_json_data, f)
+    json_output_filepath = ftchfs.write_json_as_file_w_its_path(self.response_json_data, self.json_outfilepath)
+    # property filepath cannot be changed, for it's derived from filename
+    if json_output_filepath == self.json_outfilepath:
+      # okay, no need to be changed
+      return self.json_outfilepath
+    # property was changed, let's change it via 'private' json_outfilename
+    self.json_outfilename = os.path.split(json_output_filepath)[-1]
 
-  def cpi_remote_api_fetch(self, request_json_data, p_headers):
-    p = requests.post(BLS_URL, data=request_json_data, headers=p_headers)
-    self.response_json_data = json.loads(p.text)
+  def fetch_rest_api_json_response(self):
+    self.response_json_data = ftchfs.fetch_json_response_w_restapi_reqdictdata(self.restapi_reqdatadict)
     self.write_json_api_request_as_file()
     self.dump_n_save_res_per_series()
 
-  def fetch_cpis_upto_currentyear(self):
-    json_cpi_api_m_data = json.dumps(self.api_datadict)
-    self.cpi_remote_api_fetch(json_cpi_api_m_data, m_headers)
-
   def process(self):
     start = time.time()
-    self.fetch_cpis_upto_currentyear()
+    self.fetch_rest_api_json_response()
     end = time.time()
-    self.runduration = end - start
+    self.processing_duration = end - start
 
   def __str__(self):
     outstr = f"""CPIFetcher:
     today = {self.today}
-    run duration = {self.runduration}
-    uptoyear = {self.year}
-    json_outfilename = {self.DEFAULT_JSON_OUTFILENAME}
-    json_outfile = {self.json_outfile}
-    {self.series_files_save}
+    run duration = {self.processing_duration}
+    from year = {self.from_year}
+    to year = {self.to_year}
+    json_outfilename = {self.json_outfilename}
+    json_outfilepath = {self.json_outfilepath}
+    series id files save = {self.series_jsondumpfiles_saved}
     """
     return outstr
 

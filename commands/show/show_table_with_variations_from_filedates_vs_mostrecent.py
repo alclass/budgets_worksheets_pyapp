@@ -33,7 +33,7 @@ The output will be the money correcting/updating indices
 import datetime
 import settings as cfg
 import fs.economicfs.bcb.bcb_cotacao_fetcher_from_db_or_api as bcbfetch  # bcbfetch.BCBCotacaoFetcher
-import commands.fetch.bls_cpis_from_file_to_db as ftcpi  # ftcpi.get_cpi_baselineindex_for_refmonth_m2
+import commands.fetch.bls_cpis_from_file_to_db as ftcpi  # ftcpi.get_cpi_baselineindex_for_refmonth_m2_in_db
 import fs.datefs.datefunctions as dtfs
 from prettytable import PrettyTable
 DEFAULT_DATESFILENAME = 'datesfile.dat'
@@ -94,11 +94,11 @@ class Comparator:
   @@property
   def most_recent_cpi_m2(self):
     if self._most_recent_cpi is None:
-      self._most_recent_cpi, self.m2refmonthdate = ftcpi.get_cpi_baselineindex_for_refmonth_m2(self.mostrecentdate)
+      self._most_recent_cpi, self.m2refmonthdate = ftcpi.get_cpi_baselineindex_for_refmonth_m2_in_db(self.mostrecentdate)
     return self._most_recent_cpi, self.m2refmonthdate
 
   def get_cpi_variation_from(self, pdate):
-    ini_cpi_baselineindex = ftcpi.get_cpi_baselineindex_for_refmonth(pdate)
+    ini_cpi_baselineindex = ftcpi.get_cpi_baselineindex_for_refmonth_in_db(pdate)
     if ini_cpi_baselineindex is None:
       return None, None, None, None
     fim_cpi_baselineindex, refdate = self.most_recent_cpi_m2

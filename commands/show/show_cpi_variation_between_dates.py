@@ -20,7 +20,7 @@ import sys
 def show_variation_between_dates(ini_date, fim_date):
   """"
   previous version
-    fim_cpi_baselineindex, lastdate = composite.get_last_available_cpi_baselineindex()
+    fim_cpi_baselineindex, lastdate = composite.get_last_available_cpi_baselineindex_in_db()
     lastdate = fim_date
   """
   ini_cpi_baselineindex = composite.get_cpi_baselineindex_for_refmonth(ini_date)

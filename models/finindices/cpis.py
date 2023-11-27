@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-show_cpis.py
+models/finindices/cpis.py
+  contains CPI-related functions
 """
 DEFAULT_SERIESID = 'CUUR0000SA0'
 
@@ -15,8 +16,8 @@ def find_seriesid_by_serieschar(serieschar):
 
 
 class CPIData:
-  def __init__(self, cpis=[]):
-    self.cpis = cpis
+  def __init__(self, cpis=None):
+    self.cpis = cpis or []
 
   def append(self, cpidatum):
     self.cpis.append(cpidatum)
@@ -64,6 +65,10 @@ class CPIDatum:
       baselineindex=self.baselineindex,
     )
     return outstr
+
+
+def adhoctest():
+  pass
 
 
 def process():

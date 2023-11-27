@@ -44,8 +44,8 @@ import fs.datefs.dategenerators as gendt  # for make_refmonth_date_from_str
 from dateutil.relativedelta import relativedelta
 import fs.economicfs.bcb.bcb_cotacao_fetcher_from_db_or_api as ftchr  # ftchr.BCBCotacaoFetcher
 import fs.datefs.argparse as ap  # ap.get_args
-import commands.fetch.bls_cpis_from_file_to_db as cpi  # cpi.get_cpi_baselineindex_for_refmonth
-# for compo.get_cpi_baselineindex_for_refmonth()
+import commands.fetch.bls_cpis_from_file_to_db as cpi  # cpi.get_cpi_baselineindex_for_refmonth_in_db
+# for compo.get_cpi_baselineindex_for_refmonth_in_db()
 # import commands.show.show_table_with_variations_from_filedates_vs_mostrecent as compo
 
 
@@ -120,7 +120,7 @@ class MonetCorrCalculator:
   @property
   def cpi_ini(self):
     if self._cpi_ini is None:
-      self._cpi_ini = cpi.get_cpi_baselineindex_for_refmonth(self.dateini_m2)
+      self._cpi_ini = cpi.get_cpi_baselineindex_for_refmonth_in_db(self.dateini_m2)
       if self._cpi_ini is None:
         return None
     return self._cpi_ini
@@ -128,7 +128,7 @@ class MonetCorrCalculator:
   @property
   def cpi_fim(self):
     if self._cpi_fim is None:
-      self._cpi_fim = cpi.get_cpi_baselineindex_for_refmonth(self.datefim_m2)
+      self._cpi_fim = cpi.get_cpi_baselineindex_for_refmonth_in_db(self.datefim_m2)
       if self._cpi_fim is None:
         return None
     return self._cpi_fim
