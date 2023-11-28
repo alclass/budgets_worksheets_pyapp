@@ -19,9 +19,8 @@ import fs.datefs.datefunctions as dtfs
 cur_seriesid = 'CUUR0000SA0'
 sur_seriesid = 'SUUR0000SA0'
 DEFAULT_SERIESID = 'CUUR0000SA0'
-seriesidlist = [cur_seriesid, sur_seriesid]
+available_cpi_seriesid_list = [cur_seriesid, sur_seriesid]
 NTCpiMonth = collections.namedtuple('NTCpiMonth', field_names=['cpi', 'refmonthdate'])
-
 
 
 def get_min_or_max_available_refmonthdate_in_cpi_db(lowest=True, p_seriesid=None):
@@ -39,30 +38,31 @@ def get_min_or_max_available_refmonthdate_in_cpi_db(lowest=True, p_seriesid=None
       LIMIT 1;  """
   cursor.execute(sql, tuplevalues)
   try:
-    baselineindex = cursor.fetchone()[0]
+    refmonthdate = cursor.fetchone()[0]
+    refmonthdate = dtfs.make_refmonthdate_or_none(refmonthdate)
   except TypeError:
-    baselineindex = None
+    refmonthdate = None
   # print('first_baselineindex', first_baselineindex)
   conn.close()
   # None may be returned
-  return baselineindex
+  return refmonthdate
 
 
-def get_older_available_refmonthdate_in_cpi_db():
-  return get_min_or_max_available_refmonthdate_in_cpi_db(lowest=True)
+def get_older_available_refmonthdate_in_cpi_db(seriesid=None):
+  return get_min_or_max_available_refmonthdate_in_cpi_db(True, seriesid)
 
 
-def get_newer_available_refmonthdate_in_cpi_db():
-  return get_min_or_max_available_refmonthdate_in_cpi_db(lowest=False)
+def get_newer_available_refmonthdate_in_cpi_db(seriesid=None):
+  return get_min_or_max_available_refmonthdate_in_cpi_db(False, seriesid)
 
 
-def get_older_available_year_in_cpi_db():
-  refmonthdate = get_older_available_refmonthdate_in_cpi_db()
+def get_older_available_year_in_cpi_db(seriesid=None):
+  refmonthdate = get_older_available_refmonthdate_in_cpi_db(seriesid)
   return dtfs.extract_year_from_date_or_none(refmonthdate)
 
 
-def get_newer_available_year_in_cpi_db():
-  refmonthdate = get_newer_available_refmonthdate_in_cpi_db()
+def get_newer_available_year_in_cpi_db(seriesid=None):
+  refmonthdate = get_newer_available_refmonthdate_in_cpi_db(seriesid)
   return dtfs.extract_year_from_date_or_none(refmonthdate)
 
 
@@ -271,7 +271,7 @@ def adhoctest2():
 
 
 def adhoctest():
-  for seriesid in seriesidlist:
+  for seriesid in available_cpi_seriesid_list:
     print('seriesid', seriesid)
     baselineindex, refmonthdate = get_last_available_cpi_n_refmonth_fromdb_by_series(seriesid)
     scr_msg = f"\t{refmonthdate} => {baselineindex:.4f}"

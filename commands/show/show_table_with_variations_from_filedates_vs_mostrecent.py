@@ -91,7 +91,7 @@ class Comparator:
     conn.close()
     return variation, exrate_before, exrate_after
 
-  @@property
+  @property
   def most_recent_cpi_m2(self):
     if self._most_recent_cpi is None:
       self._most_recent_cpi, self.m2refmonthdate = ftcpi.get_cpi_baselineindex_for_refmonth_m2_in_db(self.mostrecentdate)

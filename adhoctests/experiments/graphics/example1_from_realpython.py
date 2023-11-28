@@ -9,7 +9,7 @@ download_url = (
 """
 import pandas as pd
 import matplotlib.pyplot as plt
-import commands.graphics.make_graphics_datafolder_n_dld_if_needed as grph
+import commands.graphics.bcb.make_graphics_datafolder_n_dld_if_needed as grph
 
 
 def plot1():
