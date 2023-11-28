@@ -16,11 +16,7 @@ year y2 |     |     |
 import argparse
 import datetime
 from dateutil.relativedelta import relativedelta
-import itertools
 import os.path
-import time
-
-import pandas
 import fs.datefs.datefunctions as dtfs
 import pandas as pd
 import commands.fetch.cpi.read_cpis_from_db as dbr  # get_as_df_all_available_cpi_baselineindices_in_db
@@ -43,6 +39,7 @@ class Tabulator:
     self.df = None
     self.been_processed = False
     self.scripts_start_time = None  # set on method "process" (ie process_create_df())
+    self.savefile_report_msg = None
     self.runduration = None
     self.treat_years()
 
@@ -132,7 +129,7 @@ class Tabulator:
   def mount_all_years_dictlist_to_prep_for_df(self):
     """
     Once all data structures above are ready, df (DataFrame) may be instantiated from
-      a "on-the-fly" dict montage that will create an NxN matrix for df
+      an "on-the-fly" dict montage that will create an NxN matrix for df
     The result will be similar to:
       The tabulation chosen is the following
        ys/ ms | jan | feb | mar  (...)
@@ -165,14 +162,19 @@ class Tabulator:
     # print(self.df.to_string())
 
   def save_df_to_excel(self):
-    print('Save df to excel if filename is available (ie it not existing in folder).')
-    print('Filename', self.output_excel_filename)
-    print('Folder', self.output_excel_folderpath)
     if os.path.exists(self.output_excel_filepath):
-      print('Not saving, for there is an os-entry with same name. Please remove it and try again.')
+      self.savefile_report_msg = 'file not saved due to it already existing in folder'
+      scrmsg = f"""Not saving [{self.output_excel_filename}],
+      Folder: [{self.output_excel_folderpath}]
+      for there is an os-entry with same name. In case it's necessary to recreate the output Excel file,
+      please delete/remove the above mentioned file in the folder and rerun this program."""
+      print(scrmsg)
     else:
+      self.savefile_report_msg = f'file saved {datetime.datetime.now()}'
       self.df.to_excel(self.output_excel_filepath)
-      print('Saved file', self.output_excel_filename)
+      scrmsg = f"""Saved [{self.output_excel_filename}],
+      Folder: [{self.output_excel_folderpath}]"""
+      print(scrmsg)
 
   def process_create_df(self):
     self.scripts_start_time = datetime.datetime.now()
@@ -193,7 +195,7 @@ class Tabulator:
     From {self.startrefmonth} to {self.endrefmonth} | seriesid {self.seriesid}
     Number of years {self.n_years} | number of months (data points) {self.n_months}
     been processed = {self.been_processed} | duration = {self.runduration}
-    Output Excel Filename: [{self.output_excel_filename}]
+    Output Excel Filename: [{self.output_excel_filename}] | {self.savefile_report_msg}
     Folder in which output Excel file is located: [{self.output_excel_folderpath}] 
     """
     return outstr
@@ -225,7 +227,6 @@ def get_seriesid_from_cli():
     help=helpstr,
   )
   args = parser.parse_args()
-  print(args)
   seriesid = args.seriesid
   if isinstance(seriesid, list) and len(seriesid) > 0:
     seriesid = seriesid[0] if seriesid[0] else rcpi.available_cpi_seriesid_list or None
@@ -235,7 +236,6 @@ def get_seriesid_from_cli():
 
 def process():
   seriesid = get_seriesid_from_cli() or rcpi.DEFAULT_SERIESID
-  print(seriesid)
   tab = Tabulator(None, None, seriesid)
   tab.process_create_df()
 
