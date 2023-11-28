@@ -1,20 +1,31 @@
 #!/usr/bin/env python3
 """
-  docstring
+fs/datefs/datefunctions.py
+  contains date-related functions
 """
 import calendar
-from dateutil.relativedelta import relativedelta
 import collections as coll
 import datetime
+from dateutil.relativedelta import relativedelta
 import os
 import fs.textfs.strfs as strfs
 import settings
 WEEKEND_PREVIOUS_DATE_MAX_RECURSE = 41  # go back up to 31 days (a month) plus 10
 WEEKDAYS3LETTER = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+ALL_MONTHS_ENG_CAP_FIRST_LIST = list(map(lambda e: calendar.month_name[e], range(1, 13)))
+
+
+def make_allmonths_englishlower3letter_list():
+  return list(map(lambda e: e[:3].lower(), ALL_MONTHS_ENG_CAP_FIRST_LIST))
 
 
 def is_date_valid(pdate):
   if isinstance(pdate, datetime.date):
+    return True
+  # next try includes more possibilities than datetime.date,
+  # including all str repr's like yyyy-mm-dd (which in turn includes, e.g., datetime.datetime)
+  pdate = make_date_or_none(pdate)
+  if pdate is not None:
     return True
   return False
 
@@ -730,7 +741,7 @@ def transform_strdates_to_pydates(dates):
   return pydates
 
 
-def adhoc_test2():
+def adhoc_test3():
   today = datetime.date.today()
   weekday = today.weekday()
   print(today, 'weekday =>', weekday, get_weekday3letter_from_date(today))
@@ -743,7 +754,7 @@ def adhoc_test2():
   print('output datelist', datelist)
 
 
-def adhoc_test():
+def adhoc_test2():
   inidate = '2020-1-1'
   findate = '2020-1-5'
   print('Generate', findate, inidate)
@@ -760,8 +771,20 @@ def adhoc_test():
   for pdate in generate_daterange(findate, inidate):
     print(pdate)
   print('Finished')
+
+
+def extract_year_from_date_or_none(pdate):
+  pdate = make_date_or_none(pdate)
+  if pdate is None:
+    return None
+  return pdate.year
+
+
+def adhoc_test():
+
   pdate = get_monthslastday_date_via_calendar('2020-7-3')
   print("get_monthslastday_date_via_calendar('2020-7-3')", pdate)
+  print(make_allmonths_englishlower3letter_list())
 
 
 def process():
@@ -775,4 +798,4 @@ if __name__ == "__main__":
   """
   process()
   """
-  adhoc_test2()
+  adhoc_test()
