@@ -7,8 +7,8 @@ commands/fetch/verify_n_update_local_cpi_db.py
 import datetime
 from dateutil.relativedelta import relativedelta
 import fs.datefs.datefunctions as dtfs
-import commands.fetch.bls_cpis_from_file_to_db as cpi  # .get_last_available_cpi_baselineindex_in_db
-import commands.fetch.bls_cpi_api_fetcher as cftch  # .CPIFetcher
+import commands.fetch.cpi.read_cpis_from_db as cpi  # .get_last_available_cpi_n_refmonth_fromdb_by_series
+import commands.fetch.cpi.bls_cpi_api_fetcher as cftch  # .CPIFetcher
 
 
 class Verifier:
@@ -37,10 +37,11 @@ class Verifier:
     return self._current_refmonthdate
 
   def dbfetch_mostrecent(self):
-    self.baselineindex, self.mostrecent_refmonthdate_in_db = cpi.get_last_available_cpi_baselineindex_in_db()
+    self.baselineindex, self.mostrecent_refmonthdate_in_db = cpi.get_last_available_cpi_n_refmonth_fromdb_by_series()
     if self.mostrecent_refmonthdate_in_db is None:
       self.mostrecent_refmonthdate_in_db = dtfs.get_first_date_in_decade_year_tenmultiplebased_from_or_current()
-      scr_msg = f'most recent refmonth is None, defaulting to beginning of decade, ie {self.mostrecent_refmonthdate_in_db}'
+      scr_msg = (f'most recent refmonth is None, defaulting to beginning of decade,'
+                 f' ie {self.mostrecent_refmonthdate_in_db}')
       print(scr_msg)
     else:
       self.mostrecent_refmonthdate_in_db = dtfs.make_refmonthdate_or_none(self.mostrecent_refmonthdate_in_db)
@@ -54,7 +55,7 @@ class Verifier:
     self.dbfetch_mostrecent()
     self.verify_more_than_one_refmonth()
     if self.is_time_for_apifetch:
-      apifetcher = cftch.CPIFetcher(uptoyear=self.today.year)
+      apifetcher = cftch.CPIFetcher(from_year=None, to_year=self.today.year)
       apifetcher.process()
       self.api_has_been_fetch = True
 

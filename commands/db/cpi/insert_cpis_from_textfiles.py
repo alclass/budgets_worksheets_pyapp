@@ -165,7 +165,7 @@ def insert_cpis_from_file(filepath):
 def get_prettyprint_cpi_series_data_filepaths_in_folder():
   datafolderpath = sett.get_apps_data_abspath()
   ospaths = glob.glob(datafolderpath + '/*' + seriesfile_dotext)
-  # sorted() is required because map/filter/etc consume the iterable making it empty for another time
+  # sorted() is required because map/filter/etc. consume the iterable making it empty for another time
   fileentries = sorted(filter(lambda e: os.path.isfile(e), ospaths))
   curfilepaths = sorted(filter(lambda e: e.endswith(cur_ending), fileentries))
   surfilepaths = sorted(filter(lambda e: e.endswith(sur_ending), fileentries))

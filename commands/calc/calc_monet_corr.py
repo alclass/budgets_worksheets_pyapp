@@ -44,7 +44,7 @@ import fs.datefs.dategenerators as gendt  # for make_refmonth_date_from_str
 from dateutil.relativedelta import relativedelta
 import fs.economicfs.bcb.bcb_cotacao_fetcher_from_db_or_api as ftchr  # ftchr.BCBCotacaoFetcher
 import fs.datefs.argparse as ap  # ap.get_args
-import commands.fetch.bls_cpis_from_file_to_db as cpi  # cpi.get_cpi_baselineindex_for_refmonth_in_db
+import commands.fetch.cpi.read_cpis_from_db as cpi  # cpi.get_cpi_baselineindex_for_refmonth_in_db
 # for compo.get_cpi_baselineindex_for_refmonth_in_db()
 # import commands.show.show_table_with_variations_from_filedates_vs_mostrecent as compo
 
