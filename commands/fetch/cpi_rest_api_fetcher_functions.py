@@ -28,7 +28,7 @@ import os
 import prettytable
 import requests
 import settings as sett
-import fs.os.osfunctions as osfs
+import fs.os.sufix_incrementor as osfs
 BLS_URL = 'https://api.bls.gov/publicAPI/v1/timeseries/data/'
 m_headers = {'Content-type': 'application/json'}
 DICTKEY_SERIESID_K = 'seriesID'

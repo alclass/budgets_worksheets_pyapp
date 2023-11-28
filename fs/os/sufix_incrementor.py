@@ -1,5 +1,5 @@
 """
-fs/os/osfunctions.py
+fs/os/sufix_incrementor.py
   contains OS-related functions
 
 At the time of this writing, class SufixIncrementor contains functionality

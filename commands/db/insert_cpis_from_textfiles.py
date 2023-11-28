@@ -35,7 +35,7 @@ import glob
 import os
 import sqlite3
 import settings as sett
-import fs.os.osfunctions as osfs
+import fs.os.sufix_incrementor as osfs
 curseriesid = 'CUUR0000SA0'
 surseriesid = 'SUUR0000SA0'
 seriesfile_dotext = '.dat'
