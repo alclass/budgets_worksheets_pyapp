@@ -283,7 +283,7 @@ def get_datafolder_abspath_for_filename_w_tstamp(filename):
 
 
 def is_date_weekend(pdate):
-  indate = convert_yyyymmdd_strdate_to_dtdate_or_none(pdate)
+  indate = convert_generic_yyyymmdd_strdate_to_dtdate_or_none(pdate)
   if indate is None:
     return None
   try:
@@ -311,7 +311,7 @@ def get_weekday3letter_from_date(pdate):
 
 
 def get_date_or_previous_monday_to_friday(pdate, max_recurse=0):
-  indate = convert_yyyymmdd_strdate_to_dtdate_or_none(pdate)
+  indate = convert_generic_yyyymmdd_strdate_to_dtdate_or_none(pdate)
   if indate is None:
     return None
   if max_recurse > WEEKEND_PREVIOUS_DATE_MAX_RECURSE:
@@ -344,7 +344,7 @@ def get_monthslastday_date_via_addition(pdate):
 
 
 def returns_date_or_none(pdate=None):
-  return convert_yyyymmdd_strdate_to_dtdate_or_none(pdate)
+  return convert_generic_yyyymmdd_strdate_to_dtdate_or_none(pdate)
 
 
 def returns_date_or_today(pdate=None):
@@ -612,7 +612,7 @@ def transform_date_to_other_order_fields_n_sep(pdate, tosep, targetposorder):
 
 
 def convert_yyyymmdd_strdate_to_dtdate_or_today(strdate):
-  pdate = convert_yyyymmdd_strdate_to_dtdate_or_none(strdate)
+  pdate = convert_generic_yyyymmdd_strdate_to_dtdate_or_none(strdate)
   if pdate is None:
     pdate = datetime.date.today()
   return pdate
@@ -629,15 +629,43 @@ def make_tstamp_for_filename(dtime=None):
   return strdt
 
 
-def convert_yyyymmdd_strdate_to_dtdate_or_none(strdate):
+def convert_strdate_to_date_or_none_w_sep_n_order(strdate, sep='-', order='ymd'):
+  try:
+    ppp = strdate.split(' ')
+    pp = ppp[0].split(sep)
+    year = None
+    month = None
+    day = None
+    if order == 'ymd':
+      year = int(pp[0])
+      month = int(pp[1])
+      day = int(pp[2])
+    elif order == 'dmy':
+      year = int(pp[2])
+      month = int(pp[1])
+      day = int(pp[0])
+    elif order == 'mdy':
+      year = int(pp[2])
+      month = int(pp[0])
+      day = int(pp[1])
+    return datetime.date(year=year, month=month, day=day)
+  except (IndexError, TypeError,ValueError):
+    pass
+  return None
+
+def convert_generic_yyyymmdd_strdate_to_dtdate_or_none(strdate):
   if strdate is None:
     return None
-  if str != type(strdate):
-    try:
-      _, _, _ = strdate.year, strdate.month, strdate.day
-      return strdate  # though it's not a str, it has the three attributes year, month and day
-    except AttributeError:
-      return None
+  if isinstance(strdate, datetime.date):
+    return strdate
+  if isinstance(strdate, datetime.datetime):
+    return strdate
+  try:
+    _, _, _ = strdate.year, strdate.month, strdate.day
+    return strdate  # though it's not a str, it has the three attributes year, month and day
+  except (AttributeError, TypeError):
+    pass
+  strdate = str(strdate)
   if len(strdate) < 8:
     return None
   sep = ''
@@ -678,7 +706,7 @@ def convert_date_to_mmddyyyy_str_or_none(pdate):
     return None
   indate = pdate  # copy.copy() not needed to protect side effect against pdate
   if str == type(indate):
-    indate = convert_yyyymmdd_strdate_to_dtdate_or_none(indate)
+    indate = convert_generic_yyyymmdd_strdate_to_dtdate_or_none(indate)
     if indate is None:
       return None
   mm = str(indate.month).zfill(2)
@@ -710,35 +738,167 @@ def add_or_subtract_to_month(pdate, delta):
   return pdate.replace(day=d, month=m, year=y)
 
 
-def transform_strdates_to_pydates(dates):
+def introspect_possible_month_position_in_date(strdate, sep, positions):
   """
-  This function probably exists in package-module dtfs
-  (if so, refactor this)
+  This function is not inclusive when both day and month are less than 13
+  This function should be used, issued from an 'upstream function',  with a set that has
+    at least one day (in the dates) greater than 12.
+  private function that should be called from
+    introspect_possible_year_position_in_date(strdate, sep='-')
   """
-  pydates = []
-  for eachdate in dates:
-    if eachdate.find('-') > -1:
-      pp = eachdate.split('-')
-      dateorder = 'ymd'
-    elif eachdate.find('/') > -1:
-      pp = eachdate.split('/')
-      dateorder = 'dmy'
-    else:
-      continue
-    try:
-      if dateorder == 'ymd':
-        year = int(pp[0])
-        month = int(pp[1])
-        day = int(pp[2])
-      else:
-        day = int(pp[0])
-        month = int(pp[1])
-        year = int(pp[2])
-      pydate = datetime.date(year, month, day)
-      pydates.append(pydate)
-    except (ValueError, IndexError) as _:
-      continue
-  return pydates
+  try:
+    year_pos = positions['y']
+  except (IndexError, TypeError):
+    return None
+  month_testable_pos_indices = [0, 1, 2]  # ie ymd (year month day), dmy, mdy (y is never in the middle)
+  del month_testable_pos_indices[year_pos]
+  first_test_pos = month_testable_pos_indices.pop()
+  try:
+    pp = strdate.split(sep)
+    month = int(pp[first_test_pos])
+    if month > 12:
+      # this is day!
+      last_pos =  month_testable_pos_indices.pop()
+      positions.update({'d': first_test_pos, 'm': last_pos})  # year was already set
+      return positions
+    last_test_pos = month_testable_pos_indices.pop()
+    month = int(pp[last_test_pos])
+    if month > 12:
+      # this is day!
+      positions.update({'d': last_test_pos, 'm': first_test_pos})
+      return positions  # year was already set
+  except (IndexError, ValueError):
+    pass
+  # at this point, day and month are both < 13 and that's inconclusive to where they are in datum
+  positions.update({'d': None, 'm': None})
+  return positions
+
+
+def introspect_possible_year_position_in_date(strdate, sep):
+  """
+  It's inconclusive when years are in the first 31 in A.D. (Annum Domini - After Christ)
+  """
+  positions = None  # {'y': None, 'm': None, 'd': None}
+  try:
+    pp = strdate.split(sep)
+    pos0 = int(pp[0])
+    pos2 = int(pp[2])
+    year_pos0 = False
+    year_pos2 = False
+    if pos0 > 31:
+      positions = {'y': 0}
+      year_pos0 = True
+    # year is never in the middle, look up pos2
+    if pos2 > 31:
+      positions = {'y': 2}
+      year_pos2 = True
+    if year_pos0 and year_pos2:
+      error_msg = 'Inconsistent date having two fields (first & last) greater than 31'
+      raise ValueError(error_msg)
+    elif year_pos0 or year_pos2:
+      return positions
+  except (AttributeError, IndexError, ValueError):
+    pass
+  return None
+
+
+def introspect_sep_char_in_strdate(strdate):
+  """
+  Only three separate characters are allowed conventionally in-here, they are:
+    => "-" dash, "/" (forward slash) and "." (dot)
+  """
+  if strdate is None:
+    return None
+  strdate = strdate.strip(' \t\r\n')
+  if strdate.find('-') > -1:
+    if strdate.find('/') < 0 and strdate.find('.') < 0:
+      sep = '-'
+      return sep
+  if strdate.find('/') > -1:
+    if strdate.find('-') < 0 and strdate.find('.') < 0:
+      sep = '/'
+      return sep
+  if strdate.find('.') > -1:
+    if strdate.find('-') < 0 and strdate.find('/') < 0:
+      sep = '/'
+      return sep
+  # strdate either is not a str-date or it's inconsistent
+  return None
+
+
+def convert_positiondict_to_strpositions(positiondict):
+  """
+  input: positiondict = {'y': idxY,'m': idxM,'d': idxD}
+  output expected: 'ymd' | 'dmy' |  'mdy'
+  """
+  output_expected = ['ymd', 'dmy', 'mdy']
+  try:
+    poslist = [None, None, None]
+    posy = positiondict['y']
+    poslist[posy] = 'y'
+    posm = positiondict['m']
+    poslist[posm] = 'm'
+    posd = positiondict['d']
+    poslist[posd] = 'd'
+    position_str = ''.join(poslist)
+    if position_str in output_expected:
+      return position_str
+  except (IndexError, TypeError):
+    pass
+  return None
+
+
+def introspect_n_convert_strdate_to_date_or_today(strdate, sep=None, fieldsorder=None):
+  pdate = introspect_n_convert_strdate_to_date_or_none(strdate, sep, fieldsorder)
+  if pdate is None:
+    return datetime.date.today()
+  return pdate
+
+def introspect_year_month_day_field_order_in_date(strdate, sep):
+  positiondict = introspect_possible_year_position_in_date(strdate, sep)
+  positiondict = introspect_possible_month_position_in_date(strdate, sep, positiondict)
+  positionstr = convert_positiondict_to_strpositions(positiondict)
+  return positionstr
+
+
+def introspect_n_convert_strdate_to_date_or_none(strdate, sep=None, fieldsorder=None):
+  """
+
+  """
+  if sep is None:
+    sep = introspect_sep_char_in_strdate(strdate)
+    if sep is None:
+      return None
+  positionstr = introspect_year_month_day_field_order_in_date(strdate, sep)
+  return convert_strdate_to_date_or_none_w_sep_n_order(strdate, sep, positionstr)
+
+
+def introspect_n_convert_strdatelist_to_dates(p_datelist):
+  outdatelist = []
+  firstdate = p_datelist[0]
+  if isinstance(firstdate, datetime.date):
+    # all elements are supposed to be of the same type
+    return p_datelist
+  if isinstance(firstdate, datetime.datetime):
+    # all elements are supposed to be of the same type
+    return p_datelist
+  firstdate = str(firstdate)
+  sep = introspect_sep_char_in_strdate(firstdate)
+  if sep is None:
+    error_msg = 'Separator character in dates were not found'
+    raise ValueError(error_msg)
+  positionstr = None
+  for strdate in p_datelist:
+    positionstr = introspect_year_month_day_field_order_in_date(strdate, sep)
+    if positionstr:
+      break
+  if positionstr is None:
+    error_msg = 'Field order (ymd | dmy | mdy) in dates were not found'
+    raise ValueError(error_msg)
+  for strdate in p_datelist:
+    pdate = introspect_n_convert_strdate_to_date_or_none(strdate, sep, positionstr)
+    outdatelist.append(pdate)
+  return outdatelist
 
 
 def adhoc_test3():
@@ -785,6 +945,10 @@ def adhoc_test():
   pdate = get_monthslastday_date_via_calendar('2020-7-3')
   print("get_monthslastday_date_via_calendar('2020-7-3')", pdate)
   print(make_allmonths_englishlower3letter_list())
+  strdate = '2021-10-21'
+  print(strdate, 'introspect_transform_strdate_to_date')
+  pdate = introspect_n_convert_strdate_to_date_or_none(strdate, sep=None, fieldsorder=None)
+  print('introspected/transformed', pdate)
 
 
 def process():

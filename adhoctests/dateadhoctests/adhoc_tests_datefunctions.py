@@ -33,7 +33,7 @@ def adhoc_test1():
   pdate = get_date_or_previous_monday_to_friday(departdate)
   print('departdate', departdate, ' =>', pdate)
   strdt = '2020-07-23 13:02:43.561'
-  pdate = convert_yyyymmdd_strdate_to_dtdate_or_none(strdt)
+  pdate = convert_generic_yyyymmdd_strdate_to_dtdate_or_none(strdt)
   print('pdate', pdate)
 
 

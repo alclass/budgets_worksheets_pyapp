@@ -185,11 +185,11 @@ def get_args():
       return paramdict
     elif arg.startswith('-ini='):
       strdate = arg[len('-ini='):]
-      date_ini = dtfs.convert_yyyymmdd_strdate_to_dtdate_or_none(strdate)
+      date_ini = dtfs.convert_generic_yyyymmdd_strdate_to_dtdate_or_none(strdate)
       paramdict['date_ini'] = date_ini
     elif arg.startswith('-fim='):
       strdate = arg[len('-fim='):]
-      date_fim = dtfs.convert_yyyymmdd_strdate_to_dtdate_or_none(strdate)
+      date_fim = dtfs.convert_generic_yyyymmdd_strdate_to_dtdate_or_none(strdate)
       paramdict['date_fim'] = date_fim
   return paramdict
 

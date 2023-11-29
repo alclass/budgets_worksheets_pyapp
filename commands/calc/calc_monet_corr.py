@@ -2,39 +2,52 @@
 """
 calc_monet_corr.py
 
-The underlying system or app, up til now, has used one particular form of monetary correction.
-Let us call this "particular form" the "protocol for monet corr".
+The underlying system or app, up til now, has used one particular form
+  of monetary correction. Let us call this "particular form"
+  the "protocol for monet corr".
 
 This protocol consists of multiplying two variations, ie:
-  1 the variation of one correction index (here the one used is CPI_US)
+  1 the variation of one correction index (here the one used is CPI_US series "cur")
   2 the variation of currency exchange rate (here the one used is BRL/USD)
   Other forms may be devised for this system in the future.
 
-Let's see an example: suppose one want to find the monet corr between 2023-05-15 and 2022-10-25.
+Let's see an example:
+  suppose one wants to find the monet corr between 2022-10-25 & 2023-05-15.
 
-The CPI used here is a monthly index, and it takes more than one month, in relation to a month, to be known.
-So the system searches the following indices:
+The CPI used here is a monthly index, and it takes more than one month,
+  in relation to a certain month, to be known. From this, it comes up the M-2 OR M-1
+  strategy, as shown next:
 
-for 2022-10-25, it fetches the CPI(2022-08), this is called "M-2", ie, two months before
-for 2023-05-15, it fetches the CPI(2023-03), idem, M-2
+ => for date 2022-10-25, it fetches the CPI for month 2022-08,
+  this is called "M-2", ie, because the CPI is published later than the month itself,
+  it's conventioned to be fetched two months in retard
 
-The CPI, with rare exception, is a growing series. The increase is given by:
+ => for date 2023-05-15, it fetches the CPI month 2023-03, idem, under the M-2 convention.
+
+The CPI, with rare exceptions of deflation, is a growing series, ie inflation is
+  always happened, for more or for less.
+
+The CPI variation ratio is given by:
 
  variation_1 = ( CPI(2023-03) - CPI(2022-08) ) / CPI(2022-08)
 
 The second variation, as informed above, is related to the exchange rate of currencies.
-  So the same dateadhoctests as above, we have:
+  Let's consider the BRL/USD exchange ratio variation for the two dates above:
 
  variation_2 = BRL_USD(2023-05-15) - BRL_USD(2022-10-25) / BRL_USD(2022-10-25)
 
-The final multiplier (to find the monetary corrected value) is given by
-  the composition of the two variations above, ie:
+In the second variation, there's no M-2 or M-1 convention.
+  The "indices" are taken as the available exchange rates on the dates themselves.
+
+The two variations (1 & 2) altogether compose the multiplier that represents the monet corr.
+
+This final multiplier (the monetary corrected factor) is given by
+  the composition of the two variations above, as such:
 
 monet_corr_multiplier = (1 + variation_1) * (1 + variation_2)
-
 --------------
-
-As commented above, other variations/combinations may be implemented here in the future.
+As commented above, other variations/combinations may be implemented in this system
+  in the future.
 
 """
 import datetime

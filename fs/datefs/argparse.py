@@ -9,6 +9,7 @@ import os.path
 import fs.datefs.dategenerators as hilodt
 import fs.datefs.datefunctions as dtfs
 import settings as sett
+DEFAULT_TXT_DATES_FILENAME = 'datesfile.txt'
 
 
 def get_args():
@@ -73,7 +74,7 @@ class Dispatcher:
     self.n_funcapply = 0
     self.today = datetime.date.today()
 
-  def treat_func(self, plist):
+  def treat_func(self):
     if self.func and not callable(self.func):
       error_msg = 'Func (%s) must be callable in Dispatcher' % str(self.func)
       raise RuntimeError(error_msg)
@@ -85,6 +86,9 @@ class Dispatcher:
     error_msg = "Error: Paramenter function 'func' has been given to Dispatch."
     raise ValueError(error_msg)
     """
+    # notice that dates may be string and in any one of three formats (ymd | dmy | mdy)
+    # so the following function will 'normalize' them all to datetime.date's
+    self.datelist = dtfs.introspect_n_convert_strdatelist_to_dates(self.datelist)
     self.n_funcapply += 1
     return self.func(self.datelist)
 
@@ -143,18 +147,23 @@ def fetch_dates_from_datesfile(filepath=None):
     return []
   text = open(filepath).read()
   lines = text.split('\n')
-  lines = map(lambda e: e.strip(' \t\r'), lines)
-  datelist = []
+  strdatelist = []
   for line in lines:
-    dates = map(lambda e: dtfs.make_date_or_none(e), line.split(' '))
-    dates = list(filter(lambda e: e is not None, dates))
-    datelist += dates
+    words = line.split(' ')
+    words = list(map(lambda e: e.strip('\t\r\n'), words))
+    # notice that words itself is an iterable/list, so the list-comprehension below
+    # will help pick up the elment(s) to be appended to strdatelist
+    _ = [strdatelist.append(word) for word in words]
+  # notice that dates may be in some different formats (eg "2021-01-21" or "21/1/2021")
+  # but they must all be converted to type datetime.date
+  datelist = dtfs.introspect_n_convert_strdatelist_to_dates(strdatelist)
+  datelist = sorted(filter(lambda e: e is not None, datelist))
   return sorted(datelist)
 
 
 def get_default_datesfile():
   folderpath = sett.get_datafolder_abspath()
-  filename = 'dates.txt'
+  filename = DEFAULT_TXT_DATES_FILENAME
   filepath = os.path.join(folderpath, filename)
   return filepath
 
@@ -181,7 +190,6 @@ def adhoctest():
 def process():
   """
   """
-  refdate = datetime.date.today()
   args = get_args()
   print('Dispatching', args)
   dispatcher = Dispatcher(args)
