@@ -58,8 +58,9 @@ import os
 import requests
 import time
 from prettytable import PrettyTable
-import settings
+import settings as sett
 import fs.datefs.datefunctions as dtfs
+import fs.datefs.from_to_convert_date_formats as dtconv  # .trans_strdate_from_one_format_to_another_w_sep_n_posorder
 
 url_base = 'https://olinda.bcb.gov.br/olinda/servico/PTAX/' \
            'versao/v1/odata/CotacaoDolarDia(dataCotacao=@dataCotacao)'
@@ -134,7 +135,13 @@ def call_api_bcb_cotacao_dolar_on_date(pdate, connection_error_raised=0):
     )
     return res_bcb_api
   # the API accepts a data in the format 'MM/DD/YYYY', so it needs to convert pdate to it
-  mmddyyyy = dtfs.convert_sep_or_datefields_position_for_ymdstrdate(refdate, tosep='/', targetposorder='mdy')
+  mmddyyyy = dtconv.trans_strdate_from_one_format_to_another_w_sep_n_posorder(
+    refdate, fromsep='-', tosep='/', sourceposorder=None, targetposorder='mdy')
+  if mmddyyyy is None:
+    error_msg = f"""An error occurred when trying to convert date {refdate} to a mdy sep / format,
+    ie "mm/dd/yyyy" date format (got None).  This convertion is necessary to call the
+      BCB REST API for fetching BRL/USD exchange rate date."""
+    raise ValueError(error_msg)
   url = url_base + url_quer_interpol % {'mmddyyyy': mmddyyyy}
   print('calling', url)
   try:
@@ -222,7 +229,7 @@ def pretry_print_api_list(res_bcb_api1_list):
     ])
     last_str_date = str(res_api1_nt.param_date)
   print(ptab)
-  datafolder_abspath = config.get_datafolder_abspath()
+  datafolder_abspath = sett.get_datafolder_abspath()
   filename = 'exchange_rate_monthly_quotes_' + last_str_date + '.log'
   datafile_abspath = os.path.join(datafolder_abspath, filename)
   fp = open(datafile_abspath, 'w', encoding='utf8')

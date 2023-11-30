@@ -5,10 +5,10 @@ fs/datesetc/argparse_dates.py
 """
 import argparse
 import datetime
-import os.path
 import fs.datefs.dategenerators as hilodt
 import fs.datefs.datefunctions as dtfs
-import settings as sett
+import fs.datefs.introspect_dates as intr  # intr.introspect_possible_month_position_in_date
+import fs.datefs.read_write_datelist_files as rwdt  # .fetch_dates_from_textfile_w_filepath
 DEFAULT_TXT_DATES_FILENAME = 'datesfile.txt'
 
 
@@ -88,7 +88,7 @@ class Dispatcher:
     """
     # notice that dates may be string and in any one of three formats (ymd | dmy | mdy)
     # so the following function will 'normalize' them all to datetime.date's
-    self.datelist = dtfs.introspect_n_convert_strdatelist_to_dates(self.datelist)
+    self.datelist = intr.introspect_n_convert_strdatelist_to_dates(self.datelist)
     self.n_funcapply += 1
     return self.func(self.datelist)
 
@@ -134,56 +134,17 @@ class Dispatcher:
       return self.apply()
     if self.args.filepath:
       filepath = [self.args.filepath]
-      self.datelist = fetch_dates_from_datesfile(filepath)
+      self.datelist = rwdt.fetch_dates_from_textfile_w_filepath(filepath)
       return self.apply()
     if self.args.filedefault:
-      filepath = get_default_datesfile()
-      self.datelist = fetch_dates_from_datesfile(filepath)
+      filepath = rwdt.get_default_datesfilepath()
+      self.datelist = rwdt.fetch_dates_from_textfile_w_filepath(filepath)
       return self.apply()
-
-
-def fetch_dates_from_datesfile(filepath=None):
-  if filepath is None or not os.path.isfile(filepath):
-    return []
-  text = open(filepath).read()
-  lines = text.split('\n')
-  strdatelist = []
-  for line in lines:
-    words = line.split(' ')
-    words = list(map(lambda e: e.strip('\t\r\n'), words))
-    # notice that words itself is an iterable/list, so the list-comprehension below
-    # will help pick up the elment(s) to be appended to strdatelist
-    _ = [strdatelist.append(word) for word in words]
-  # notice that dates may be in some different formats (eg "2021-01-21" or "21/1/2021")
-  # but they must all be converted to type datetime.date
-  datelist = dtfs.introspect_n_convert_strdatelist_to_dates(strdatelist)
-  datelist = sorted(filter(lambda e: e is not None, datelist))
-  return sorted(datelist)
-
-
-def get_default_datesfile():
-  folderpath = sett.get_datafolder_abspath()
-  filename = DEFAULT_TXT_DATES_FILENAME
-  filepath = os.path.join(folderpath, filename)
-  return filepath
-
-
-def get_datesfile(filepath=None):
-  if filepath is None:
-    return get_default_datesfile()
-  if filepath.find(os.sep) < 0:
-    folderpath = sett.get_datafolder_abspath()
-    filename = filepath
-    filepath = os.path.join(folderpath, filename)
-  if not os.path.isfile(filepath):
-    error_msg = 'File does not exist [%s].' % str(filepath)
-    raise OSError(error_msg)
-  return filepath
 
 
 def adhoctest():
-  filepath = get_datesfile()
-  plist = fetch_dates_from_datesfile(filepath)
+  filepath = rwdt.get_datesfilepath_from_datafolder_w_filename()
+  plist = rwdt.fetch_dates_from_textfile_w_filepath(filepath)
   print(plist)
 
 

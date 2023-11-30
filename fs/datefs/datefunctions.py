@@ -8,7 +8,6 @@ import collections as coll
 import datetime
 from dateutil.relativedelta import relativedelta
 import os
-import fs.textfs.strfs as strfs
 import settings
 WEEKEND_PREVIOUS_DATE_MAX_RECURSE = 41  # go back up to 31 days (a month) plus 10
 WEEKDAYS3LETTER = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -344,7 +343,7 @@ def get_monthslastday_date_via_addition(pdate):
 
 
 def returns_date_or_none(pdate=None):
-  return convert_generic_yyyymmdd_strdate_to_dtdate_or_none(pdate)
+  return make_date_or_none(pdate)
 
 
 def returns_date_or_today(pdate=None):
@@ -416,86 +415,8 @@ def get_daterange_asc_or_desc(pinidate, pfindate, makes_desc=False, accept_futur
   return get_daterange(inidate, findate, accept_future)
 
 
-def generate_daterange(pinidate, pfindate, accept_future=False):
-  inidate = returns_date_or_today(pinidate)
-  findate = returns_date_or_today(pfindate)
-  today = datetime.date.today()
-  if not accept_future:
-    if inidate > today >= findate:
-      inidate = today
-    elif findate > today >= inidate:
-      findate = today
-    elif inidate > today and findate > today:
-      return None
-  if inidate == findate:
-    yield inidate
-    return
-  elif inidate < findate:
-    ongoingdate = inidate
-    while ongoingdate <= findate:  # fimdate will also be included in daterange
-      yield ongoingdate
-      ongoingdate = ongoingdate + datetime.timedelta(days=1)
-  elif inidate > findate:
-    ongoingdate = inidate
-    while ongoingdate >= findate:  # fimdate will also be included in daterange
-      yield ongoingdate
-      ongoingdate = ongoingdate - datetime.timedelta(days=1)
-  return
-
-
-def get_daterange(pinidate, pfindate, accept_future=False):
-  inidate = returns_date_or_today(pinidate)
-  findate = returns_date_or_today(pfindate)
-  today = datetime.date.today()
-  if inidate > today and not accept_future:
-    inidate = today
-  if findate > today and not accept_future:
-    findate = today
-  daterange = [inidate]
-  if inidate == findate:
-    pass
-  elif inidate < findate:
-    ongoingdate = inidate
-    while ongoingdate < findate:  # fimdate will also be included in daterange
-      ongoingdate = ongoingdate + datetime.timedelta(days=1)
-      daterange.append(ongoingdate)
-  elif inidate > findate:
-    ongoingdate = inidate
-    while ongoingdate > findate:  # fimdate will also be included in daterange
-      ongoingdate = ongoingdate - datetime.timedelta(days=1)
-      daterange.append(ongoingdate)
-  return daterange
-
-
 strdate_separators = ['-', '/', '.']
 
-
-def convert_sep_or_datefields_position_for_ymdstrdate(pstrdate, tosep='-', sourceposorder='ymd', targetposorder='ymd'):
-  """
-    The input pstrdate must be in the ymd order.
-
-  :param pstrdate:
-  :param tosep:
-  :param sourceposorder:
-  :param targetposorder:
-  :return:
-  """
-  if pstrdate is None:
-    return None
-  # force it to be a str, only useful when, for example, a datetime.date is sent in, but not harmful otherwise
-  strdate = str(pstrdate)
-  sep_in_date = ''
-  for sep in strdate_separators:
-    if sep in strdate:
-      sep_in_date = sep
-      break
-  strdate = strdate.replace(sep_in_date, tosep)
-  strdate, pdate = return_strdate_in_fields_order_if_good_or_none(strdate, tosep, sourceposorder)
-  if strdate is None:
-    return None
-  if sourceposorder == targetposorder:
-    return strdate
-  return transform_date_to_other_order_fields_n_sep(pdate, tosep, targetposorder)
 
 
 def return_strdate_in_fields_order_if_good_or_none(strdate, sep, posorder):
@@ -573,7 +494,7 @@ def transform_date_to_other_order_fields_n_sep(pdate, tosep, targetposorder):
   """
     Consider this function private, ie,
     strdate should already have been tested a good strdate,
-    which is good in caller convert_sep_or_datefields_position_for_ymdstrdate()
+    which is good in caller trans_strdate_from_one_format_to_another_w_sep_n_posorder()
 
   :param pdate:
   :param tosep:
@@ -629,93 +550,6 @@ def make_tstamp_for_filename(dtime=None):
   return strdt
 
 
-def convert_strdate_to_date_or_none_w_sep_n_order(strdate, sep='-', order='ymd'):
-  try:
-    ppp = strdate.split(' ')
-    pp = ppp[0].split(sep)
-    year = None
-    month = None
-    day = None
-    if order == 'ymd':
-      year = int(pp[0])
-      month = int(pp[1])
-      day = int(pp[2])
-    elif order == 'dmy':
-      year = int(pp[2])
-      month = int(pp[1])
-      day = int(pp[0])
-    elif order == 'mdy':
-      year = int(pp[2])
-      month = int(pp[0])
-      day = int(pp[1])
-    return datetime.date(year=year, month=month, day=day)
-  except (IndexError, TypeError,ValueError):
-    pass
-  return None
-
-def convert_generic_yyyymmdd_strdate_to_dtdate_or_none(strdate):
-  if strdate is None:
-    return None
-  if isinstance(strdate, datetime.date):
-    return strdate
-  if isinstance(strdate, datetime.datetime):
-    return strdate
-  try:
-    _, _, _ = strdate.year, strdate.month, strdate.day
-    return strdate  # though it's not a str, it has the three attributes year, month and day
-  except (AttributeError, TypeError):
-    pass
-  strdate = str(strdate)
-  if len(strdate) < 8:
-    return None
-  sep = ''
-  if strdate.find('-') > -1:
-    sep = '-'
-  elif strdate.find('.') > -1:
-    sep = '.'
-  elif strdate.find('/') > -1:
-    sep = '/'
-  if sep == '':
-    stryyyy = strdate[:4]
-    strmm = strdate[4:6]
-    strdd = strdate[6:8]
-  else:
-    pp = strdate.split(sep)
-    stryyyy = pp[0]
-    strmm = pp[1]
-    strdd = strfs.pick_first_word(pp[2])
-  try:
-    yyyy = int(stryyyy)
-    mm = int(strmm)
-    dd = int(strdd)
-    return datetime.date(yyyy, mm, dd)
-  except ValueError:
-    pass
-  return None
-
-
-def convert_date_to_mmddyyyy_str_or_today(pdate):
-  pdate = convert_date_to_mmddyyyy_str_or_none(pdate)
-  if pdate is None:
-    pdate = datetime.date.today()
-  return pdate
-
-
-def convert_date_to_mmddyyyy_str_or_none(pdate):
-  if pdate is None:
-    return None
-  indate = pdate  # copy.copy() not needed to protect side effect against pdate
-  if str == type(indate):
-    indate = convert_generic_yyyymmdd_strdate_to_dtdate_or_none(indate)
-    if indate is None:
-      return None
-  mm = str(indate.month).zfill(2)
-  dd = str(indate.day).zfill(2)
-  yyyy = str(indate.year)
-  mmddyyyy = '%s-%s-%s' % (mm, dd, yyyy)
-  return mmddyyyy
-
-
 def add_or_subtract_to_month(pdate, delta):
   """
   DEPRECATED: use instead relativedelta from dateutils.relativedelta
@@ -737,168 +571,6 @@ def add_or_subtract_to_month(pdate, delta):
   d = min(pdate.day, calendar.monthrange(y, m)[1])
   return pdate.replace(day=d, month=m, year=y)
 
-
-def introspect_possible_month_position_in_date(strdate, sep, positions):
-  """
-  This function is not inclusive when both day and month are less than 13
-  This function should be used, issued from an 'upstream function',  with a set that has
-    at least one day (in the dates) greater than 12.
-  private function that should be called from
-    introspect_possible_year_position_in_date(strdate, sep='-')
-  """
-  try:
-    year_pos = positions['y']
-  except (IndexError, TypeError):
-    return None
-  month_testable_pos_indices = [0, 1, 2]  # ie ymd (year month day), dmy, mdy (y is never in the middle)
-  del month_testable_pos_indices[year_pos]
-  first_test_pos = month_testable_pos_indices.pop()
-  try:
-    pp = strdate.split(sep)
-    month = int(pp[first_test_pos])
-    if month > 12:
-      # this is day!
-      last_pos =  month_testable_pos_indices.pop()
-      positions.update({'d': first_test_pos, 'm': last_pos})  # year was already set
-      return positions
-    last_test_pos = month_testable_pos_indices.pop()
-    month = int(pp[last_test_pos])
-    if month > 12:
-      # this is day!
-      positions.update({'d': last_test_pos, 'm': first_test_pos})
-      return positions  # year was already set
-  except (IndexError, ValueError):
-    pass
-  # at this point, day and month are both < 13 and that's inconclusive to where they are in datum
-  positions.update({'d': None, 'm': None})
-  return positions
-
-
-def introspect_possible_year_position_in_date(strdate, sep):
-  """
-  It's inconclusive when years are in the first 31 in A.D. (Annum Domini - After Christ)
-  """
-  positions = None  # {'y': None, 'm': None, 'd': None}
-  try:
-    pp = strdate.split(sep)
-    pos0 = int(pp[0])
-    pos2 = int(pp[2])
-    year_pos0 = False
-    year_pos2 = False
-    if pos0 > 31:
-      positions = {'y': 0}
-      year_pos0 = True
-    # year is never in the middle, look up pos2
-    if pos2 > 31:
-      positions = {'y': 2}
-      year_pos2 = True
-    if year_pos0 and year_pos2:
-      error_msg = 'Inconsistent date having two fields (first & last) greater than 31'
-      raise ValueError(error_msg)
-    elif year_pos0 or year_pos2:
-      return positions
-  except (AttributeError, IndexError, ValueError):
-    pass
-  return None
-
-
-def introspect_sep_char_in_strdate(strdate):
-  """
-  Only three separate characters are allowed conventionally in-here, they are:
-    => "-" dash, "/" (forward slash) and "." (dot)
-  """
-  if strdate is None:
-    return None
-  strdate = strdate.strip(' \t\r\n')
-  if strdate.find('-') > -1:
-    if strdate.find('/') < 0 and strdate.find('.') < 0:
-      sep = '-'
-      return sep
-  if strdate.find('/') > -1:
-    if strdate.find('-') < 0 and strdate.find('.') < 0:
-      sep = '/'
-      return sep
-  if strdate.find('.') > -1:
-    if strdate.find('-') < 0 and strdate.find('/') < 0:
-      sep = '/'
-      return sep
-  # strdate either is not a str-date or it's inconsistent
-  return None
-
-
-def convert_positiondict_to_strpositions(positiondict):
-  """
-  input: positiondict = {'y': idxY,'m': idxM,'d': idxD}
-  output expected: 'ymd' | 'dmy' |  'mdy'
-  """
-  output_expected = ['ymd', 'dmy', 'mdy']
-  try:
-    poslist = [None, None, None]
-    posy = positiondict['y']
-    poslist[posy] = 'y'
-    posm = positiondict['m']
-    poslist[posm] = 'm'
-    posd = positiondict['d']
-    poslist[posd] = 'd'
-    position_str = ''.join(poslist)
-    if position_str in output_expected:
-      return position_str
-  except (IndexError, TypeError):
-    pass
-  return None
-
-
-def introspect_n_convert_strdate_to_date_or_today(strdate, sep=None, fieldsorder=None):
-  pdate = introspect_n_convert_strdate_to_date_or_none(strdate, sep, fieldsorder)
-  if pdate is None:
-    return datetime.date.today()
-  return pdate
-
-def introspect_year_month_day_field_order_in_date(strdate, sep):
-  positiondict = introspect_possible_year_position_in_date(strdate, sep)
-  positiondict = introspect_possible_month_position_in_date(strdate, sep, positiondict)
-  positionstr = convert_positiondict_to_strpositions(positiondict)
-  return positionstr
-
-
-def introspect_n_convert_strdate_to_date_or_none(strdate, sep=None, fieldsorder=None):
-  """
-
-  """
-  if sep is None:
-    sep = introspect_sep_char_in_strdate(strdate)
-    if sep is None:
-      return None
-  positionstr = introspect_year_month_day_field_order_in_date(strdate, sep)
-  return convert_strdate_to_date_or_none_w_sep_n_order(strdate, sep, positionstr)
-
-
-def introspect_n_convert_strdatelist_to_dates(p_datelist):
-  outdatelist = []
-  firstdate = p_datelist[0]
-  if isinstance(firstdate, datetime.date):
-    # all elements are supposed to be of the same type
-    return p_datelist
-  if isinstance(firstdate, datetime.datetime):
-    # all elements are supposed to be of the same type
-    return p_datelist
-  firstdate = str(firstdate)
-  sep = introspect_sep_char_in_strdate(firstdate)
-  if sep is None:
-    error_msg = 'Separator character in dates were not found'
-    raise ValueError(error_msg)
-  positionstr = None
-  for strdate in p_datelist:
-    positionstr = introspect_year_month_day_field_order_in_date(strdate, sep)
-    if positionstr:
-      break
-  if positionstr is None:
-    error_msg = 'Field order (ymd | dmy | mdy) in dates were not found'
-    raise ValueError(error_msg)
-  for strdate in p_datelist:
-    pdate = introspect_n_convert_strdate_to_date_or_none(strdate, sep, positionstr)
-    outdatelist.append(pdate)
-  return outdatelist
 
 
 def adhoc_test3():

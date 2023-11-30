@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-calc_monet_corr.py
+commands/calc/calc_monet_corr.py
 
 The underlying system or app, up til now, has used one particular form
   of monetary correction. Let us call this "particular form"

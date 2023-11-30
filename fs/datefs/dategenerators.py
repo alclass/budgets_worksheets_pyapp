@@ -62,6 +62,91 @@ def convert_strdatelist_to_datelist(strdatelist):
   return datelist
 
 
+
+
+def make_date_or_none(pdate):
+  """
+  input date, to output a date, must be either:
+    1 a datetime.date itself (which is returned rightaway) or
+    2 an object whose str repr has the prefix form "yyyy-mm-dd" ie, at_least_1digit_year-1or2digit_month-1or2digit_day
+  param: pdate datetime.date | string | None
+  output: datetime.date | None
+  """
+  if isinstance(pdate, datetime.date):
+    return pdate
+  try:
+    pdate = str(pdate)
+    ppp = pdate.split(' ')
+    pp = ppp[0].split('-')
+    year = int(pp[0])
+    month = int(pp[1])
+    day = int(pp[2])
+    return datetime.date(year=year, month=month, day=day)
+  except (IndexError, TypeError, ValueError):
+    pass
+  return None
+
+
+def make_date_or_today(pdate):
+  pdate = make_date_or_none(pdate)
+  if pdate is None:
+    return datetime.date.today()
+  return pdate
+
+
+def generate_daterange(p_inidate, p_findate, accept_future=False):
+  inidate = make_date_or_today(p_inidate)
+  findate = make_date_or_today(p_findate)
+  today = datetime.date.today()
+  if not accept_future:
+    if inidate > today >= findate:
+      inidate = today
+    elif findate > today >= inidate:
+      findate = today
+    elif inidate > today and findate > today:
+      return None
+  if inidate == findate:
+    yield inidate
+    return
+  elif inidate < findate:
+    ongoingdate = inidate
+    while ongoingdate <= findate:  # fimdate will also be included in daterange
+      yield ongoingdate
+      ongoingdate = ongoingdate + datetime.timedelta(days=1)
+  elif inidate > findate:
+    ongoingdate = inidate
+    while ongoingdate >= findate:  # fimdate will also be included in daterange
+      yield ongoingdate
+      ongoingdate = ongoingdate - datetime.timedelta(days=1)
+  return
+
+
+def get_daterange(pinidate, pfindate, accept_future=False):
+  inidate = returns_date_or_today(pinidate)
+  findate = returns_date_or_today(pfindate)
+  today = datetime.date.today()
+  if inidate > today and not accept_future:
+    inidate = today
+  if findate > today and not accept_future:
+    findate = today
+  daterange = [inidate]
+  if inidate == findate:
+    pass
+  elif inidate < findate:
+    ongoingdate = inidate
+    while ongoingdate < findate:  # fimdate will also be included in daterange
+      ongoingdate = ongoingdate + datetime.timedelta(days=1)
+      daterange.append(ongoingdate)
+  elif inidate > findate:
+    ongoingdate = inidate
+    while ongoingdate > findate:  # fimdate will also be included in daterange
+      ongoingdate = ongoingdate - datetime.timedelta(days=1)
+      daterange.append(ongoingdate)
+  return daterange
+
+
+
+
 def gen_decrescent_daily_dates_within(startpoint, finishpoint):
   current_date = copy.copy(startpoint)
   while current_date >= finishpoint:
