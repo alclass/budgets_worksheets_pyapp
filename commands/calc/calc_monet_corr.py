@@ -72,6 +72,8 @@ class MonetCorrCalculator:
     self._exrate_ini = None
     self._exrate_fim = None
     self._monetcorr_multiplier = None
+    self.df = None
+    self.df_dates_n_prices = None
     self.calc_monet_corr_multiplier_between_dates()
 
   def are_four_values_available(self):
@@ -183,6 +185,7 @@ class MonetCorrCalculator:
     self._monetcorr_multiplier = self.calc_monet_corr_multiplier_between_dates()
     return self._monetcorr_multiplier
 
+
   def calc_monet_corr_multiplier_between_dates(self):
     """
     """
@@ -218,11 +221,32 @@ class MonetCorrCalculator:
     return outstr
 
 
-class DoubleDateMonetCorr:
+class DatePriceRecordsMonetCorrCalculator:
   def __init__(self, refdate=None):
     self.refdate = dtfs.make_date_or_today(refdate)
     self.dictlist = []
+    self.df = None
+    self.df_dates_n_prices = None
     self.df = pd.DataFrame(columns=['dt_i',  'cpi_i', 'exr_i', 'dt_f', 'cpi_f', 'exr_f', 'mult'])
+
+  def set_dates_n_prices_ntlist(self, dates_n_prices_ntlist):
+    """
+    NT is NTDatesNPrices, fields=['date', 'price']
+    """
+    if dates_n_prices_ntlist is None or not iter(dates_n_prices_ntlist):
+      return
+    if  len(dates_n_prices_ntlist) == 0:
+      return
+    for nt in dates_n_prices_ntlist:
+      try:
+        _ = nt.date
+        _ = nt.price
+      except (AttributeError, TypeError):
+        return
+    self.df_dates_n_prices = pd.DataFrame(dates_n_prices_ntlist)
+
+  def integrate_date_price_into_df(self):
+    self.df[['date', 'price']] = self.df_dates_n_prices
 
   def calc_monetcorr_bw_date_n_ref(self, otherdate):
     """
@@ -236,7 +260,7 @@ class DoubleDateMonetCorr:
     pdict = mcc.gen_rowdict()
     self.dictlist.append(pdict)
 
-  def calc_monetcorr_bw_datelist_n_refdate(self, datelist):
+  def calc_monetcorr_w_datelist_n_refdate(self, datelist):
     """
 
     """
@@ -245,6 +269,12 @@ class DoubleDateMonetCorr:
       self.calc_monetcorr_bw_date_n_ref(pdate)
     self.df = pd.DataFrame(self.dictlist)
     print(self.df.to_string())
+
+  def update_prices(self):
+    self.calc_monetcorr_w_datelist_n_refdate()
+    self.integrate_date_price_into_df()
+    print(self.df.to_string())
+
 
 
 def adhoctest():
@@ -283,9 +313,9 @@ def process():
   """
   args = ap.get_args()
   print(args)
-  double = DoubleDateMonetCorr()
+  double = DatePriceRecordsMonetCorrCalculator()
   dispatcher = ap.Dispatcher(args)
-  dispatcher.func = double.calc_monetcorr_bw_datelist_n_refdate
+  dispatcher.func = double.calc_monetcorr_w_datelist_n_refdate
   dispatcher.dispatch()
 
 

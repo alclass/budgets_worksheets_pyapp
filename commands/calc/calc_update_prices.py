@@ -9,7 +9,7 @@ output: list (or DataFrame) with at least the updated prices
 
 """
 import datetime
-import commands.calc.calc_monet_corr as cmc  # cmc.DoubleDateMonetCorr
+import commands.calc.calc_monet_corr as cmc  # cmc.DatePriceRecordsMonetCorrCalculator
 
 
 class DatePriceList:
@@ -35,8 +35,8 @@ class DatePriceList:
     self.sort_dateprice_list()
     self.extract_dates_from_dateprice_list()
     print(self.datelist)
-    self.ddmc = cmc.DoubleDateMonetCorr(refdate=self.today)
-    self.ddmc.calc_monetcorr_bw_datelist_n_refdate(self.datelist)
+    self.ddmc = cmc.DatePriceRecordsMonetCorrCalculator(refdate=self.today)
+    self.ddmc.calc_monetcorr_w_datelist_n_refdate(self.datelist)
     self.df = self.ddmc.df
     print(self.df.to_string())
 

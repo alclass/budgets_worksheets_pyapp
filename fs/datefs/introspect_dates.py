@@ -19,6 +19,7 @@ Notice year (y) is never in the middle.
 import datetime
 import fs.datefs.datefunctions as dtfs
 STRDATE_SEPARATORS = ['-', '/', '.']
+ORDERPOS_TOKENS_AVAILABLE = ['ymd', 'ydm', 'dmy', 'mdy']
 
 
 def convert_strdate_to_date_or_none_w_sep_n_order(strdate, sep='-', order='ymd'):
@@ -159,6 +160,8 @@ def find_sep_n_posorder_from_a_strdatelist(p_datelist):
   """
   private function: only to be called from below introspect_n_convert_strdatelist_to_dates(p_datelist)
   """
+  if p_datelist is None or len(p_datelist) == 0:
+    return None, None
   firstdate = p_datelist[0]
   firstdate = str(firstdate)
   sep = introspect_sep_char_in_strdate(firstdate)
