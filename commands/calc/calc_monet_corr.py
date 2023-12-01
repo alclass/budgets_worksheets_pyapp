@@ -2,53 +2,95 @@
 """
 commands/calc/calc_monet_corr.py
 
-The underlying system or app, up til now, has used one particular form
-  of monetary correction. Let us call this "particular form"
-  the "protocol for monet corr".
+The underlying system or app, up til now, has used
+  one particular form of monetary correction. Let us
+  call this "particular form" the "protocol for monet corr".
 
 This protocol consists of multiplying two variations, ie:
-  1 the variation of one correction index (here the one used is CPI_US series "cur")
-  2 the variation of currency exchange rate (here the one used is BRL/USD)
+  1 the variation of one monetary correction index
+    (here the one used is CPI_US series "cur")
+  2 the variation in currency exchange rate
+    (here the one used is BRL/USD)
+
   Other forms may be devised for this system in the future.
 
 Let's see an example:
-  suppose one wants to find the monet corr between 2022-10-25 & 2023-05-15.
+  suppose one wants to find the monet corr between
+  dates 2022-10-25 (initial) & 2023-05-15 (final).
 
-The CPI used here is a monthly index, and it takes more than one month,
-  in relation to a certain month, to be known. From this, it comes up the M-2 OR M-1
-  strategy, as shown next:
+The M-2 (month minus 2) or M-1 Strategy
+---------------------------------------
 
- => for date 2022-10-25, it fetches the CPI for month 2022-08,
-  this is called "M-2", ie, because the CPI is published later than the month itself,
-  it's conventioned to be fetched two months in retard
+The CPI indices publication is a monthly, and it takes
+  more than one month period for a certain month's index
+  to be published in relation to itself.
+Because of this, a M-2 or M-1 strategy is used. For example:
 
- => for date 2023-05-15, it fetches the CPI month 2023-03, idem, under the M-2 convention.
+Consider a price monetary correction in-between the following
+  two dates: 2022-10-25 (initial) & 2023-05-15 (final).
 
-The CPI, with rare exceptions of deflation, is a growing series, ie inflation is
-  always happened, for more or for less.
+ => for the inital date 2022-10-25, program fetches
+    the CPI for month 2022-08; this is called "M-2" (month minus 2),
+    ie, because the CPI is published later than the month itself,
+  the convention M-2 retards both dates in 2 months.
 
-The CPI variation ratio is given by:
+ => similarly, for date 2023-05-15, program fetches
+    the CPI month 2023-03, idem, that's under the M-2 convention.
+
+Inflation versus Deflation
+--------------------------
+
+The CPI, with rare exceptions of deflation, is a growing series,
+  ie inflation tends to be the norm, for more or for less.
+
+This fact is import if one considers not using a negative
+  factor that will diminish, excepting if deflation becames
+  more common and with "more impact" in prices.
+
+The Calculation Formula
+-----------------------
+
+Obs: [TO-DO] In the future, this system may allow
+  configuring the composition of the terms for the calculation.
+
+The CPI variation ratio is given by the following 2 terms
+  (called below variations):
 
  variation_1 = ( CPI(2023-03) - CPI(2022-08) ) / CPI(2022-08)
 
-The second variation, as informed above, is related to the exchange rate of currencies.
-  Let's consider the BRL/USD exchange ratio variation for the two dates above:
+The first variation, as informed above,
+  is related to inflation, ie the loss of monetary power
+  against itself through time.
+
+The second variation, also as informed above,
+  is related to the exchange rate of currencies. Notice
+  that the premisse here is that the price under consideration
+  is somehow influenced by the foreign currency.
+  (This may or may not be the case, as said above,
+  configuration may be implemented here to give more control to
+  opting in or out of some terms or components in the calculation.)
+
+Let's consider the BRL/USD exchange ratio variation
+ for the two dates above:
 
  variation_2 = BRL_USD(2023-05-15) - BRL_USD(2022-10-25) / BRL_USD(2022-10-25)
 
 In the second variation, there's no M-2 or M-1 convention.
-  The "indices" are taken as the available exchange rates on the dates themselves.
+  The "indices" are taken as the available exchange rates
+  on the "day" dates themselves.
 
-The two variations (1 & 2) altogether compose the multiplier that represents the monet corr.
+The two variations (1 & 2) altogether compose
+  the "multiplier factor" that represents
+  the monetary correction to be applied.
 
-This final multiplier (the monetary corrected factor) is given by
+In a nutshell, this final multiplier
+  (the monetary corrected factor) is given by
   the composition of the two variations above, as such:
 
 monet_corr_multiplier = (1 + variation_1) * (1 + variation_2)
 --------------
-As commented above, other variations/combinations may be implemented in this system
-  in the future.
-
+As commented above, other variations/combinations may be
+  implemented in this system in the future.
 """
 import datetime
 import pandas as pd
@@ -185,7 +227,6 @@ class MonetCorrCalculator:
     self._monetcorr_multiplier = self.calc_monet_corr_multiplier_between_dates()
     return self._monetcorr_multiplier
 
-
   def calc_monet_corr_multiplier_between_dates(self):
     """
     """
@@ -235,7 +276,7 @@ class DatePriceRecordsMonetCorrCalculator:
     """
     if dates_n_prices_ntlist is None or not iter(dates_n_prices_ntlist):
       return
-    if  len(dates_n_prices_ntlist) == 0:
+    if len(dates_n_prices_ntlist) == 0:
       return
     for nt in dates_n_prices_ntlist:
       try:
@@ -260,11 +301,11 @@ class DatePriceRecordsMonetCorrCalculator:
     pdict = mcc.gen_rowdict()
     self.dictlist.append(pdict)
 
-  def calc_monetcorr_w_datelist_n_refdate(self, datelist):
+  def calc_monetcorr_w_datelist_n_refdate(self, strdatelist):
     """
 
     """
-    datelist = gendt.convert_strdatelist_to_datelist(datelist)
+    datelist = gendt.convert_strdatelist_to_datelist(strdatelist)
     for pdate in datelist:
       self.calc_monetcorr_bw_date_n_ref(pdate)
     self.df = pd.DataFrame(self.dictlist)
@@ -274,7 +315,6 @@ class DatePriceRecordsMonetCorrCalculator:
     self.calc_monetcorr_w_datelist_n_refdate()
     self.integrate_date_price_into_df()
     print(self.df.to_string())
-
 
 
 def adhoctest():
