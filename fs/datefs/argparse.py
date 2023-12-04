@@ -134,17 +134,17 @@ class Dispatcher:
       return self.apply()
     if self.args.filepath:
       filepath = [self.args.filepath]
-      self.datelist = rwdt.fetch_dates_from_textfile_w_filepath(filepath)
+      self.datelist = rwdt.fetch_dates_from_strdates_in_text_having_sep_from_filepath(filepath)
       return self.apply()
     if self.args.filedefault:
       filepath = rwdt.get_default_datesfilepath()
-      self.datelist = rwdt.fetch_dates_from_textfile_w_filepath(filepath)
+      self.datelist = rwdt.fetch_dates_from_strdates_in_text_having_sep_from_filepath(filepath)
       return self.apply()
 
 
 def adhoctest():
   filepath = rwdt.get_datesfilepath_from_datafolder_w_filename()
-  plist = rwdt.fetch_dates_from_textfile_w_filepath(filepath)
+  plist = rwdt.fetch_dates_from_strdates_in_text_having_sep_from_filepath(filepath)
   print(plist)
 
 

@@ -23,6 +23,22 @@ DEFAULT_DATE_SEPARATOR = '-'
 ORDERPOS_TOKENS_AVAILABLE = ['ymd', 'ydm', 'dmy', 'mdy']
 
 
+def normalize_zfill_to_0_1_or_2(zfill=0):
+  """
+  zfill may be either 0, 1 or 2
+    0 and 1 have the same effect in strdates eg yyyy-m-d
+    2 fills in a left-zero if needed eg yyyy-mm-dd
+  """
+  if isinstance(zfill, int):
+    # if it's negative, take its reciprocal (or simetrical, ie -1*n)
+    zfill = zfill if zfill > -1 else -1 * zfill
+    # any integer greater than 2 becomes 2 (its ceiling)
+    zfill = zfill if zfill < 3 else 2
+  else:  # if some variable not int came in
+    zfill = 0
+  return zfill
+
+
 def convert_strdate_to_date_or_none_w_sep_n_order(strdate, sep='-', orderpos='ymd'):
   try:
     ppp = strdate.split(' ')
@@ -52,7 +68,7 @@ def convert_strdate_to_date_or_none_w_sep_n_order(strdate, sep='-', orderpos='ym
   return None
 
 
-def convert_strdate_w_or_wo_sep_to_date_or_none(strdate):
+def introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate):
   if strdate is None:
     return None
   if isinstance(strdate, datetime.date):
@@ -83,6 +99,14 @@ def convert_strdate_w_or_wo_sep_to_date_or_none(strdate):
       # either of the 3 separators is not present, so algorithm presupposes format 'ymd'
       # (no other combination than 'ymd' is allowed in this case)
       # however, if slicing below is errand, an exception will be raised/caught and None returned at the end
+      # IMPORTANT: the to-index in slicing is not raising IndexError,
+      #   so len(strdate) must be used right at the beginning here
+      if len(strdate) != 8:
+        # though the following msg, the IndexError exception below is caught at the end of this segment,
+        # making function returns None and not crashing the run
+        error_msg = f'strdate [{strdate}] without a separator is only acceptable with 8 digits'
+        raise IndexError(error_msg)
+      # strdates without a separator are only acceptable with 8 digits
       year = int(strdate[:4])
       month = int(strdate[4:6])
       day = int(strdate[6:8])
@@ -93,26 +117,42 @@ def convert_strdate_w_or_wo_sep_to_date_or_none(strdate):
     n0 = int(pp[0])
     n1 = int(pp[1])
     n2 = int(pp[2])
+    n0 = n0 if n0 > -1 else -1 * n0
+    n1 = n1 if n1 > -1 else -1 * n1
+    n2 = n2 if n2 > -1 else -1 * n2
     year, month, day = None, None, None
     if n0 > 31:
       year = n0
-      if n2 > 12:
-        # hypothesis 1 ymd where d is > 12
+      if n2 > 12 and n1 < 13:
+        # hypothesis 1: ymd where d is > 12
         day = n2
         month = n1
-      # hypothesis 2 ydm where d is > 12
-      if n1 > 12:
+      elif n1 == n2:
+        day = n1
+        month = n1
+      # hypothesis 2: ydm where d is > 12
+      if n1 > 12 and n2 < 13:
         day = n1
         month = n2
+      elif n1 == n2 and n1 < 13:
+        day = n1
+        month = n1
     if n2 > 31:
       year = n2
-      if n0 > 12:
-        # hypothesis 3 dmy where d is > 12
+      if n0 > 12 and n1 < 13:
+        # hypothesis 3 dmy where d is > 12 & m < 13 or d=m
         day = n0
         month = n1
+      elif n0 == n1 and n0 < 13:
+        day = n0
+        month = n0
       # hypothesis 4 mdy where d is > 12
-      if n1 > 12:
+      if n1 > 12 and n0 < 13:
         day = n1
+        month = n0
+      if n0 == n1 and n0 < 13:
+        # because they are the same, it's indifferent day or month
+        day = n0
         month = n0
     if year and month and day:
       return datetime.date(year, month, day)
@@ -123,13 +163,25 @@ def convert_strdate_w_or_wo_sep_to_date_or_none(strdate):
   return None
 
 
-def convert_date_to_mmddyyyy_str_or_today_with_date_opt_sep_zfill(pdate, sep='/', zfill=None):
-  pdate = convert_date_to_mmddyyyy_str_or_none_with_date_opt_sep_zfill(pdate, sep, zfill)
-  if pdate is not None:
-    return pdate
-  # at this point, pdate is None
-  pdate = datetime.date.today()
-  return convert_date_to_mmddyyyy_str_or_none_with_date_opt_sep_zfill(pdate, sep)
+def introspect_n_convert_strdate_to_date_or_today_w_or_wo_sep_n_posorder(strdate):
+  pdate = introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
+  if pdate is None:
+    return datetime.date.today()
+  return pdate
+
+
+def convert_date_to_strmmddyyyy_or_none_opt_sep_zfill(pdate, sep='/', zfill=None):
+  target_posorder = 'mdy'
+  # strdate
+  return form_strdate_w_date_sep_posorder_opt_zfill(pdate, sep, target_posorder, zfill)
+
+
+def convert_date_to_strmmddyyyy_or_itsreprtoday_opt_sep_zfill(pdate, sep='/', zfill=0):
+  strdate = convert_date_to_strmmddyyyy_or_none_opt_sep_zfill(pdate, sep, zfill)
+  if strdate is not None:
+    return strdate
+  today = datetime.date.today()
+  return convert_date_to_strmmddyyyy_or_none_opt_sep_zfill(today, sep, zfill)
 
 
 def convert_date_to_mmddyyyy_str_or_none_with_date_opt_sep_zfill(pdate, sep='/', zfill=None):
@@ -137,8 +189,7 @@ def convert_date_to_mmddyyyy_str_or_none_with_date_opt_sep_zfill(pdate, sep='/',
     return None
   if sep is None or sep not in STRDATE_SEPARATORS:
     sep = DEFAULT_DATE_SEPARATOR
-  if zfill is None or not isinstance(zfill, int):
-    zfill = 0
+  zfill = normalize_zfill_to_0_1_or_2(zfill)
   if isinstance(pdate, datetime.date) or isinstance(pdate, datetime.datetime):
     if zfill == 0:
       mstr = str(pdate.month)
@@ -148,10 +199,20 @@ def convert_date_to_mmddyyyy_str_or_none_with_date_opt_sep_zfill(pdate, sep='/',
       dstr = str(pdate.day).zfill(zfill)
     outstrdate = f"{mstr}{sep}{dstr}{sep}{pdate.year}"
     return outstrdate
-  pdate = convert_strdate_w_or_wo_sep_to_date_or_none(pdate)
+  pdate = introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(pdate)
   if isinstance(pdate, datetime.date):
     return convert_date_to_mmddyyyy_str_or_none_with_date_opt_sep_zfill(pdate)
   return None
+
+
+def extract_datelist_from_strdatelist_considering_any_sep_n_posorder(p_strdatelist):
+  outdatelist = []
+  for strdate in p_strdatelist:
+    pdate = introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
+    if pdate is None:
+      continue
+    outdatelist.append(pdate)
+  return outdatelist
 
 
 def extract_datelist_from_strdatelist_sep_n_posorder_consistent(p_strdatelist):
@@ -164,6 +225,38 @@ def extract_datelist_from_strdatelist_sep_n_posorder_consistent(p_strdatelist):
       continue
     outdatelist.append(pdate)
   return outdatelist
+
+
+def form_strdate_w_date_sep_posorder_opt_zfill(pdate, sep='/', posorder='dmy', zfill=None):
+  try:
+    _, _, _ = int(pdate.year), int(pdate.month), int(pdate.day)
+  except (AttributeError, TypeError, ValueError):
+    return None
+  if posorder not in ORDERPOS_TOKENS_AVAILABLE:
+    return None
+  zfill = normalize_zfill_to_0_1_or_2(zfill)
+  mstr = f"{pdate.month}"
+  dstr = f"{pdate.day}"
+  if zfill > 0:
+    mstr = str(pdate.month).zfill(zfill)
+    dstr = str(pdate.day).zfill(zfill)
+  try:
+    if posorder == 'ymd':
+      strdate = f"{pdate.year}{sep}{mstr}{sep}{dstr}"
+    elif posorder == 'ydm':
+      strdate = f"{pdate.year}{sep}{dstr}{sep}{mstr}"
+    elif posorder == 'dmy':
+      strdate = f"{dstr}{sep}{mstr}{sep}{pdate.year}"
+    elif posorder == 'mdy':
+      strdate = f"{mstr}{sep}{dstr}{sep}{pdate.year}"
+    else:
+      # this error should never occur if ORDERPOS_TOKENS_AVAILABLE contains the four combinations above
+      error_msg = f"Logical Error in program: posorder {posorder} should be in set {ORDERPOS_TOKENS_AVAILABLE}"
+      raise ValueError(error_msg)
+    return strdate
+  except (AttributeError, TypeError):
+    pass
+  return None
 
 
 def introspect_n_convert_to_date_or_none_w_strdate_opt_sep_posorder(strdate, sep=None, posorder=None):
@@ -222,19 +315,37 @@ def find_sep_n_posorder_from_a_strdatelist(p_datelist):
   raise ValueError(error_msg)
 
 
-def introspect_n_convert_strdatelist_to_dates(p_datelist):
-  if p_datelist is None or len(p_datelist) == 0:
+def introspect_n_convert_sdlist_to_dates_w_or_wo_sep_n_posorder(strdatelist):
+  if strdatelist is None or len(strdatelist) == 0:
     return []
   outdatelist = []
-  firstdate = p_datelist[0]
+  firstdate = strdatelist[0]
   if isinstance(firstdate, datetime.date):
     # all elements are supposed to be of the same type
-    return p_datelist
+    return strdatelist
   if isinstance(firstdate, datetime.datetime):
     # all elements are supposed to be of the same type
-    return p_datelist
-  sep, positionstr = find_sep_n_posorder_from_a_strdatelist(p_datelist)
-  for strdate in p_datelist:
+    return strdatelist
+  sep, positionstr = find_sep_n_posorder_from_a_strdatelist(strdatelist)
+  for strdate in strdatelist:
+    pdate = introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
+    outdatelist.append(pdate)
+  return outdatelist
+
+
+def introspect_n_convert_strdatelist_to_dates(strdatelist):
+  if strdatelist is None or len(strdatelist) == 0:
+    return []
+  outdatelist = []
+  firstdate = strdatelist[0]
+  if isinstance(firstdate, datetime.date):
+    # all elements are supposed to be of the same type
+    return strdatelist
+  if isinstance(firstdate, datetime.datetime):
+    # all elements are supposed to be of the same type
+    return strdatelist
+  sep, positionstr = find_sep_n_posorder_from_a_strdatelist(strdatelist)
+  for strdate in strdatelist:
     pdate = introspect_n_convert_to_date_or_none_w_strdate_opt_sep_posorder(strdate, sep, positionstr)
     outdatelist.append(pdate)
   return outdatelist
@@ -405,13 +516,13 @@ def adhoc_test():
   print(strdate, type(strdate), 'introspect_transform_strdate_to_date')
   pdate = introspect_n_convert_to_date_or_none_w_strdate_opt_sep_posorder(strdate, sep=None, posorder=None)
   print('introspected/transformed', pdate, type(pdate))
-  pdate = convert_strdate_w_or_wo_sep_to_date_or_none(strdate)
+  pdate = introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
   print('convert_strdate_w_or_wo_sep_to_date_or_none', pdate, type(pdate))
   strdate = '20211021'
-  pdate = convert_strdate_w_or_wo_sep_to_date_or_none(strdate)
+  pdate = introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
   print(strdate, 'convert_strdate_w_or_wo_sep_to_date_or_none', pdate, type(pdate))
   strdate = '2021-1-1'  # this is ambiguos / inconclusive for day and month are both < 13
-  pdate = convert_strdate_w_or_wo_sep_to_date_or_none(strdate)
+  pdate = introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
   print(strdate, 'convert_strdate_w_or_wo_sep_to_date_or_none', pdate, type(pdate))
 
 
@@ -428,6 +539,39 @@ def adhoc_test2():
   print('filtered_strlist (conformant with sep and posorder)', filtered_list)
   datelist = extract_datelist_from_strdatelist_sep_n_posorder_consistent(strdatelist)
   print('extract_datelist_from_strdatelist_sep_n_posorder_consistent =>', datelist)
+  today = datetime.date.today()
+  sep, posorder = '/', 'dmy'
+  strdate = form_strdate_w_date_sep_posorder_opt_zfill(today, sep, posorder)
+  print(today, 'sep', sep, 'posorder', posorder, 'no-zfill, form_strdate...', strdate)
+  sep, posorder, zfill = '.', 'mdy', 2
+  strdate = form_strdate_w_date_sep_posorder_opt_zfill(today, sep, posorder, zfill)
+  print(today, 'sep', sep, 'posorder', posorder, 'zfill', zfill, 'form_strdate...', strdate)
+
+
+def adhoc_test3():
+  strdate = '2013/12/1'
+  pdate = introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
+  scrmsg = f"strdate={strdate}, date={pdate}"
+  print(scrmsg)
+  strdate = '2013.12.13'
+  pdate = introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
+  scrmsg = f"strdate={strdate}, date={pdate}"
+  print(scrmsg)
+  strdate = '20211121'
+  pdate = introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
+  scrmsg = f"strdate={strdate}, date={pdate}"
+  print(scrmsg)
+  strdate = '2021121'
+  pdate = introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
+  scrmsg = f"strdate={strdate}, date={pdate}"
+  print(scrmsg)
+  today = datetime.date.today()
+  strdate = convert_date_to_strmmddyyyy_or_none_opt_sep_zfill(today, sep='/', zfill=2)
+  scrmsg = f"mmddyyyy strdate={strdate}, date={today}"
+  print(scrmsg)
+  strdate = convert_date_to_strmmddyyyy_or_none_opt_sep_zfill(today, sep='/', zfill=-1)
+  scrmsg = f"mmddyyyy strdate={strdate}, date={today}"
+  print(scrmsg)
 
 
 def process():
@@ -441,4 +585,4 @@ if __name__ == "__main__":
   """
   process()
   """
-  adhoc_test2()
+  adhoc_test3()

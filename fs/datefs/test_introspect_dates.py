@@ -29,6 +29,7 @@ Examples:
 import datetime
 import unittest
 import fs.datefs.introspect_dates as intr  # .convert_strdate_to_date_or_none_w_sep_n_order
+import fs.datefs.introspect_dates_datamass as dmass  # .get_tuple_12strdatelist_n_corresp_date_datamass
 
 
 class Test(unittest.TestCase):
@@ -72,32 +73,32 @@ class Test(unittest.TestCase):
     # Notice that the target function does not know posorder, ie the positional order of year, month & day
     y, m, d = 2023, 4, 5
     strdate = f'{y}-{m:02}-{d:02}'
-    returned_date = intr.convert_strdate_w_or_wo_sep_to_date_or_none(strdate)
+    returned_date = intr.introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
     self.assertIsNone(returned_date)
     # t2
     # year is unconclusive with month, ie both are less than 12
     y, m, d = 12, 4, 5
     strdate = f'{y}-{m}-{d}'
-    returned_date = intr.convert_strdate_w_or_wo_sep_to_date_or_none(strdate)
+    returned_date = intr.introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
     self.assertIsNone(returned_date)
     # t3
     # both month and day are less than 13, so date is unconclusive
     y, m, d = 13, 4, 5
     strdate = f'{y}-{m}-{d}'
-    returned_date = intr.convert_strdate_w_or_wo_sep_to_date_or_none(strdate)
+    returned_date = intr.introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
     self.assertIsNone(returned_date)
     # t4
     # both month and day are less than 13, so date is unconclusive
     y, m, d = 13, 4, 13
     strdate = f'{y}-{m}-{d}'
-    returned_date = intr.convert_strdate_w_or_wo_sep_to_date_or_none(strdate)
+    returned_date = intr.introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
     self.assertIsNone(returned_date)
     # t5
     # here, differently from above, year, month & day are logically obtained, no matter it's positioning,
     # ie date is 'conclusive'
     y, m, d = 32, 4, 13
     strdate = f'{y}-{m}-{d}'
-    returned_date = intr.convert_strdate_w_or_wo_sep_to_date_or_none(strdate)
+    returned_date = intr.introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
     expected_date = datetime.date(year=y, month=m, day=d)
     self.assertEqual(returned_date, expected_date)
 
@@ -135,7 +136,7 @@ class Test(unittest.TestCase):
     # t6
     # testing function's variation that instead of returning None returns 'today'
     sep = '/'
-    returned_date = intr.convert_date_to_mmddyyyy_str_or_today_with_date_opt_sep_zfill('rubish', sep)
+    returned_date = intr.convert_date_to_strmmddyyyy_or_itsreprtoday_opt_sep_zfill('rubish', sep)
     expected_strdate = f'{self.today.month}{sep}{self.today.day}{sep}{self.today.year}'
     self.assertEqual(returned_date, expected_strdate)
 
@@ -237,3 +238,54 @@ class Test(unittest.TestCase):
     sd1_as_date = datetime.date(year=y, month=m, day=d)
     expected_datelist = [sd1_as_date]
     self.assertEqual(returned_datelist, expected_datelist)
+
+  def test_strdate_form_with_datamass(self):
+    """
+    @see module fs/datefs/introspect_dates_datamass.py
+      that produces the 12 combination strdates (with zfill=0)
+    Example = [
+      '2023-5-15', '2023/5/15', '2023.5.15',  # ymd with -, / & .
+      '2023-15-5', '2023/15/5', '2023.15.5',  # ydm with -, / & .
+      '15-5-2023', '15/5/2023', '15.5.2023',  # dmy with -, / & .
+      '5-15-2023', '5/15/2023', '5.15.2023'   # mdy with -, / & .
+    ]
+    With zfill=2, days and months are 2-digit shown, examples:
+      instead of '2023-5-15', it's formed as '2023-05-15'
+      instead of '5/15/2023', it's formed as '05/15/2023'
+    """
+    # t1
+    # the first hypothesis uses zfill = 0
+    zfill = 0
+    strdatelist, expected_date = dmass.get_testtuple_12strdatelist_n_corresp_date_datamass(zfill)
+    for strdate in strdatelist:
+      returned_date = intr.introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
+      self.assertEqual(expected_date, returned_date)
+    # t2
+    # the second hypothesis uses zfill = 2
+    zfill = 2
+    strdatelist, expected_date = dmass.get_testtuple_12strdatelist_n_corresp_date_datamass(zfill)
+    for strdate in strdatelist:
+      returned_date = intr.introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
+      self.assertEqual(expected_date, returned_date)
+
+  def test_extract_datelist_from_strdatelist_considering_any_sep_n_posorder(self):
+    # t1
+    strdatelist, datelist = dmass.get_testtuple_strdatelist_n_datelist_for_extraction_wo_sep_n_posorder()
+    for i, strdate in enumerate(strdatelist):
+      expected_date = datelist[i]
+      returned_date = intr.introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
+      self.assertEqual(expected_date, returned_date)
+    # t2
+    # this 2nd hypothesis has 'negative' strdates, ie strdates unconclusive
+    strdatelist, datelist = dmass.get_testtuple_negative_sdlist_n_dlist_f_extr_wo_sep_n_posorder()
+    for i, strdate in enumerate(strdatelist):
+      expected_date = datelist[i]
+      returned_date = intr.introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
+      self.assertEqual(expected_date, returned_date)
+    # t3
+    # this 3rd hypothesis has day-month-coincidence strdates
+    strdatelist, datelist = dmass.get_testtuple_coinc_day_month_sdlist_n_dlist_f_extr_wo_sep_n_posorder()
+    for i, strdate in enumerate(strdatelist):
+      expected_date = datelist[i]
+      returned_date = intr.introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
+      self.assertEqual(expected_date, returned_date)

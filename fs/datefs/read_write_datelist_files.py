@@ -31,9 +31,25 @@ def fetch_wordlist_from_textfile_w_filepath(filepath=None):
   return strdatelist
 
 
-def fetch_dates_from_textfile_w_filepath(filepath=None):
+def fetch_dates_from_strdates_in_text_w_or_wo_sep_from_filepath(filepath=None):
+  """
+  strdates with sep come in 12 combinations
+  strdates without a sep can only be an 8-digit stringnumber
+  """
+  strdatelist = fetch_wordlist_from_textfile_w_filepath(filepath)
+  datelist = intr.introspect_n_convert_sdlist_to_dates_w_or_wo_sep_n_posorder(strdatelist)
+  datelist = sorted(filter(lambda e: e is not None, datelist))
+  return sorted(datelist)
+
+
+def fetch_dates_from_strdates_in_text_having_sep_from_filepath(filepath=None):
+  """
+  strdates with sep come in 12 combinations
+  strdates without a sep can only be an 8-digit stringnumber
+
   # notice that dates may be in some different formats (eg "2021-01-21" or "21/1/2021")
-  # but they must all be converted to type datetime.date
+  # among these strdates, those that return as datetime.date go into datelist
+  """
   strdatelist = fetch_wordlist_from_textfile_w_filepath(filepath)
   datelist = intr.introspect_n_convert_strdatelist_to_dates(strdatelist)
   datelist = sorted(filter(lambda e: e is not None, datelist))
