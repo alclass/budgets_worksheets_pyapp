@@ -9,7 +9,7 @@ import fs.datefs.introspect_dates as intr  # intr.introspect_possible_month_posi
 def adhoc_test():
   strdate = '2021-10-21'
   print(strdate, type(strdate), 'introspect_transform_strdate_to_date')
-  pdate = intr.introspect_n_convert_strdate_to_date_or_none(strdate, sep=None, positionstr=None)
+  pdate = intr.introspect_n_convert_to_date_or_none_w_strdate_opt_sep_posorder(strdate, sep=None, positionstr=None)
   print('introspected/transformed', pdate, type(pdate))
 
 
