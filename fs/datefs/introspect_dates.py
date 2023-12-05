@@ -23,20 +23,6 @@ DEFAULT_DATE_SEPARATOR = '-'
 ORDERPOS_TOKENS_AVAILABLE = ['ymd', 'ydm', 'dmy', 'mdy']
 
 
-def normalize_zfill_to_0_1_or_2(zfill=0):
-  """
-  zfill may be either 0, 1 or 2
-    0 and 1 have the same effect in strdates eg yyyy-m-d
-    2 fills in a left-zero if needed eg yyyy-mm-dd
-  """
-  if isinstance(zfill, int):
-    # if it's negative, take its reciprocal (or simetrical, ie -1*n)
-    zfill = zfill if zfill > -1 else -1 * zfill
-    # any integer greater than 2 becomes 2 (its ceiling)
-    zfill = zfill if zfill < 3 else 2
-  else:  # if some variable not int came in
-    zfill = 0
-  return zfill
 
 
 def convert_strdate_to_date_or_none_w_sep_n_order(strdate, sep='-', orderpos='ymd'):
@@ -123,34 +109,34 @@ def introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
     year, month, day = None, None, None
     if n0 > 31:
       year = n0
-      if n2 > 12 and n1 < 13:
+      if n2 > 12:  # this if is not to date-validate but just to disambiguate month from day
         # hypothesis 1: ymd where d is > 12
         day = n2
         month = n1
-      elif n1 == n2:
+      elif n1 == n2:  # at this point (elif), only if month==day a datetime.date is consistent
         day = n1
         month = n1
       # hypothesis 2: ydm where d is > 12
-      if n1 > 12 and n2 < 13:
+      if n1 > 12:  # this if is not to date-validate but just to disambiguate month from day
         day = n1
         month = n2
-      elif n1 == n2 and n1 < 13:
+      elif n1 == n2:  # at this point (elif), only if month==day a datetime.date is consistent
         day = n1
         month = n1
     if n2 > 31:
       year = n2
-      if n0 > 12 and n1 < 13:
+      if n0 > 12:  # this if is not to date-validate but just to disambiguate month from day
         # hypothesis 3 dmy where d is > 12 & m < 13 or d=m
         day = n0
         month = n1
-      elif n0 == n1 and n0 < 13:
+      elif n0 == n1:  # at this point (elif), only if month==day a datetime.date is consistent
         day = n0
         month = n0
       # hypothesis 4 mdy where d is > 12
-      if n1 > 12 and n0 < 13:
+      if n1 > 12:  # this if is not to date-validate but just to disambiguate month from day
         day = n1
         month = n0
-      if n0 == n1 and n0 < 13:
+      if n0 == n1:  # at this point (elif), only if month==day a datetime.date is consistent
         # because they are the same, it's indifferent day or month
         day = n0
         month = n0
@@ -158,8 +144,8 @@ def introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
       return datetime.date(year, month, day)
   except (IndexError, ValueError):
     pass
-  # falling back here means either an inconsistent positioning
-  # or an ambiguity (or inconclusiveness) having both day and month < 13
+  # falling back here means either an inconsistent positioning happened
+  # or an ambiguity (or inconclusiveness) of day to month happened
   return None
 
 
@@ -184,27 +170,6 @@ def convert_date_to_strmmddyyyy_or_itsreprtoday_opt_sep_zfill(pdate, sep='/', zf
   return convert_date_to_strmmddyyyy_or_none_opt_sep_zfill(today, sep, zfill)
 
 
-def convert_date_to_mmddyyyy_str_or_none_with_date_opt_sep_zfill(pdate, sep='/', zfill=None):
-  if pdate is None:
-    return None
-  if sep is None or sep not in STRDATE_SEPARATORS:
-    sep = DEFAULT_DATE_SEPARATOR
-  zfill = normalize_zfill_to_0_1_or_2(zfill)
-  if isinstance(pdate, datetime.date) or isinstance(pdate, datetime.datetime):
-    if zfill == 0:
-      mstr = str(pdate.month)
-      dstr = str(pdate.day)
-    else:
-      mstr = str(pdate.month).zfill(zfill)
-      dstr = str(pdate.day).zfill(zfill)
-    outstrdate = f"{mstr}{sep}{dstr}{sep}{pdate.year}"
-    return outstrdate
-  pdate = introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(pdate)
-  if isinstance(pdate, datetime.date):
-    return convert_date_to_mmddyyyy_str_or_none_with_date_opt_sep_zfill(pdate)
-  return None
-
-
 def extract_datelist_from_strdatelist_considering_any_sep_n_posorder(p_strdatelist):
   outdatelist = []
   for strdate in p_strdatelist:
@@ -225,6 +190,16 @@ def extract_datelist_from_strdatelist_sep_n_posorder_consistent(p_strdatelist):
       continue
     outdatelist.append(pdate)
   return outdatelist
+
+
+def check_n_raise_if_strdatelist_has_any_nonconformant_sep_n_posorder(p_strdatelist):
+  datelist = extract_datelist_from_strdatelist_sep_n_posorder_consistent(p_strdatelist)
+  n_datelist, n_strdatelist = len(datelist), len(p_strdatelist)
+  if n_datelist != n_strdatelist:
+    error_msg = f"""Input data has one or more invalid strdates.
+    original date words = {n_strdatelist}
+    converted dates = {n_datelist}"""
+    raise ValueError(error_msg)
 
 
 def form_strdate_w_date_sep_posorder_opt_zfill(pdate, sep='/', posorder='dmy', zfill=None):
@@ -487,6 +462,27 @@ def remove_strdates_not_conforming_to_sep_n_posorder(strdatelist, sep, posorder)
       continue
     outstrdatelist.append(strdate)
   return outstrdatelist
+
+
+def normalize_zfill_to_0_1_or_2(zfill=0):
+  """
+  zfill may be either 0, 1 or 2 for it is applied to str month and day
+    0 and 1 have the same effect in strdates ie yyyy-m-d e.g. 2023-5-5
+    2 fills in a left-zero if needed ie yyyy-mm-dd e.g. 2023-05-05
+  """
+  if isinstance(zfill, int):
+    # if it's negative, take its reciprocal (or simetrical, ie -1*n)
+    zfill = zfill if zfill > -1 else -1 * zfill
+    # any integer greater than 2 becomes 2 (its ceiling)
+    zfill = zfill if zfill < 3 else 2
+  else:  # if some variable not int came in
+    try:
+      zfill = int(zfill)
+      # if zfill was cast into int and an exception was not raised, call itself (recursion) 'returning'
+      return normalize_zfill_to_0_1_or_2(zfill)
+    except (TypeError, ValueError):
+      zfill = 0
+  return zfill
 
 
 def trans_positiondict_to_strpositions(positiondict):

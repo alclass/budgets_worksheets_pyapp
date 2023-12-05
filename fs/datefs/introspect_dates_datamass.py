@@ -35,13 +35,13 @@ def get_testtuple_strdatelist_n_datelist_for_extraction_wo_sep_n_posorder():
   return strdatelist, datelist
 
 
-def get_testtuple_negative_sdlist_n_dlist_f_extr_wo_sep_n_posorder():
+def get_unconclusive_strdatelist_f_extr_wo_sep_n_posorder():
   """
-  The first one is the only that produces a date, the others produce None
+  All strdates in-here are "unconclusive", ie either day and month are ambiguous
+    or year itself is ambiguous with day
   """
   strdatelist = ['1965-5-1', '30/12/13', '2023.5.6', '2021121']
-  datelist = [None, None, None, None]
-  return strdatelist, datelist
+  return strdatelist
 
 
 def get_testtuple_coinc_day_month_sdlist_n_dlist_f_extr_wo_sep_n_posorder():

@@ -19,12 +19,12 @@ Conclusive vs unconclusive strdates:
     # in a strdate, year is 'conclusive' if above 31 (ie, it does not confuse with day)
     # in a strdate, day is 'conclusive' if above 12 (ie, it does not confuse with month)
 Examples:
-  a) unconclusive strdates
-    2023.1.3 is unconclusive, because one does not know whether digit 1 is day or month, same to 3;
-    13-1-3 is also unconclusive, because, adding to the above, one does not know whether 13 is day or year;
-  b) conclusive strdates
-    2023-1-13 is conclusive, for 2023 is greater than 31 and 13 greater than 12 (sep='-', posorder='ymd')
-    2/22/2022 is conclusive, idem as above, though different in sep & posorder (sep='/', posorder='mdy')
+    a) unconclusive strdates
+  2023.1.3 is unconclusive, because one does not know whether digit 1 is day or month, same to 3;
+  13-1-3 is also unconclusive, because, adding to the above, one does not know whether 13 is day or year;
+    b) conclusive strdates
+  2023-1-13 is conclusive, for 2023 is greater than 31 and 13 greater than 12 (sep='-', posorder='ymd'
+  2/22/2022 is conclusive, idem as above, though different in sep & posorder (sep='/', posorder='mdy'
 """
 import datetime
 import unittest
@@ -94,7 +94,15 @@ class Test(unittest.TestCase):
     returned_date = intr.introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
     self.assertIsNone(returned_date)
     # t5
-    # here, differently from above, year, month & day are logically obtained, no matter it's positioning,
+    # this hypothesis tests an exception and both day and month are less than 13
+    # ie, when both (day & month) are equal
+    y, m, d = 32, 4, 4
+    strdate = f'{y}-{m}-{d}'
+    returned_date = intr.introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
+    expected_date = datetime.date(year=y, month=m, day=d)
+    self.assertEqual(returned_date, expected_date)
+    # t6
+    # here, differently from above, year, month & day are logically obtainable, no matter it's positioning,
     # ie date is 'conclusive'
     y, m, d = 32, 4, 13
     strdate = f'{y}-{m}-{d}'
@@ -104,37 +112,37 @@ class Test(unittest.TestCase):
 
   def test_convert_date_to_mmddyyyy_str_or_none(self):
     # t1
-    # this first hypothesis used zfill = 2
+    # this hypothesis used zfill = 2
     y, m, d = 2023, 4, 5
     zfill = 2
     pdate = datetime.date(year=y, month=m, day=d)
-    returned_date = intr.convert_date_to_mmddyyyy_str_or_none_with_date_opt_sep_zfill(pdate, sep='/', zfill=zfill)
+    returned_date = intr.convert_date_to_strmmddyyyy_or_none_opt_sep_zfill(pdate, sep='/', zfill=zfill)
     expected_strdate = f'{m:02}/{d:02}/{y}'
     self.assertEqual(returned_date, expected_strdate)
     # t2
-    # this second hypothesis used zfill = 0 (next one is the same, but let it be defaulted)
+    # this hypothesis used zfill = 0 (next one is the same, but let it be defaulted)
     zfill = 0
-    returned_date = intr.convert_date_to_mmddyyyy_str_or_none_with_date_opt_sep_zfill(pdate, sep='/', zfill=zfill)
+    returned_date = intr.convert_date_to_strmmddyyyy_or_none_opt_sep_zfill(pdate, sep='/', zfill=zfill)
     expected_strdate = f'{m}/{d}/{y}'
     self.assertEqual(returned_date, expected_strdate)
     # t3
-    # same as above, but letting zfill goes in as default, ie, it's not passed into
-    returned_date = intr.convert_date_to_mmddyyyy_str_or_none_with_date_opt_sep_zfill(pdate, sep='/')
+    # same as above, but letting zfill goes in as default
+    returned_date = intr.convert_date_to_strmmddyyyy_or_none_opt_sep_zfill(pdate, sep='/')
     self.assertEqual(returned_date, expected_strdate)
     # t4
     # same as above, but changing the value of sep
     sep = '.'
-    returned_date = intr.convert_date_to_mmddyyyy_str_or_none_with_date_opt_sep_zfill(pdate, sep)
+    returned_date = intr.convert_date_to_strmmddyyyy_or_none_opt_sep_zfill(pdate, sep)
     expected_strdate = f'{m}{sep}{d}{sep}{y}'
     self.assertEqual(returned_date, expected_strdate)
     # t5
-    # something weird to get back None
+    # something weird to send in and get back None
     y, m, d = 'bla', 'foo', 'bar'
     pdate = y + m + d
-    returned_date = intr.convert_date_to_mmddyyyy_str_or_none_with_date_opt_sep_zfill(pdate)
+    returned_date = intr.convert_date_to_strmmddyyyy_or_none_opt_sep_zfill(pdate)
     self.assertIsNone(returned_date)
     # t6
-    # testing function's variation that instead of returning None returns 'today'
+    # testing an above function's variation that instead of returning None returns 'today'
     sep = '/'
     returned_date = intr.convert_date_to_strmmddyyyy_or_itsreprtoday_opt_sep_zfill('rubish', sep)
     expected_strdate = f'{self.today.month}{sep}{self.today.day}{sep}{self.today.year}'
@@ -142,7 +150,7 @@ class Test(unittest.TestCase):
 
   def test_convert_to_date_or_none_w_strdate_opt_sep_posorder(self):
     # t1
-    # this first hypothesis keeps day above 12 so that date is conclusive
+    # this hypothesis keeps day above 12 so that date is conclusive
     # ie, day and month are not unconclusive between themselves,
     # for sep and posorder are not passed into, needing to be introspected somewhere inside the code
     y, m, d = 2023, 4, 15
@@ -151,7 +159,7 @@ class Test(unittest.TestCase):
     expected_date = datetime.date(year=y, month=m, day=d)
     self.assertEqual(returned_date, expected_date)
     # t2
-    # this second hypothesis keeps day below 13, making date unconclusive, and then
+    # this hypothesis keeps day below 13, making date unconclusive, and then
     # expecting None
     y, m, d = 2023, 4, 5
     strdate = f'{y}-{m}-{d}'
@@ -159,7 +167,7 @@ class Test(unittest.TestCase):
     self.assertIsNone(returned_date)
     # t3
     # this third hypothesis is like the one above but passes in sep and posorder
-    # expecting None
+    # expecting not None but a valid date
     y, m, d = 2023, 4, 5
     strdate = f'{y}-{m}-{d}'
     sep, posorder = '-', 'ymd'
@@ -167,7 +175,8 @@ class Test(unittest.TestCase):
     expected_date = datetime.date(year=y, month=m, day=d)
     self.assertEqual(returned_date, expected_date)
     # t4
-    # this fourth hypothesis uses a function variation that returns today instead of None
+    # though sending in 'rubish', this hypothesis uses a function variation
+    # that returns today instead of None
     rubbish_to_pass_in = 'bla bla'
     returned_date = intr.introspect_n_convert_strdate_to_date_or_today(rubbish_to_pass_in)
     expected_date = self.today
@@ -191,14 +200,18 @@ class Test(unittest.TestCase):
           def test_raise_if_negative(self):
               with self.assertRaises(ValueError):
                   raise_if_negative(-1)
+
+    # recapitulating:
+    # year is 'conclusive' if above 31 (ie, it does not confuse with day)
+    # day is 'conclusive' if above 12 (ie, it does not confuse with month,
+    # excepting when day and month are equal)
+    # if year and day are 'conclusive', date altogether is 'conclusive'
+    # date validation itself is done at construction time (datetime.date())
     """
     # t1
-    # this first hypothesis shows input data having only the last item ['2023-04-14']
+    # this hypothesis shows input data having only the last item ['2023-04-14']
     # as conclusive, for posorder, which also shows that the target function
     # is able to find it having at least this one conclusive year-month-day combination
-    # year is 'conclusive' if above 31 (ie, it does not confuse with day)
-    # day is 'conclusive' if above 12 (ie, it does not confuse with month)
-    # if year and day are 'conclusive', date altogether is 'conclusive'
     sd1, sd2, sd3 = ('2023-05-04', '2023-03-04', '2023-04-14')
     strdatelist = [sd1, sd2, sd3]
     expected_sep = '-'
@@ -206,16 +219,16 @@ class Test(unittest.TestCase):
     sep, posorder = intr.find_sep_n_posorder_from_a_strdatelist(strdatelist)
     self.assertEqual((sep, posorder), (expected_sep, expected_posorder))
     # t2
-    # this second hypothesis shows all input dates as unconclusive between month and day
+    # this hypothesis shows all input dates as unconclusive between month and day,
     # so it expects a ValueError exception raised
     sd1, sd2, sd3 = ('2023-05-04', '2023-03-04', '2023-2-4')
     strdatelist = [sd1, sd2, sd3]
     self.assertRaises(ValueError, intr.find_sep_n_posorder_from_a_strdatelist, strdatelist)
     # t3
-    # this third hypothesis is somewhat an odd case, because the introspection
-    # picks up the very first possible sep and posorder
-    # and (purposely) does not check every element in the list thereafter
-    # @see below: this is resolved with extract_datelist_from_strdatelist_sep_n_posorder_consistent()
+    # this hypothesis concerns an internal rule on the introspection devised here-in
+    # which picks up the very first possible sep and posorder found when looping through the list;
+    # this particular function does not check the whole consistency; other functions do it;
+    # e.g. @see below: function extract_datelist_from_strdatelist_sep_n_posorder_consistent()
     sd1, sd2, sd3 = ('2023.14.05', '2023/03-04', 'bla foo bar')  # only the first one is good
     strdatelist = [sd1, sd2, sd3]
     expected_sep = '.'
@@ -223,15 +236,15 @@ class Test(unittest.TestCase):
     sep, posorder = intr.find_sep_n_posorder_from_a_strdatelist(strdatelist)
     self.assertEqual((sep, posorder), (expected_sep, expected_posorder))
     # t4
-    # this fouth hypothesis expands on the one above with removing non-conforming strdates
+    # this hypothesis expands on the one above with removing non-conforming strdates
     # to sep and posorder found
     returned_strlist = intr.remove_strdates_not_conforming_to_sep_n_posorder(strdatelist, sep, posorder)
     expected_strlist = [sd1]  # only the first one is good
     self.assertEqual(returned_strlist, expected_strlist)
     # t5
-    # this fifth hypothesis compounds the former two, ie it gets a datelist that
+    # this hypothesis compounds the former two, ie it gets a datelist that
     # is consistent within sep and posorder
-    # notice that strdatelist above has inconsistent items in terms of sep and posorder
+    # notice that strdatelist above has only one onsistent item in terms of sep and posorder
     returned_datelist = intr.extract_datelist_from_strdatelist_sep_n_posorder_consistent(strdatelist)
     y, d, m = tuple(sd1.split('.'))  # pay attention to posorder, ie ydm from '2023.14.05'
     y, m, d = int(y), int(m), int(d)
@@ -244,46 +257,68 @@ class Test(unittest.TestCase):
     @see module fs/datefs/introspect_dates_datamass.py
       that produces the 12 combination strdates (with zfill=0)
     Example = [
-      '2023-5-15', '2023/5/15', '2023.5.15',  # ymd with -, / & .
-      '2023-15-5', '2023/15/5', '2023.15.5',  # ydm with -, / & .
-      '15-5-2023', '15/5/2023', '15.5.2023',  # dmy with -, / & .
-      '5-15-2023', '5/15/2023', '5.15.2023'   # mdy with -, / & .
+      '2023-5-15', '2023/5/15', '2023.5.15',  # ymd with -, / & '.'
+      '2023-15-5', '2023/15/5', '2023.15.5',  # ydm with -, / & '.'
+      '15-5-2023', '15/5/2023', '15.5.2023',  # dmy with -, / & '.'
+      '5-15-2023', '5/15/2023', '5.15.2023'   # mdy with -, / & '.'
     ]
     With zfill=2, days and months are 2-digit shown, examples:
       instead of '2023-5-15', it's formed as '2023-05-15'
-      instead of '5/15/2023', it's formed as '05/15/2023'
+      instead of '5/15/2023', it's formed as '05/15/2023
     """
     # t1
-    # the first hypothesis uses zfill = 0
+    # this first hypothesis uses zfill = 0
     zfill = 0
     strdatelist, expected_date = dmass.get_testtuple_12strdatelist_n_corresp_date_datamass(zfill)
     for strdate in strdatelist:
       returned_date = intr.introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
       self.assertEqual(expected_date, returned_date)
     # t2
-    # the second hypothesis uses zfill = 2
+    # this hypothesis uses zfill = 2
     zfill = 2
     strdatelist, expected_date = dmass.get_testtuple_12strdatelist_n_corresp_date_datamass(zfill)
     for strdate in strdatelist:
       returned_date = intr.introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
       self.assertEqual(expected_date, returned_date)
+    # t3
+    # this hypothesis uses zfill = -500 (which will be normalized to 2)
+    zfill = -500
+    strdatelist, expected_date = dmass.get_testtuple_12strdatelist_n_corresp_date_datamass(zfill)
+    for strdate in strdatelist:
+      returned_date = intr.introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
+      self.assertEqual(expected_date, returned_date)
+    returned_zfill = intr.normalize_zfill_to_0_1_or_2(zfill)
+    expected_zfill = 2
+    # t4
+    # this hypothesis tests zfill separately, ie if zfill = -500, it's normalized to 2
+    self.assertEqual(expected_zfill, returned_zfill)
 
   def test_extract_datelist_from_strdatelist_considering_any_sep_n_posorder(self):
     # t1
+    # this hypothesis tests a strdatelist against its one-by-one convertion datelist
+    # both strdatelist & datelist are prepared in module 'dmass'
     strdatelist, datelist = dmass.get_testtuple_strdatelist_n_datelist_for_extraction_wo_sep_n_posorder()
     for i, strdate in enumerate(strdatelist):
       expected_date = datelist[i]
       returned_date = intr.introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
       self.assertEqual(expected_date, returned_date)
     # t2
-    # this 2nd hypothesis has 'negative' strdates, ie strdates unconclusive
-    strdatelist, datelist = dmass.get_testtuple_negative_sdlist_n_dlist_f_extr_wo_sep_n_posorder()
+    # this hypothesis tests ValueError exception due to different sizes
+    # between datelist & strdatelist
+    self.assertRaises(ValueError, intr.check_n_raise_if_strdatelist_has_any_nonconformant_sep_n_posorder, strdatelist)
+    # t3
+    # this hypothesis has 'negative' strdates,
+    # ie all strdates are unconclusive (expected_dates must all be None's)
+    strdatelist = dmass.get_unconclusive_strdatelist_f_extr_wo_sep_n_posorder()
+    datelist = [None]*len(strdatelist)
     for i, strdate in enumerate(strdatelist):
       expected_date = datelist[i]
       returned_date = intr.introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
       self.assertEqual(expected_date, returned_date)
-    # t3
-    # this 3rd hypothesis has day-month-coincidence strdates
+    # t4
+    # this hypothesis has day-month-coincidence strdates
+    # e.g. 2023-1-1 is consistent for it is indifferent in relation to day & month
+    # the rule is day and month should have day about 12 but when both are equal, resulting date is consistent;
     strdatelist, datelist = dmass.get_testtuple_coinc_day_month_sdlist_n_dlist_f_extr_wo_sep_n_posorder()
     for i, strdate in enumerate(strdatelist):
       expected_date = datelist[i]
