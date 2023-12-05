@@ -45,7 +45,8 @@ def fetch_cotacao_in_db_for_date_or_none(pdate):
     logger.info(log_msg)
     # print(log_msg)
     res_bcb_api1 = apis.namedtuple_bcb_api1(
-      cotacao_compra=db_found_exch.buyquote, cotacao_venda=db_found_exch.sellquote, cotacao_datahora=db_found_exch.quotesdatetime,
+      cotacao_compra=db_found_exch.buyquote, cotacao_venda=db_found_exch.sellquote,
+      cotacao_datahora=db_found_exch.quotesdatetime,
       param_date=db_found_exch.quotesdate, error_msg=None, gen_msg='Fetched from db',
       exchanger=db_found_exch
     )
@@ -105,7 +106,8 @@ def retrieve_cotacao_from_db_or_move_on_to_call_the_api(pdate, recurse_pass):
     logger.info(log_msg)
     # print(log_msg)
     res_bcb_api1 = apis.namedtuple_bcb_api1(
-      cotacao_compra=db_found_exch.buyquote, cotacao_venda=db_found_exch.sellquote, cotacao_datahora=db_found_exch.quotesdatetime,
+      cotacao_compra=db_found_exch.buyquote, cotacao_venda=db_found_exch.sellquote,
+      cotacao_datahora=db_found_exch.quotesdatetime,
       param_date=db_found_exch.quotesdate, error_msg=None, gen_msg='Fetched from db',
       exchanger=db_found_exch
     )
@@ -129,7 +131,7 @@ def fetch_cotacao_thru_the_api_for_its_not_in_db(indate):
     # 'next' function will return an 'error' namedtuple
     return logfs.log_error_namedtuple(res_bcb_api1)
   # at this point, the API call has something
-  return put_cotacao_into_db_n_return_namedtuple()
+  return put_cotacao_into_db_n_return_namedtuple(res_bcb_api1, indate)
 
 
 def put_cotacao_into_db_n_return_namedtuple(namedtuple_res_bcb_api1, pdate):

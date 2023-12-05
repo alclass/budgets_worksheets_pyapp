@@ -2,6 +2,7 @@
 """
 dategenerators.py
   contains generator functions for dateadhoctests.
+
 Example of one such functions:
   => gen_dates_for_last_month()
   A generator function that returns all day-dateadhoctests for last month
@@ -121,9 +122,9 @@ def generate_daterange(p_inidate, p_findate, accept_future=False):
   return
 
 
-def get_daterange(pinidate, pfindate, accept_future=False):
-  inidate = returns_date_or_today(pinidate)
-  findate = returns_date_or_today(pfindate)
+def get_daterange(p_inidate, p_findate, accept_future=False):
+  inidate = make_date_or_none(p_inidate)
+  findate = make_date_or_none(p_findate)
   today = datetime.date.today()
   if inidate > today and not accept_future:
     inidate = today

@@ -60,7 +60,7 @@ import time
 from prettytable import PrettyTable
 import settings as sett
 import fs.datefs.datefunctions as dtfs
-import fs.datefs.from_to_convert_date_formats as dtconv  # .trans_strdate_from_one_format_to_another_w_sep_n_posorder
+import fs.datefs.introspect_dates as dtconv  # .trans_strdate_from_one_format_to_another_w_sep_n_posorder
 
 url_base = 'https://olinda.bcb.gov.br/olinda/servico/PTAX/' \
            'versao/v1/odata/CotacaoDolarDia(dataCotacao=@dataCotacao)'
@@ -68,8 +68,10 @@ url_quer_interpol = "?@dataCotacao='%(mmddyyyy)s'&$top=100&$format=json"
 
 API_CALL_COTACAO_MAX_PREVIOUS_DAY_TRIES = 8
 
-namedtuple_bcb_api1 = coll.namedtuple('BCBAPI1DataStr',
-                              'cotacao_compra cotacao_venda cotacao_datahora param_date error_msg gen_msg exchanger')
+namedtuple_bcb_api1 = coll.namedtuple(
+  'BCBAPI1DataStr',
+  'cotacao_compra cotacao_venda cotacao_datahora param_date error_msg gen_msg exchanger'
+)
 # 1) cotacao_compra is cotacaoCompra, 2) cotacao_venda is cotacaoVenda &  3) cotacao_datahora is dataHoraCotacao
 
 
@@ -92,10 +94,10 @@ def call_api_bcb_cotacao_dolar_on_date(pdate, connection_error_raised=0):
   https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/CotacaoDolarDia(dataCotacao=@dataCotacao)
     ?@dataCotacao='07-23-2020'&$top=100&$format=json
   The JsonToDict Result, for the URL above, is:
-{
-  '@odata.context': 'https://was-p.bcnet.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata$metadata#_CotacaoDolarDia',
-  'value':[{'cotacaoCompra': 5.1641, 'cotacaoVenda': 5.1647, 'dataHoraCotacao': '2020-07-23 13:02:43.561'}]
-}
+  '{'
+    '@odata.context': 'https://was-p.bcnet.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata$metadata#_CotacaoDolarDia',
+    'value':[{'cotacaoCompra': 5.1641, 'cotacaoVenda': 5.1647, 'dataHoraCotacao': '2020-07-23 13:02:43.561'}]
+  }
 
 * Notice:
   when there's no currency exchange quote data, server answers 'value' as [], ie, the empty list,
@@ -136,7 +138,7 @@ def call_api_bcb_cotacao_dolar_on_date(pdate, connection_error_raised=0):
     return res_bcb_api
   # the API accepts a data in the format 'MM/DD/YYYY', so it needs to convert pdate to it
   mmddyyyy = dtconv.trans_strdate_from_one_format_to_another_w_sep_n_posorder(
-    refdate, fromsep='-', tosep='/', sourceposorder=None, targetposorder='mdy')
+    refdate, fromsep=None, tosep='/', sourceposorder=None, targetposorder='mdy')
   if mmddyyyy is None:
     error_msg = f"""An error occurred when trying to convert date {refdate} to a mdy sep / format,
     ie "mm/dd/yyyy" date format (got None).  This convertion is necessary to call the
@@ -182,7 +184,7 @@ def call_api_bcb_cotacao_dolar_on_date(pdate, connection_error_raised=0):
     )
     return res_bcb_api
   if len(valuedict) == 0:
-    # maybe this case never happens and it's the above case when holidays or weekend days happen
+    # maybe this case never happens, and it's the above case when holidays or weekend days happen
     datatime_cotacao = dtfs.convert_date_to_datetime_or_none(refdate)
     res_bcb_api = namedtuple_bcb_api1(
       cotacao_compra=None, cotacao_venda=None, cotacao_datahora=datatime_cotacao,
@@ -207,7 +209,8 @@ def call_api_bcb_cotacao_dolar_on_date(pdate, connection_error_raised=0):
 
 def pretry_print_api_list(res_bcb_api1_list):
   """
-  namedtuple_bcb_api1 = coll.namedtuple('BCBAPI1DataStr', 'cotacao_compra cotacao_venda cotacao_datahora param_date error_msg')
+  namedtuple_bcb_api1 =
+    coll.namedtuple('BCBAPI1DataStr', 'cotacao_compra cotacao_venda cotacao_datahora param_date error_msg')
 
   :param res_bcb_api1_list:
   :return:

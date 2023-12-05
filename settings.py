@@ -13,7 +13,6 @@ DATESDATA_FILENAME_DEFAULT = 'datesfile.dat'
 NONDEFAULT_DATA_FOLDERPATH = None  # may be changed in local_settings.py; if None, default will be used
 DATA_FOLDERNAME = 'dados'  # may be overridden by its counterpart in local_settings.py
 SQLITE_FILENAME_DEFAULT = 'exchange_n_indices.sqlite'
-
 try:
   import local_settings as ls
   NONDEFAULT_DATA_FOLDERPATH = os.path.abspath(ls.DATA_FOLDERPATH)

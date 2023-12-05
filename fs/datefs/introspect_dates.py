@@ -23,9 +23,21 @@ DEFAULT_DATE_SEPARATOR = '-'
 ORDERPOS_TOKENS_AVAILABLE = ['ymd', 'ydm', 'dmy', 'mdy']
 
 
+def convert_date_to_strmmddyyyy_or_none_opt_sep_zfill(pdate, sep='/', zfill=None):
+  target_posorder = 'mdy'
+  # strdate
+  return form_strdate_w_date_sep_posorder_opt_zfill(pdate, sep, target_posorder, zfill)
 
 
-def convert_strdate_to_date_or_none_w_sep_n_order(strdate, sep='-', orderpos='ymd'):
+def convert_date_to_strmmddyyyy_or_itsreprtoday_opt_sep_zfill(pdate, sep='/', zfill=0):
+  strdate = convert_date_to_strmmddyyyy_or_none_opt_sep_zfill(pdate, sep, zfill)
+  if strdate is not None:
+    return strdate
+  today = datetime.date.today()
+  return convert_date_to_strmmddyyyy_or_none_opt_sep_zfill(today, sep, zfill)
+
+
+def convert_strdate_to_date_or_none_w_sep_n_posorder(strdate, sep='-', orderpos='ymd'):
   try:
     ppp = strdate.split(' ')
     pp = ppp[0].split(sep)
@@ -52,6 +64,156 @@ def convert_strdate_to_date_or_none_w_sep_n_order(strdate, sep='-', orderpos='ym
   except (IndexError, TypeError, ValueError):
     pass
   return None
+
+
+def convert_strdate_to_date_or_none_wo_sep_n_fieldorder(strdate):
+  return introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
+
+
+def trans_from_date_to_strdate_w_sep_posorder_n_zfill(pdate, sep='-', posorder='ymd', zfill=0):
+  zfill = normalize_zfill_to_0_1_or_2(zfill)
+  try:
+    y = f"{pdate.year}"
+    m = f"{pdate.month}"
+    d = f"{pdate.day}"
+    if zfill == 2:
+      m = str(pdate.month).zfill(zfill)
+      d = str(pdate.day).zfill(zfill)
+    if sep not in STRDATE_SEPARATORS:
+      return None
+    if posorder == 'ymd':
+     return y + sep + m + sep + d
+    elif posorder == 'ydm':
+      return y + sep + d + sep + m
+    elif posorder == 'dmy':
+      return d + sep + m + sep + y
+    elif posorder == 'mdy':
+      return m + sep + d + sep + y
+  except (AttributeError, TypeError, ValueError):
+    pass
+  # fallback to returning None means that posorder is not one of the four available
+  # [ymd, ydm,dmy, mdy] or an except was caught due to pdate not implementing year, month, and day as int
+  return None
+
+
+def trans_strdate_from_one_format_to_another_w_sep_n_posorder(
+   strdate: any,
+   fromsep='-', sourceposorder='ymd',
+   tosep='/', targetposorder='mdy', zfill=0
+):
+  """
+    The incoming strdate is transformed into date and then 'formatted'
+      to the output specified.
+
+  :param strdate:
+  :param fromsep:
+  :param tosep:
+  :param sourceposorder:
+  :param targetposorder:
+  :param zfill:
+  :return: str | None
+  """
+  if strdate is None:
+    return None
+  if isinstance(strdate, datetime.date):
+    # if it's type is datetime.date, fromsep is ignored
+    return trans_from_date_to_strdate_w_sep_posorder_n_zfill(strdate, tosep, targetposorder, zfill)
+  # before go to str, try attributes
+  pdate = convert_strdate_to_date_or_none_w_sep_n_posorder(strdate, fromsep, sourceposorder)
+  if pdate is None:
+    return None
+  return trans_from_date_to_strdate_w_sep_posorder_n_zfill(pdate, tosep, targetposorder, zfill)
+
+
+def extract_datelist_from_strdatelist_considering_any_sep_n_posorder(p_strdatelist):
+  outdatelist = []
+  for strdate in p_strdatelist:
+    pdate = introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
+    if pdate is None:
+      continue
+    outdatelist.append(pdate)
+  return outdatelist
+
+
+def extract_datelist_from_strdatelist_w_sep_n_posorder(strdatelist, sep, posorder):
+  outdatelist = []
+  for strdate in strdatelist:
+    pdate = convert_strdate_to_date_or_none_w_sep_n_posorder(strdate, sep, posorder)
+    if pdate is None:
+      continue
+    outdatelist.append(pdate)
+  return outdatelist
+
+
+def extract_datelist_from_strdatelist_sep_n_posorder_consistent(strdatelist):
+  sep, posorder = find_sep_n_posorder_from_a_strdatelist(strdatelist)
+  return extract_datelist_from_strdatelist_w_sep_n_posorder(strdatelist, sep, posorder)
+
+
+def check_n_raise_if_strdatelist_has_any_nonconformant_sep_n_posorder(p_strdatelist):
+  datelist = extract_datelist_from_strdatelist_sep_n_posorder_consistent(p_strdatelist)
+  n_datelist, n_strdatelist = len(datelist), len(p_strdatelist)
+  if n_datelist != n_strdatelist:
+    error_msg = f"""Input data has one or more invalid strdates.
+    original date words = {n_strdatelist}
+    converted dates = {n_datelist}"""
+    raise ValueError(error_msg)
+
+
+def form_strdate_w_date_sep_posorder_opt_zfill(pdate, sep='/', posorder='dmy', zfill=None):
+  try:
+    _, _, _ = int(pdate.year), int(pdate.month), int(pdate.day)
+  except (AttributeError, TypeError, ValueError):
+    return None
+  if posorder not in ORDERPOS_TOKENS_AVAILABLE:
+    return None
+  zfill = normalize_zfill_to_0_1_or_2(zfill)
+  mstr = f"{pdate.month}"
+  dstr = f"{pdate.day}"
+  if zfill > 0:
+    mstr = str(pdate.month).zfill(zfill)
+    dstr = str(pdate.day).zfill(zfill)
+  try:
+    if posorder == 'ymd':
+      strdate = f"{pdate.year}{sep}{mstr}{sep}{dstr}"
+    elif posorder == 'ydm':
+      strdate = f"{pdate.year}{sep}{dstr}{sep}{mstr}"
+    elif posorder == 'dmy':
+      strdate = f"{dstr}{sep}{mstr}{sep}{pdate.year}"
+    elif posorder == 'mdy':
+      strdate = f"{mstr}{sep}{dstr}{sep}{pdate.year}"
+    else:
+      # this error should never occur if ORDERPOS_TOKENS_AVAILABLE contains the four combinations above
+      error_msg = f"Logical Error in program: posorder {posorder} should be in set {ORDERPOS_TOKENS_AVAILABLE}"
+      raise ValueError(error_msg)
+    return strdate
+  except (AttributeError, TypeError):
+    pass
+  return None
+
+
+def introspect_n_convert_to_date_or_none_w_strdate_opt_sep_posorder(strdate, sep=None, posorder=None):
+  """
+  This function tries to convert a strdate to a date.
+  If the strdate does not have one of the allowed separators ['-', '/', '.'], it returns None.
+  @see function above that can treat the no-separator case.
+  """
+  if sep is None:
+    sep = introspect_sep_char_in_strdate(strdate)
+    if sep is None:
+      return None
+  if posorder is None:
+    posorder = introspect_year_month_day_field_order_in_date(strdate, sep)
+  return convert_strdate_to_date_or_none_w_sep_n_posorder(strdate, sep, posorder)
+
+
+def introspect_n_convert_strdate_to_date_or_today(strdate, sep=None, posorder=None):
+  try:
+    pdate = introspect_n_convert_to_date_or_none_w_strdate_opt_sep_posorder(strdate, sep, posorder)
+    return pdate
+  except (TypeError, ValueError):
+    pass
+  return datetime.date.today()
 
 
 def introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate):
@@ -156,108 +318,6 @@ def introspect_n_convert_strdate_to_date_or_today_w_or_wo_sep_n_posorder(strdate
   return pdate
 
 
-def convert_date_to_strmmddyyyy_or_none_opt_sep_zfill(pdate, sep='/', zfill=None):
-  target_posorder = 'mdy'
-  # strdate
-  return form_strdate_w_date_sep_posorder_opt_zfill(pdate, sep, target_posorder, zfill)
-
-
-def convert_date_to_strmmddyyyy_or_itsreprtoday_opt_sep_zfill(pdate, sep='/', zfill=0):
-  strdate = convert_date_to_strmmddyyyy_or_none_opt_sep_zfill(pdate, sep, zfill)
-  if strdate is not None:
-    return strdate
-  today = datetime.date.today()
-  return convert_date_to_strmmddyyyy_or_none_opt_sep_zfill(today, sep, zfill)
-
-
-def extract_datelist_from_strdatelist_considering_any_sep_n_posorder(p_strdatelist):
-  outdatelist = []
-  for strdate in p_strdatelist:
-    pdate = introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
-    if pdate is None:
-      continue
-    outdatelist.append(pdate)
-  return outdatelist
-
-
-def extract_datelist_from_strdatelist_sep_n_posorder_consistent(p_strdatelist):
-  sep, posorder = find_sep_n_posorder_from_a_strdatelist(p_strdatelist)
-  # strdatelist = remove_strdates_not_conforming_to_sep_n_posorder(p_strdatelist, sep, posorder)
-  outdatelist = []
-  for strdate in p_strdatelist:
-    pdate = convert_strdate_to_date_or_none_w_sep_n_order(strdate, sep, posorder)
-    if pdate is None:
-      continue
-    outdatelist.append(pdate)
-  return outdatelist
-
-
-def check_n_raise_if_strdatelist_has_any_nonconformant_sep_n_posorder(p_strdatelist):
-  datelist = extract_datelist_from_strdatelist_sep_n_posorder_consistent(p_strdatelist)
-  n_datelist, n_strdatelist = len(datelist), len(p_strdatelist)
-  if n_datelist != n_strdatelist:
-    error_msg = f"""Input data has one or more invalid strdates.
-    original date words = {n_strdatelist}
-    converted dates = {n_datelist}"""
-    raise ValueError(error_msg)
-
-
-def form_strdate_w_date_sep_posorder_opt_zfill(pdate, sep='/', posorder='dmy', zfill=None):
-  try:
-    _, _, _ = int(pdate.year), int(pdate.month), int(pdate.day)
-  except (AttributeError, TypeError, ValueError):
-    return None
-  if posorder not in ORDERPOS_TOKENS_AVAILABLE:
-    return None
-  zfill = normalize_zfill_to_0_1_or_2(zfill)
-  mstr = f"{pdate.month}"
-  dstr = f"{pdate.day}"
-  if zfill > 0:
-    mstr = str(pdate.month).zfill(zfill)
-    dstr = str(pdate.day).zfill(zfill)
-  try:
-    if posorder == 'ymd':
-      strdate = f"{pdate.year}{sep}{mstr}{sep}{dstr}"
-    elif posorder == 'ydm':
-      strdate = f"{pdate.year}{sep}{dstr}{sep}{mstr}"
-    elif posorder == 'dmy':
-      strdate = f"{dstr}{sep}{mstr}{sep}{pdate.year}"
-    elif posorder == 'mdy':
-      strdate = f"{mstr}{sep}{dstr}{sep}{pdate.year}"
-    else:
-      # this error should never occur if ORDERPOS_TOKENS_AVAILABLE contains the four combinations above
-      error_msg = f"Logical Error in program: posorder {posorder} should be in set {ORDERPOS_TOKENS_AVAILABLE}"
-      raise ValueError(error_msg)
-    return strdate
-  except (AttributeError, TypeError):
-    pass
-  return None
-
-
-def introspect_n_convert_to_date_or_none_w_strdate_opt_sep_posorder(strdate, sep=None, posorder=None):
-  """
-  This function tries to convert a strdate to a date.
-  If the strdate does not have one of the allowed separators ['-', '/', '.'], it returns None.
-  @see function above that can treat the no-separator case.
-  """
-  if sep is None:
-    sep = introspect_sep_char_in_strdate(strdate)
-    if sep is None:
-      return None
-  if posorder is None:
-    posorder = introspect_year_month_day_field_order_in_date(strdate, sep)
-  return convert_strdate_to_date_or_none_w_sep_n_order(strdate, sep, posorder)
-
-
-def introspect_n_convert_strdate_to_date_or_today(strdate, sep=None, posorder=None):
-  try:
-    pdate = introspect_n_convert_to_date_or_none_w_strdate_opt_sep_posorder(strdate, sep, posorder)
-    return pdate
-  except (TypeError, ValueError):
-    pass
-  return datetime.date.today()
-
-
 def find_sep_n_posorder_from_a_strdatelist(p_datelist):
   """
   private function: only to be called from below introspect_n_convert_strdatelist_to_dates(p_datelist)
@@ -301,10 +361,14 @@ def introspect_n_convert_sdlist_to_dates_w_or_wo_sep_n_posorder(strdatelist):
   if isinstance(firstdate, datetime.datetime):
     # all elements are supposed to be of the same type
     return strdatelist
-  sep, positionstr = find_sep_n_posorder_from_a_strdatelist(strdatelist)
+  sep, posorder = find_sep_n_posorder_from_a_strdatelist(strdatelist)
   for strdate in strdatelist:
-    pdate = introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
-    outdatelist.append(pdate)
+    if sep and posorder:
+      pdate = convert_strdate_to_date_or_none_w_sep_n_posorder(strdate, sep, posorder)
+    else:
+      pdate = introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
+    if pdate:
+      outdatelist.append(pdate)
   return outdatelist
 
 
@@ -457,7 +521,7 @@ def remove_strdates_not_conforming_to_sep_n_posorder(strdatelist, sep, posorder)
     return strdatelist
   outstrdatelist = []
   for strdate in strdatelist:
-    pdate = convert_strdate_to_date_or_none_w_sep_n_order(strdate, sep, posorder)
+    pdate = convert_strdate_to_date_or_none_w_sep_n_posorder(strdate, sep, posorder)
     if pdate is None:
       continue
     outstrdatelist.append(strdate)
@@ -562,11 +626,13 @@ def adhoc_test3():
   scrmsg = f"strdate={strdate}, date={pdate}"
   print(scrmsg)
   today = datetime.date.today()
-  strdate = convert_date_to_strmmddyyyy_or_none_opt_sep_zfill(today, sep='/', zfill=2)
-  scrmsg = f"mmddyyyy strdate={strdate}, date={today}"
+  sep, zfill = '/', -77
+  strdate = convert_date_to_strmmddyyyy_or_none_opt_sep_zfill(today, sep=sep, zfill=zfill)
+  scrmsg = f"sep={sep}, zfill={zfill}, mmddyyyy date={today}, strdate={strdate} "
   print(scrmsg)
-  strdate = convert_date_to_strmmddyyyy_or_none_opt_sep_zfill(today, sep='/', zfill=-1)
-  scrmsg = f"mmddyyyy strdate={strdate}, date={today}"
+  zfill = -1
+  strdate = convert_date_to_strmmddyyyy_or_none_opt_sep_zfill(today, sep=sep, zfill=zfill)
+  scrmsg = f"sep={sep}, zfill={zfill}, mmddyyyy date={today}, strdate={strdate} "
   print(scrmsg)
 
 

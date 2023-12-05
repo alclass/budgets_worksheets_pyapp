@@ -43,27 +43,27 @@ class Test(unittest.TestCase):
     # t1
     y, m, d = 2023, 4, 5
     strdate = f'{y}-{m}-{d}'
-    returned_date = intr.convert_strdate_to_date_or_none_w_sep_n_order(strdate, sep, posorder)
+    returned_date = intr.convert_strdate_to_date_or_none_w_sep_n_posorder(strdate, sep, posorder)
     expected_date = datetime.date(year=y, month=m, day=d)
     self.assertEqual(returned_date, expected_date)
     # t2
     y, m, d = 2023, 14, 5
     strdate = f'{y}-{m}-{d}'
-    returned_date = intr.convert_strdate_to_date_or_none_w_sep_n_order(strdate, sep, posorder)
+    returned_date = intr.convert_strdate_to_date_or_none_w_sep_n_posorder(strdate, sep, posorder)
     self.assertIsNone(returned_date)
     # t3
     strdate = '2023-10-15'
-    returned_date = intr.convert_strdate_to_date_or_none_w_sep_n_order(strdate, sep, posorder)
+    returned_date = intr.convert_strdate_to_date_or_none_w_sep_n_posorder(strdate, sep, posorder)
     expected_date = datetime.date(year=2023, month=10, day=15)
     self.assertEqual(returned_date, expected_date)
     # t4
     strdate = 'bla blah'
-    returned_date = intr.convert_strdate_to_date_or_none_w_sep_n_order(strdate, sep, posorder)
+    returned_date = intr.convert_strdate_to_date_or_none_w_sep_n_posorder(strdate, sep, posorder)
     self.assertIsNone(returned_date)
     # t5
     y, m, d = 13, 10, 15
     strdate = f'{y}-{m}-{d}'
-    returned_date = intr.convert_strdate_to_date_or_none_w_sep_n_order(strdate, sep, posorder)
+    returned_date = intr.convert_strdate_to_date_or_none_w_sep_n_posorder(strdate, sep, posorder)
     expected_date = datetime.date(year=y, month=m, day=d)
     self.assertEqual(returned_date, expected_date)
 
@@ -324,3 +324,44 @@ class Test(unittest.TestCase):
       expected_date = datelist[i]
       returned_date = intr.introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
       self.assertEqual(expected_date, returned_date)
+
+  def test_trans_strdate_from_one_format_to_another_w_sep_n_posorder(self):
+    # t1
+    # this hypothesis (subtest) aims to transform
+    # from: '5/12/2023' with ['/', 'dmy']
+    # to:  '12.05.2023' with ['.', 'mdy']
+    from_strdate, fromsep, from_posorder = '5/12/2023', '/', 'dmy'
+    expected_strdate, tosep, to_posorder = '12.05.2023', '.', 'mdy'
+    returned_strdate = intr.trans_strdate_from_one_format_to_another_w_sep_n_posorder(
+      strdate=from_strdate, fromsep=fromsep, tosep=tosep,
+      sourceposorder=from_posorder, targetposorder=to_posorder, zfill=2,
+    )
+    self.assertEqual(expected_strdate, returned_strdate)
+    # t2
+    # idem as t1 with another datum sample
+    from_strdate, fromsep, from_posorder = '5/6/2023', '/', 'dmy'
+    expected_strdate, tosep, to_posorder = '6-5-2023', '-', 'mdy'  # zfill is default
+    returned_strdate = intr.trans_strdate_from_one_format_to_another_w_sep_n_posorder(
+      strdate=from_strdate, fromsep=fromsep, tosep=tosep,
+      sourceposorder=from_posorder, targetposorder=to_posorder,
+    )
+    self.assertEqual(expected_strdate, returned_strdate)
+    # t3
+    # this subtest uses a dynamical date (self.today)
+    y, m, d = self.today.year, self.today.month, self.today.day
+    from_strdate, fromsep, from_posorder = f'{d}/{m}/{y}', '/', 'dmy'
+    expected_strdate, tosep, to_posorder = f'{m}-{d}-{y}', '-', 'mdy'  # zfill is default
+    returned_strdate = intr.trans_strdate_from_one_format_to_another_w_sep_n_posorder(
+      strdate=from_strdate, fromsep=fromsep, tosep=tosep,
+      sourceposorder=from_posorder, targetposorder=to_posorder,
+    )
+    self.assertEqual(expected_strdate, returned_strdate)
+    # t4
+    # a "non-date" (Feb 30 does not exist!) will be sent in expecting back None
+    from_strdate, fromsep, from_posorder = '2023-30-2', '-', 'ydm'
+    tosep, to_posorder = '-', 'mdy'  # zfill is default
+    returned_strdate = intr.trans_strdate_from_one_format_to_another_w_sep_n_posorder(
+      strdate=from_strdate, fromsep=fromsep, tosep=tosep,
+      sourceposorder=from_posorder, targetposorder=to_posorder,
+    )
+    self.assertIsNone(returned_strdate)

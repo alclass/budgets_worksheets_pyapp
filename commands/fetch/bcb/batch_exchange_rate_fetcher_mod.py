@@ -13,7 +13,9 @@ import config
 import sys
 """
 import argparse
+import collections
 import datetime
+from dateutil.relativedelta import relativedelta
 import fs.datefs.datefunctions as dtfs
 import fs.datefs.dategenerators as gendt
 import fs.economicfs.bcb.bcb_cotacao_fetcher_from_db_or_api as bcbfetch  # bcbfetch.BCBCotacaoFetcher
@@ -64,13 +66,38 @@ def get_args():
 
 
 class Dispatcher:
+  """
+  field_names = [date, today, refmonthdate, datelist, daterange]
+  * today is boolean, all others are list
+  args = Namespace(date=None, today=False, refmonthdate=None, datelist=None, daterange=None)
 
-  def __init__(self, args):
+  Obs:
+    None is equivalent to False (and vice versa)
+  """
+
+  arg_fieldnames = ['date', 'today', 'refmonthdate', 'datelist', 'daterange']
+  nt_args_fallback = collections.namedtuple(
+    'NTArgs', field_names = arg_fieldnames
+  )
+
+  def __init__(self, args=None):
     self.func = None
-    self.args = args
+    self.args = args or self.nt_args_fallback()
     self.n_rolls = 0
     self.n_funcapply = 0
     self.today = datetime.date.today()
+
+  def are_args_empty(self):
+    """
+    asdict = self.args._asdict()
+    """
+    if self.args is None:
+      return False
+    for fieldname in self.arg_fieldnames:
+      arg = eval('self.args.'+fieldname)
+      if arg is None:
+        return True
+    return False
 
   def apply(self, plist):
     """
@@ -139,6 +166,10 @@ def process():
   args = get_args()
   print('Dispatching', args)
   dispatcher = Dispatcher(args)
+  if dispatcher.are_args_empty():
+    yesterday = datetime.date.today() - relativedelta(days=1)
+    print('Adding to args yesterday', yesterday)
+    dispatcher.args.date = yesterday
   dispatcher.dispatch()
 
 

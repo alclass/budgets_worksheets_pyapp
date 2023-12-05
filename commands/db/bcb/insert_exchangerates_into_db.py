@@ -12,8 +12,9 @@ import fs.datefs.datefunctions as dtfs
 # import settings as sett
 
 
-def fetch_exchangerate_thru_api(pydate):
-  bcb_api_nt = fin.dbfetch_bcb_cotacao_compra_dolar_apifallback(pydate)
+def fetch_exchangerate_thru_api(pdate):
+  bcb = fin.BCBCotacaoFetcher(pdate)
+  bcb_api_nt = bcb.pop_dates_n_try_find_cotacao()
   return bcb_api_nt
 
 

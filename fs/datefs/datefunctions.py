@@ -9,6 +9,7 @@ import datetime
 from dateutil.relativedelta import relativedelta
 import os
 import settings
+import fs.datefs.dategenerators as dtgen
 WEEKEND_PREVIOUS_DATE_MAX_RECURSE = 41  # go back up to 31 days (a month) plus 10
 WEEKDAYS3LETTER = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 ALL_MONTHS_ENG_CAP_FIRST_LIST = list(map(lambda e: calendar.month_name[e], range(1, 13)))
@@ -282,11 +283,11 @@ def get_datafolder_abspath_for_filename_w_tstamp(filename):
 
 
 def is_date_weekend(pdate):
-  indate = convert_generic_yyyymmdd_strdate_to_dtdate_or_none(pdate)
-  if indate is None:
+  pdate = make_date_or_none(pdate)
+  if pdate is None:
     return None
   try:
-    weekdaynumber = indate.weekday()
+    weekdaynumber = pdate.weekday()
     if weekdaynumber in [5, 6]:
       return True
     return False
@@ -310,7 +311,7 @@ def get_weekday3letter_from_date(pdate):
 
 
 def get_date_or_previous_monday_to_friday(pdate, max_recurse=0):
-  indate = convert_generic_yyyymmdd_strdate_to_dtdate_or_none(pdate)
+  indate = make_date_or_none(pdate)
   if indate is None:
     return None
   if max_recurse > WEEKEND_PREVIOUS_DATE_MAX_RECURSE:
@@ -409,10 +410,10 @@ def get_daterange_asc_or_desc(pinidate, pfindate, makes_desc=False, accept_futur
   inidate = returns_date_or_today(pinidate)
   findate = returns_date_or_today(pfindate)
   if inidate < findate and makes_desc:
-    return get_daterange(findate, inidate, accept_future)
+    return dtgen.get_daterange(findate, inidate, accept_future)
   if inidate > findate and not makes_desc:
-    return get_daterange(findate, inidate, accept_future)
-  return get_daterange(inidate, findate, accept_future)
+    return dtgen.get_daterange(findate, inidate, accept_future)
+  return dtgen.get_daterange(inidate, findate, accept_future)
 
 
 strdate_separators = ['-', '/', '.']
@@ -617,10 +618,6 @@ def adhoc_test():
   pdate = get_monthslastday_date_via_calendar('2020-7-3')
   print("get_monthslastday_date_via_calendar('2020-7-3')", pdate)
   print(make_allmonths_englishlower3letter_list())
-  strdate = '2021-10-21'
-  print(strdate, 'introspect_transform_strdate_to_date')
-  pdate = introspect_n_convert_strdate_to_date_or_none(strdate, sep=None, fieldsorder=None)
-  print('introspected/transformed', pdate)
 
 
 def process():

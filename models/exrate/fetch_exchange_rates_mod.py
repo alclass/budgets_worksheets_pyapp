@@ -6,7 +6,7 @@
   3) -- procdaterange=<dtini,dtfim>      |     fetches brl/usd exchange rate quotes for daterange <dtini,dtfim>
 """
 import sys
-import fs.economicfs.bcb_cotacao_fetcher_from_db_or_api as prefs
+import fs.economicfs.bcb.bcb_financefunctions as finfs
 
 
 def get_args():
@@ -25,19 +25,23 @@ def get_args():
   return argsdict
 
 
-def process():
+def adhoctest():
   argsdict = get_args()
   if len(argsdict) == 0:
     return
   if 'procyear' in argsdict.keys():
     year = argsdict['procyear']
     print('Parameter procyear = ', year)
-    return prefs.batch_fetch_brl_usd_cotacoes(year)
+    return finfs.fetch_cotacao_brl_per_usd_for_datelist(year)
   if 'procdaterange' in argsdict.keys():
     daterange = argsdict['procdaterange']
     inidate, findate = daterange
     print('Parameter procdaterange = ', daterange)
-    prefs.batch_fetch_brl_usd_cotacoes_month_by_month(inidate, findate)
+    finfs.fetch_cotacao_brl_per_usd_for_datelist(inidate, findate)
+
+
+def process():
+  pass
 
 
 if __name__ == "__main__":

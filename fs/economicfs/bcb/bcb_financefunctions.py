@@ -13,7 +13,10 @@
 import collections as coll
 import datetime
 import fs.datefs.datefunctions as dtfs
-import fs.economicfs.bcb_api_finfunctions as apis
+import fs.datefs.dategenerators as dtgen
+import fs.economicfs.bcb.bcb_api_finfunctions as apis
+import fs.datefs.introspect_dates as intr
+
 
 MonetCorrNT = coll.namedtuple(
   'MonetCorrNamedTuple',
@@ -35,11 +38,11 @@ def fetch_cotacao_brl_per_usd_for_datelist(datelist):
   # datelist = dtfs.prepare_datelist_uniq_n_in_desc_order(datelist)
   quote_n_date_resultlist = []
   for pdate in datelist:
-    mdy = dtfs.convert_sep_or_datefields_position_for_ymdstrdate(
+    mdy_strdate = intr.trans_strdate_from_one_format_to_another_w_sep_n_posorder(
       pdate, tosep='-', sourceposorder='ymd', targetposorder='mdy'
     )
-    print('mdy', mdy)
-    cotacao_compra, data_cotacao = apis.call_api_bcb_cotacao_dolar_on_date(mdy)
+    print('mdy_strdate', mdy_strdate)
+    cotacao_compra, data_cotacao = apis.call_api_bcb_cotacao_dolar_on_date(mdy_strdate)
     quote_n_date_resultlist.append((cotacao_compra, data_cotacao))
     print('For', pdate, 'api returned =>', cotacao_compra, data_cotacao)
   return quote_n_date_resultlist
@@ -140,7 +143,8 @@ def monetarily_correct_by_exchange_rate(ini_montant, ini_date, fin_date=None, cu
 
 def adhoc_test2():
   # converted_money = convert_fromto_currency(10, CURR_USD, CURR_BRL)
-  daterange = dtfs.get_daterange('20200720', '20200717')
+  dateini, datefim = '2023-10-10', '2023-11-10'
+  daterange = dtgen.get_daterange(dateini, datefim)
   exchangedate = None
   for refdate in daterange:
     if dtfs.is_date_weekend(refdate):
@@ -150,8 +154,8 @@ def adhoc_test2():
       if refdate >= exchangedate:  # notice daterange is reversed, ie, it loops day by day to the past
         print('refdate has already been taken', refdate)
         continue
-    exchangeratio, exchangedate = apis.call_api_bcb_cotacao_dolar_on_date(refdate)
-    print(refdate, 'exchangeratio =', exchangeratio, 'exchangedate =', exchangedate)
+    nt_bcb_api = apis.call_api_bcb_cotacao_dolar_on_date(refdate)
+    print(refdate, nt_bcb_api)
 
 
 def adhoc_test3():
@@ -193,3 +197,4 @@ def process():
 
 if __name__ == "__main__":
   process()
+  adhoc_test2()

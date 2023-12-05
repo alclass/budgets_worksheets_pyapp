@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 fs/economicfs/bcb_cotacao_fetcher_from_db_or_api.py
+
   This module contains class:
     => fs.economicfs.preapis_finfunctions.BCBCotacaoFetcher
   which models the cotacao fetching that uses a date-scheme

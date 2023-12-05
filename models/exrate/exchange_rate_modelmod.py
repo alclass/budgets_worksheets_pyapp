@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
 """
-exchange_rate_modelmod.py
-
-  docstring
+models/exrate/exchange_rate_modelmod.py
+  models the sql-table via SqlAlchemy
 """
 import datetime
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, Date, Time
+from sqlalchemy import Column, Integer, Date, String, Time
 from sqlalchemy.sql.expression import asc
 import settings as sett
 import fs.datefs.datefunctions as dtfs
 import fs.db.conn_sa as consa
-
 Base = declarative_base()
 
 
@@ -22,19 +20,17 @@ class ExchangeRateDate(Base):
   __tablename__ = 'daily_exchange_rates'
 
   id = Column(Integer, primary_key=True)
-  # numerator_curr3 = Column(String(3), default=config.CURR_BRL)
-  # denominator_curr3 = Column(String(3), default=config.CURR_USD)
+  numerator_curr3 = Column(String(3), default=sett.CURR_BRL)
+  denominator_curr3 = Column(String(3), default=sett.CURR_USD)
+  # numerator_curr3 = sett.CURR_BRL
+  # denominator_curr3 = sett.CURR_USD
   buyquote_as_int = Column(Integer, name='buyquote', nullable=True)  # DECIMAL(precision=4)
   sellquote_as_int = Column(Integer, name='sellquote', nullable=True)
   quotesdate = Column(Date, unique=True)
   quotesdaytime = Column(Time, nullable=True)
   # infofrom = Column(String(10), default='BCB PTAX')
-
   # created_at = Column(TIMESTAMP, default=datetime.datetime.now)  # utcnow() uses UTC (SaoPaulo timezone plus 3h)
   # updated_at = Column(TIMESTAMP, nullable=True, onupdate=datetime.datetime.now)
-
-  numerator_curr3 = sett.CURR_BRL
-  denominator_curr3 = sett.CURR_USD
   infofrom = 'BCB PTAX'
 
   @property
@@ -122,7 +118,6 @@ def ahdoc_test_insert_etc():
 
 
 def print_db():
-  print('print_db => Base.metadata.create_all(con.sqlalchemy_engine')
   sqlalchemy_engine = consa.get_sa_engine()
   Base.metadata.create_all(sqlalchemy_engine)
   sessionhandler = consa.get_sa_session_handler()
@@ -130,6 +125,10 @@ def print_db():
   exrates = session.query(ExchangeRateDate). \
       order_by(asc(ExchangeRateDate.quotesdate)).\
       all()
+  scrmsg = f"""ExchangeRateDate: 1) create table | 2) read table 
+  tablename = {ExchangeRateDate.__tablename__} | Base.metadata.create_all(con.sqlalchemy_engine
+  """
+  print(scrmsg)
   for i, exrate in enumerate(exrates):
     print(i+1, exrate)
   print('Total records =', len(exrates))

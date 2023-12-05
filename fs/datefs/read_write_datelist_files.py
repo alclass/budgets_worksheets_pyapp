@@ -2,12 +2,10 @@
 """
 fs/datefs/read_write_datelist_files.py
 """
-import copy
 import os
-import fs.datefs.introspect_dates as intr
-import fs.datefs.from_to_convert_date_formats as fromto
+import fs.datefs.introspect_dates as fromto
 import fs.os.sufix_incrementor as sfx_incr
-# import fs.datefs.datefunctions as dtfs
+import fs.datefs.introspect_dates as intr  # .convert_strdate_to_date_or_none_w_sep_n_order
 import settings as sett
 DEFAULT_TXT_INPUT_DATES_FILENAME = 'datesfile.txt'
 DEFAULT_TXT_OUTPUT_DATES_FILENAME = 'datesfile_processed_to_norm_yyyy-mm-dd.txt'
@@ -31,7 +29,7 @@ def fetch_wordlist_from_textfile_w_filepath(filepath=None):
   return strdatelist
 
 
-def fetch_dates_from_strdates_in_text_w_or_wo_sep_from_filepath(filepath=None):
+def fetch_dates_from_strdates_in_text_wo_sep_but_of_oneform_from_filepath(filepath=None):
   """
   strdates with sep come in 12 combinations
   strdates without a sep can only be an 8-digit stringnumber
@@ -42,56 +40,50 @@ def fetch_dates_from_strdates_in_text_w_or_wo_sep_from_filepath(filepath=None):
   return sorted(datelist)
 
 
-def fetch_dates_from_strdates_in_text_having_sep_from_filepath(filepath=None):
+def fetch_dates_from_strdates_intext_from_filepath_w_sep_n_posorder(filepath=None, sep='/', posorder='dmy'):
   """
-  strdates with sep come in 12 combinations
+  This function extracts dates from files but dates must conform to sep & posorder
+  @see other functions in this module that extracts dates under other ways
+
+  strdates with sep & posorder come in 12 different combinations
   strdates without a sep can only be an 8-digit stringnumber
 
   # notice that dates may be in some different formats (eg "2021-01-21" or "21/1/2021")
-  # among these strdates, those that return as datetime.date go into datelist
+  # among these strdates, those that return as "datetime.date" go into datelist
   """
   strdatelist = fetch_wordlist_from_textfile_w_filepath(filepath)
-  datelist = intr.introspect_n_convert_strdatelist_to_dates(strdatelist)
+  datelist = intr.extract_datelist_from_strdatelist_w_sep_n_posorder(strdatelist, sep, posorder)
   datelist = sorted(filter(lambda e: e is not None, datelist))
   return sorted(datelist)
 
 
-def form_datesfilepath_from_datafolder_w_filename(p_filename=None):
-  filename = p_filename or DEFAULT_TXT_INPUT_DATES_FILENAME
-  folderpath = sett.get_datafolder_abspath()
-  filepath = os.path.join(folderpath, filename)
-  return filepath
-
-
-def form_default_output_datesfilepath(p_folderpath=None, p_filename=None, followsuffix=True):
-  filename = p_filename or DEFAULT_TXT_OUTPUT_DATES_FILENAME
-  folderpath = p_folderpath
-  if folderpath is None:
-    folderpath = sett.get_datafolder_abspath()
-  if not os.path.exists(folderpath):
-    os.makedirs(folderpath)
-  filepath = os.path.join(folderpath, filename)
+def form_new_datesfilepath_w_folderpath_n_filename(p_filename=None, p_folderpath=None, followsuffix=True):
+  filepath = form_datesfilepath_w_folderpath_n_filename(p_filename, p_folderpath)
   if os.path.exists(filepath):
     if not followsuffix:
-      error_msg = f"""Output file {filename} already exists in folder:
-      => [{folderpath}]
-      Please, remove it """
+      error_msg = f"""Output file {p_filename} already exists in folder:
+      => [{p_folderpath}]
+      Please, remove it or, programatically, set parameter followsuffix."""
       raise OSError(error_msg)
     else:
       filepath = sfx_incr.get_filepath_if_available_or_increment_numbersufix(filepath)
   return filepath
 
 
-def get_datesfilepath_from_datafolder_w_filename(p_filename=None):
-  filepath = form_datesfilepath_from_datafolder_w_filename(p_filename)
-  if not os.path.isfile(filepath):
-    error_msg = 'File does not exist [%s].' % str(filepath)
-    raise OSError(error_msg)
+def form_datesfilepath_w_folderpath_n_filename(p_filename=None, p_folderpath=None):
+  """
+  Forms filepath with folderpath & filename
+  """
+  folderpath = p_folderpath or sett.get_datafolder_abspath()
+  filename = p_filename or DEFAULT_TXT_INPUT_DATES_FILENAME
+  if not os.path.exists(folderpath):
+    os.makedirs(folderpath)
+  filepath = os.path.join(folderpath, filename)
   return filepath
 
 
-def get_default_datesfilepath():
-  return get_datesfilepath_from_datafolder_w_filename()
+def form_default_datesfilepath():
+  return form_datesfilepath_w_folderpath_n_filename(None, None)
 
 
 def save_without_existence_check_text_to_file(text, output_filepath):
@@ -117,15 +109,18 @@ class DateFileReaderWriter:
   def __init__(self, input_filepath=None, output_filepath=None):
     self.input_filepath, self.output_filepath = input_filepath, output_filepath
     self.treat_filepaths()
-    self.orginal_strdatelist = None
-    self.strdatelist = None
+    self.words = None
+    self.strdatelist = None    # may be the whole or a subset of self.words
     self.n_dates_gencounted = 0
+    self.sep = '-'  # default, it may be replaced at runtime
+    self.posorder = 'ymd'  # default, it may be replaced at runtime
+    self.bool_keep_sep_n_posorder_fix = True
     self.bool_generator_ongoing = False  # either datelist is taken all at once or 'generated'
     self.bool_generator_has_run = False
     self.datelist = None
     self.sep = None  # it's either - (dash), / (forward slash) or . (dot)
     self.orderpos = None  # it's either ymd, ydm, dmy or mdy
-    self.read_datefile_n_set_sep_n_orderpos()
+    self.read_datefile_get_words_n_first_sep_n_posorder()
     self.introspect_seq_n_orderpos_from_datelist()
 
   def treat_filepaths(self):
@@ -154,7 +149,7 @@ class DateFileReaderWriter:
 
   def treat_input_filepath(self):
     if self.input_filepath is None:
-      self.input_filepath = get_default_datesfilepath()
+      self.input_filepath = form_default_datesfilepath()
     if not os.path.isfile(self.input_filepath):
       error_msg = f"""Input dates file {self.input_filename} does not exist.
       In folderpath = {self.input_folderpath}
@@ -163,7 +158,9 @@ class DateFileReaderWriter:
 
   def treat_output_filepath(self):
     if self.output_filepath is None:
-      self.output_filepath = form_default_output_datesfilepath()
+      self.output_filepath = form_new_datesfilepath_w_folderpath_n_filename(
+        None, None, followsuffix=True
+      )
     if os.path.exists(self.output_filepath):
       self.output_filepath = sfx_incr.get_filepath_if_available_or_increment_numbersufix(self.output_filepath)
 
@@ -178,26 +175,36 @@ class DateFileReaderWriter:
   def introspect_seq_n_orderpos_from_datelist(self):
     self.sep, self.orderpos = intr.find_sep_n_posorder_from_a_strdatelist(self.strdatelist)
 
-  def read_datefile_n_set_sep_n_orderpos(self):
-    self.orginal_strdatelist = fetch_wordlist_from_textfile_w_filepath(self.input_filepath)
-    self.strdatelist = copy.copy(self.orginal_strdatelist)
-    sep, orderpos = intr.find_sep_n_posorder_from_a_strdatelist(self.strdatelist)
+  def read_datefile_get_words_n_first_sep_n_posorder(self):
+    self.words = fetch_wordlist_from_textfile_w_filepath(self.input_filepath)
+    self.strdatelist = []  # copy.copy(self.words)  # to be processed ahead
+    self.sep, self.orderpos = intr.find_sep_n_posorder_from_a_strdatelist(self.strdatelist)
+
+  def extract_dates(self):
+    """
     folderpath, filename = os.path.split(self.input_filepath)
     if sep is None:
       folderpath, filename = os.path.split(self.input_filepath)
-      error_msg = f"""The three (3) possible strdate separators were not found.
+      error_msg = f""The three (3) possible strdate separators were not found.
       Separators are: {intr.STRDATE_SEPARATORS}
       input file is {filename} in:
         => {folderpath}
-      """
+      ""
       raise ValueError(error_msg)
     if orderpos is None:
-      error_msg = f"""The four (3) possible date field positionings were not found.
+      error_msg = f""The four (3) possible date field positionings were not found.
       There are: {intr.ORDERPOS_TOKENS_AVAILABLE}
       input file is {filename} in:
         => {folderpath}
-      """
+      ""
       raise ValueError(error_msg)
+    """
+    if self.bool_keep_sep_n_posorder_fix:
+      self.datelist = intr.extract_datelist_from_strdatelist_w_sep_n_posorder(
+        self.words, self.sep, self.posorder
+      )
+    else:
+      self.datelist = intr.extract_datelist_from_strdatelist_considering_any_sep_n_posorder(self.words)
 
   def join_datelist_as_text_or_none(self):
     if self.datelist and len(self.datelist) > 0:
@@ -241,7 +248,10 @@ class DateFileReaderWriter:
     self.bool_generator_ongoing = True
     words_to_del = []
     for word in self.strdatelist:
-      pdate = fromto.convert_strdate_to_date_or_none_w_sep_n_fieldorder(word, self.sep, self.orderpos)
+      if self.bool_keep_sep_n_posorder_fix:
+        pdate = fromto.convert_strdate_to_date_or_none_w_sep_n_fieldorder(word, self.sep, self.orderpos)
+      else:
+        pdate = fromto.convert_strdate_to_date_or_none_w_sep_n_fieldorder(word, self.sep, self.orderpos)
       if pdate is None:
         words_to_del.append(word)
         continue
@@ -254,27 +264,29 @@ class DateFileReaderWriter:
     return
 
   def show_input_outside_side_by_side(self):
-    if self.orginal_strdatelist is None:
-      self.read_datefile_n_set_sep_n_orderpos()
+    if self.words is None:
+      self.read_datefile_get_words_n_first_sep_n_posorder()
     if self.datelist is None:
       self.get_dates_converting_all_at_once()
     for i, pdate in enumerate(self.datelist):
-      scrmsg = f"{i+1} orig={self.orginal_strdatelist[i]} | strdate={self.strdatelist[i]} | date={pdate}"
+      scrmsg = f"{i+1} orig={self.words[i]} | strdate={self.strdatelist[i]} | date={pdate}"
       print(scrmsg)
 
 
 def adhoc_test():
   dates_rw = DateFileReaderWriter()
+  dates_rw.bool_keep_sep_n_posorder_fix = False
   for i, pdate in enumerate(dates_rw.gen_dates_converting_one_by_one()):
     print(i+1, pdate)
   print('n dates', dates_rw.n_dates)
   dates_rw.show_input_outside_side_by_side()
   dates_rw.save_output_datelist_to_file()
-  outfp = dates_rw.output_filepath
-  dates_rw2 = DateFileReaderWriter(input_filepath=outfp)
+  output_filepath = dates_rw.output_filepath
+  print(output_filepath)
+  dates_rw2 = DateFileReaderWriter()
+  dates_rw2.bool_keep_sep_n_posorder_fix = True
   print('='*40)
   dates_rw2.show_input_outside_side_by_side()
-
 
 
 def process():
