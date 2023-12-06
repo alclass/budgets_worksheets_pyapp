@@ -40,14 +40,14 @@ class DatePriceList:
 
   def __init__(self):
     self.today = datetime.date.today()
-    self._dates = []
+    self.dates = []
     self.records = []
-    self._prices = []
+    self.prices = []
     self.ddmc = None
     self.df = None
 
   @property
-  def dates(self):
+  def xdates(self):
     return self._dates
 
   def sort_records_by_date(self):
@@ -73,7 +73,6 @@ class DatePriceList:
     self.df['prices'] = self.prices
     self.df['newprice'] = self.df.prices * self.df.mult
     print(self.df.to_string())
-
 
 
 def adhoctest2():

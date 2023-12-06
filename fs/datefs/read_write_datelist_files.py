@@ -11,12 +11,14 @@ DEFAULT_TXT_INPUT_DATES_FILENAME = 'datesfile.txt'
 DEFAULT_TXT_OUTPUT_DATES_FILENAME = 'datesfile_processed_to_norm_yyyy-mm-dd.txt'
 
 
-def fetch_wordlist_from_textfile_w_filepath(filepath=None):
+def fetch_wordlist_from_textfile_w_filepath(p_filepath=None):
   """
   gets a list of words from the text inside filepath
   """
-  if filepath is None or not os.path.isfile(filepath):
-    return []
+  if p_filepath is None or not os.path.isfile(p_filepath):
+    filepath = form_datesfilepath_w_folderpath_n_filename()
+  else:
+    filepath = p_filepath
   text = open(filepath).read()
   lines = text.split('\n')
   strdatelist = []

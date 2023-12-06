@@ -20,10 +20,10 @@ class ExchangeRateDate(Base):
   __tablename__ = 'daily_exchange_rates'
 
   id = Column(Integer, primary_key=True)
-  numerator_curr3 = Column(String(3), default=sett.CURR_BRL)
-  denominator_curr3 = Column(String(3), default=sett.CURR_USD)
-  # numerator_curr3 = sett.CURR_BRL
-  # denominator_curr3 = sett.CURR_USD
+  # numerator_curr3 = Column(String(3), default=sett.CURR_BRL)
+  # denominator_curr3 = Column(String(3), default=sett.CURR_USD)
+  numerator_curr3 = sett.CURR_BRL
+  denominator_curr3 = sett.CURR_USD
   buyquote_as_int = Column(Integer, name='buyquote', nullable=True)  # DECIMAL(precision=4)
   sellquote_as_int = Column(Integer, name='sellquote', nullable=True)
   quotesdate = Column(Date, unique=True)

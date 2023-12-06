@@ -77,12 +77,12 @@ class Dispatcher:
 
   arg_fieldnames = ['date', 'today', 'refmonthdate', 'datelist', 'daterange']
   nt_args_fallback = collections.namedtuple(
-    'NTArgs', field_names = arg_fieldnames
+    'NTArgs', field_names=arg_fieldnames
   )
 
   def __init__(self, args=None):
     self.func = None
-    self.args = args or self.nt_args_fallback()
+    self.args = args
     self.n_rolls = 0
     self.n_funcapply = 0
     self.today = datetime.date.today()
