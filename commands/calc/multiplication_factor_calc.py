@@ -60,7 +60,7 @@ monet_corr_multiplier = (1 + variation_1) * (1 + variation_2)
 As commented above, other variations/combinations may be
   implemented in this system in the future.
 """
-
+import copy
 import datetime
 import pandas as pd
 import fs.datefs.introspect_dates as intr  # for make_refmonth_date_from_str
@@ -78,16 +78,28 @@ class MonetCorrCalculator:
     self.treat_dates()
     self._cpi_ini = None
     self._cpi_fim = None
+    self._cpi_var_ratio = None
     self._exrate_ini = None
     self._exrate_fim = None
+    self._exrate_var_ratio = None
     self._multiplication_factor = None
-    self._multiplication_factor_nolessthan1 = None
     self._df = None
     self.df_dates_n_prices = None
-    self.calc_monet_corr_multiplier_between_dates()
+    # make multiplication factor calculation
+    _ = self.multiplication_factor
 
-  def are_four_values_available(self):
-    if self.cpi_ini and self.cpi_fim and self.exrate_ini and self.exrate_fim:
+  def are_cpi_values_available(self):
+    if self.cpi_ini and self.cpi_fim:
+      return True
+    return False
+
+  def are_exrate_values_available(self):
+    if self.exrate_ini and self.exrate_fim:
+      return True
+    return False
+
+  def are_both_cpi_n_exrate_available(self):
+    if self.are_cpi_values_available and self.are_exrate_values_available():
       return True
     return False
 
@@ -150,68 +162,110 @@ class MonetCorrCalculator:
   @property
   def exrate_ini(self):
     """
-      bcb = fin.dbfetch_bcb_cotacao_compra_dolar_apifallback(self.dateini)
     """
-    if self._exrate_ini is None:
-      bcb = ftchr.BCBCotacaoFetcher(pdate=self.dateini)
-      if bcb is None or bcb.namedtuple_cotacao is None:
-        return None
-      if bcb.namedtuple_cotacao.cotacao_venda is None:
-        return None
-      self._exrate_ini = bcb.namedtuple_cotacao.cotacao_venda
+    if self._exrate_ini is not None:
+      return self._exrate_ini
+    bcb = ftchr.BCBCotacaoFetcher(pdate=self.dateini)
+    if bcb is None or bcb.namedtuple_cotacao is None:
+      return None
+    if bcb.namedtuple_cotacao.cotacao_venda is None:
+      return None
+    self._exrate_ini = bcb.namedtuple_cotacao.cotacao_venda
     return self._exrate_ini
 
   @property
   def exrate_fim(self):
     """
-      bcb = fin.dbfetch_bcb_cotacao_compra_dolar_apifallback(self.datefim)
     """
-    if self._exrate_fim is None:
-      bcb = ftchr.BCBCotacaoFetcher(pdate=self.datefim)
-      if bcb is None or bcb.namedtuple_cotacao is None:
-        return None
-      if bcb.namedtuple_cotacao.cotacao_venda is None:
-        return None
-      self._exrate_fim = bcb.namedtuple_cotacao.cotacao_venda
+    if self._exrate_fim is not None:
+      return self._exrate_fim
+    bcb = ftchr.BCBCotacaoFetcher(pdate=self.datefim)
+    if bcb is None or bcb.namedtuple_cotacao is None:
+      return None
+    if bcb.namedtuple_cotacao.cotacao_venda is None:
+      return None
+    self._exrate_fim = bcb.namedtuple_cotacao.cotacao_venda
     return self._exrate_fim
 
   @property
-  def cpi_variation_ratio(self):
-    return (self.cpi_fim - self.cpi_ini) / self.cpi_ini
+  def cpi_var_ratio(self):
+    """
+    Calculates the ratio of how cpi_fim increases (or decreases) in relation to cpi_ini
+    self._cpi_var_ratio = (self.cpi_fim - self.cpi_ini) / self.cpi_ini
+    """
+    if self._cpi_var_ratio is not None:
+      return self._cpi_var_ratio
+    if not self.are_cpi_values_available():
+      return None
+    self._cpi_var_ratio = (self.cpi_fim - self.cpi_ini) / self.cpi_ini
+    return self._cpi_var_ratio
+
+  def get_cpi_var_factor(self):
+    """
+    Calculates the "cpi-composite" for the multiplication factor in here
+    This factor-component is: 1 + cpi_var_ratio
+    """
+    if self.are_both_cpi_n_exrate_available():
+      return 1 + self.cpi_var_ratio
+    return None
 
   @property
-  def cpi_variation_factor(self):
-    return 1 + (self.cpi_fim - self.cpi_ini) / self.cpi_ini
+  def exrate_var_ratio(self):
+    """
+    Calculates the ratio of how exrate_fim increases (or decreases) in relation to exrate_ini
+    self._exrate_var_ratio = (self.exrate_fim - self.exrate_ini) / self.exrate_ini
+    """
+    if self._exrate_var_ratio is not None:
+      return self._exrate_var_ratio
+    if not self.are_exrate_values_available():
+      return None
+    self._exrate_var_ratio = (self.exrate_fim - self.exrate_ini) / self.exrate_ini
+    return self._exrate_var_ratio
 
-  @property
-  def exrates_variation_ratio(self):
-    return (self.exrate_fim - self.exrate_ini) / self.exrate_ini
-
-  @property
-  def exrates_variation_factor(self):
-    return 1 + (self.exrate_fim - self.exrate_ini) / self.exrate_ini
+  def get_exrate_var_factor(self):
+    """
+    Calculates the "exrate-composite" for the multiplication factor in here
+    This factor-component is: 1 + cpi_var_ratio
+    """
+    if self.are_exrate_values_available():
+      return 1 + self.exrate_var_ratio
+    return None
 
   @property
   def multiplication_factor_nolessthan1(self):
-    if self._multiplication_factor_nolessthan1 is not None:
-      return self._multiplication_factor_nolessthan1
-    mfactor = self.multiplication_factor
-    self._multiplication_factor_nolessthan1 = mfactor if mfactor >= 1 else 1.0
-    return self._multiplication_factor_nolessthan1
+    """
+    Cuts off the multiplication factor at 1 if it is less than 1
+      (a king of 'floor value')
+    Obs:
+      Though inflation is the norm in the "world today",
+        deflation sometimes happens.
+      For conceptual cases where deflation becames significant,
+        some new formulation may be devised here in the future.
+      One possible cenario is to have an attenuation function,
+        ie, a function that allows deflation in an attenuated way.
+      E.g.: suppose it do it in ranges:
+        range 1: from 0.95 to 1.0 considers 1 (the cut-off value already in-here)
+        range 2: from 0.85 to 0.95 considers half the interval
+          (ie, if multiplication_factor is 0.9, output midway to 1.0, ie 0.95)
+          (ie, if multiplication_factor is 0.86, output midway to 1.0, ie 0.93)
+        and so on
+
+      Another cenario is to make an on/off control variable that, if it's on,
+        will use the scheme devised above, and, if it's off,
+        will use the whole multiplication factor without attenuation.
+    """
+    if self.are_both_cpi_n_exrate_available():
+      return self.multiplication_factor if self.multiplication_factor >= 1 else 1.0
+    return None
 
   @property
   def multiplication_factor(self):
     if self._multiplication_factor is not None:
       return self._multiplication_factor
-    if not self.are_four_values_available():
+    if not self.are_both_cpi_n_exrate_available():
       return None
-    self.calc_monet_corr_multiplier_between_dates()
+    self._multiplication_factor = self.get_cpi_var_factor() * self.get_exrate_var_factor()
     return self._multiplication_factor
-
-  def calc_monet_corr_multiplier_between_dates(self):
-    """
-    """
-    self._multiplication_factor = self.cpi_variation_factor * self.exrates_variation_factor
 
   @property
   def dfdict(self):
@@ -245,20 +299,16 @@ class MonetCorrCalculator:
       self._df = pd.DataFrame(self.dfdict, index=idxlist, columns=columns)
     return self._df
 
-  def gen_rowdict(self):
+  def form_rowdict_with_explainparcels(self):
     parcel1 = f"({self.cpi_fim:.4f}-{self.cpi_ini:.4f})/{self.cpi_ini:.4f}"
     parcel2 = f"({self.exrate_fim:.4f}-{self.exrate_ini:.4f})/{self.exrate_ini:.4f}"
     formula = f"=(1+{parcel1})*(1+{parcel2})"
-    _ = formula
-    outdict = {
-      'dt_i': self.dateini,
-      'cpi_i': self.cpi_ini,
-      'exr_i': self.exrate_ini,
-      'dt_f': self.datefim,
-      'cpi_f': self.cpi_fim,
-      'exr_f': self.exrate_fim,
-      'mult': self.multiplication_factor,
-    }
+    outdict = copy.copy(self.dfdict)
+    outdict.update({
+      'parcel1': parcel1,
+      'parcel2': parcel2,
+      'formula': formula,
+    })
     return outdict
 
   def get_tuplelist(self):
@@ -272,10 +322,11 @@ class MonetCorrCalculator:
     return outstr
 
   def __str__(self):
+
     outstr = f"""Monetary Correction Calculator:
     on {self.dateini} => cpi {self.cpi_ini:04f} | on {self.datefim} => cpi {self.cpi_fim:04f}
-    cpi ratio = {self.cpi_variation_ratio:04f} | cpi factor = {self.cpi_variation_factor:04f}
-    exrate ratio = {self.exrates_variation_ratio:04f} | cpi factor = {self.exrates_variation_factor:04f}
+    cpi ratio = {self.cpi_var_ratio:04f} | cpi factor = {self.get_cpi_var_factor():04f}
+    exrate ratio = {self.exrate_var_ratio:04f} | cpi factor = {self.get_exrate_var_factor():04f}
     multiplication factor = {self.multiplication_factor}
     """
     return outstr

@@ -26,7 +26,7 @@ The CPI indices publication is a monthly, and it takes
   more than one-month (the IDE spelling corrector forced the hyphen...)
   period for a certain month's index
   to be published in relation to itself.
-Because of this, a M-2 or M-1 strategy is used. For example:
+Because of this, an M-2 or M-1 strategy is used. For example:
 
 Consider a price monetary correction in-between the following
   two dates: 2022-10-25 (initial) & 2023-05-15 (final).
@@ -60,6 +60,22 @@ import fs.datefs.introspect_dates as intr
 import fs.datefs.read_write_datelist_files as rwdl
 import fs.datefs.argparse as ap  # ap.get_args
 import commands.calc.multiplication_factor_calc as mfcalc
+import commands.calc.datamass_for_multfactortable as prices_dmass  #.get_date_n_price_tuplelist
+
+
+def create_df_w_prices():
+  # row 1
+  dictlist = []
+  price_dict = {'dt_i': '2013-01-01', 'price': '24.55'}
+  dictlist.append(price_dict)
+  price_dict = {'dt_i': '2013-12-31', 'price': '41.31'}
+  dictlist.append(price_dict)
+  price_dict = {'dt_i': '2023-11-13', 'price': '19.17'}
+  dictlist.append(price_dict)
+  columns = list(price_dict.keys())
+  dfprices = pd.DataFrame(dictlist, columns=columns)
+  print(dfprices.to_string())
+  return dfprices
 
 
 class DatePriceRecordsMonetCorrCalculator:
@@ -77,13 +93,39 @@ class DatePriceRecordsMonetCorrCalculator:
     may be monetarily corrected looking up the multiplication factors
     on the first DataFrame on their dates.
   """
-  def __init__(self, refdate=None, datelist=[]):
+  def __init__(self, refdate=None, datelist=None, date_n_price_ntlist=None):
     self.refdate = dtfs.make_date_or_today(refdate)
-    self.dictlist = []
     self.datelist = datelist
-    self.df = None
+    self._date_n_price_ntlist = date_n_price_ntlist
+    self._df = None
     # self.df_dates_n_prices = None
-    self.df = pd.DataFrame(columns=mfcalc.DATAFRAME_COLUMNS)
+    self.trans_dates_into_df()
+
+  @property
+  def date_n_price_ntlist(self):
+    return self._date_n_price_ntlist
+
+  @property
+  def df(self):
+    if self._df is None:
+      if self.datelist is not None:
+        self.trans_dates_into_df()
+    return self._df
+
+  @date_n_price_ntlist.setter
+  def date_n_price_ntlist(self, ntlist):
+    if ntlist is None:
+      self._date_n_price_ntlist = prices_dmass.get_date_n_price_ntlist()
+    else:
+      self._date_n_price_ntlist = ntlist
+
+  def trans_dates_into_df(self):
+    if self.datelist is None:
+      return
+    self._df = pd.DataFrame(columns=mfcalc.DATAFRAME_COLUMNS)
+    for i, pdate in enumerate(self.datelist):
+      mcc = mfcalc.MonetCorrCalculator(pdate, self.refdate, i)
+      self._df.loc[i] = mcc.df.loc[i]
 
   def set_dates_n_prices_ntlist(self, dates_n_prices_ntlist):
     """
@@ -101,19 +143,39 @@ class DatePriceRecordsMonetCorrCalculator:
       except (AttributeError, TypeError):
         return
 
-  def integrate_date_price_into_df(self):
-    self.df[['date', 'price']] = self.df_dates_n_prices
+  def integrate_prices_into_dates_dataframe(self, ntlist):
+    """
+    for i, pdate in enumerate(self.datelist):
+      calcor = mfcalc.MonetCorrCalculator(pdate, self.refdate, rowindexfordf=i)
+      self.df.loc[i] = calcor.df.loc[i]
+    self.df[['dt_i', 'price']] = dfprices[['dt_i', 'price']]
+    print('@ integrate_prices_into_dates_dataframe')
+    print(self.df.to_string())
+    """
+    dfprices = pd.DataFrame(ntlist)
+    dfprices.rename({'date': 'dt_i'}, axis=1, inplace=True)
+    print('df', self.df.to_string())
+    df = self.df
+    dfprices = dfprices.set_index('dt_i')  # , inplace=True
+    df = df.set_index('dt_i')  # , inplace=True
+    print(df.to_string())
+    print('dfprices', dfprices.to_string())
+    dfres = pd.merge(df, dfprices, left_index=True, right_index=True)
+    dfres['newprice'] = dfres['price'] * dfres['mul1']
+    print('Result')
+    print(dfres.to_string())
 
-  def calc_monetcorr_bw_date_n_ref(self, otherdate):
+
+  def calc_monetcorr_bw_ref_n_a_comparedate(self, compare_date):
     """
 
     """
-    date1 = otherdate
-    date2 = self.refdate
-    mcc = MonetCorrCalculator(dateini=date1, datefim=date2)
+    mcc = mfcalc.MonetCorrCalculator(dateini=self.refdate, datefim=compare_date)
     nrows = self.df.shape[0]
-    print(date1, date2, 'nrows', nrows, 'multiplication_factor', mcc.multiplication_factor)
-    pdict = mcc.gen_rowdict()
+    multfact = mcc.multiplication_factor
+    scrmsg = f"f{self.refdate} {compare_date} nrows {nrows} mfact={multfact}"
+    print(scrmsg)
+    pdict = mcc.form_rowdict_with_explainparcels()
     self.dictlist.append(pdict)
 
   def calc_monetcorr_w_datelist_n_refdate(self, strdatelist):
@@ -123,32 +185,40 @@ class DatePriceRecordsMonetCorrCalculator:
     # datelist = gendt.convert_strdatelist_to_datelist(strdatelist)
     datelist = intr.introspect_n_convert_sdlist_to_dates_w_or_wo_sep_n_posorder(strdatelist)
     for pdate in datelist:
-      self.calc_monetcorr_bw_date_n_ref(pdate)
+      self.calc_monetcorr_bw_ref_n_a_comparedate(pdate)
     self.df = pd.DataFrame(self.dictlist)
     print(self.df.to_string())
 
-  def integrate_dates_df(self):
-    for i, pdate in enumerate(self.datelist):
-      calcor = mfcalc.MonetCorrCalculator(pdate, self.refdate, rowindexfordf=i)
-      self.df.loc[i] = calcor.df.loc[i]
-
   def update_prices(self):
+    """
     self.calc_monetcorr_w_datelist_n_refdate()
-    self.integrate_date_price_into_df()
+    self.integrate_prices_into_dates_dataframe()
+    """
     print(self.df.to_string())
 
 
-def adhoctest2():
+  def __str__(self):
+    outstr = """
+    """
+    return outstr
+
+
+def create_adhoctest_calculator():
   dates = rwdl.fetch_dates_from_strdates_in_text_wo_sep_but_of_oneform_from_filepath()
   print('len =', len(dates), dates)
   today = datetime.date.today()
   yesterday = today - relativedelta(days=1)
   lcalcor = DatePriceRecordsMonetCorrCalculator(yesterday, dates)
-  lcalcor.integrate_dates_df()
   print(lcalcor.df.to_string())
+  return lcalcor
 
 
 def adhoctest():
+  lcalcor = create_adhoctest_calculator()
+  print(lcalcor)
+
+
+def adhoctest2():
   """
   -dl "2023-05-20" "2023-06-21"
   calc_monet_corr_between_datelist_n_mostrecent(args.datelist)
@@ -164,9 +234,8 @@ def adhoctest():
     datefim = dtfs.make_date_or_none(args.fim[0])
     print('i', dateini, 'f', datefim)
     mcc = mfcalc.MonetCorrCalculator(dateini, datefim)
-    mcc.calc_monet_corr_multiplier_between_dates()
     print(mcc.multiplication_factor)
-    series = mcc.gen_rowdict()
+    series = mcc.form_rowdict_with_explainparcels()
     print(series)
   # twodates = args.calc_monet_corr
   except (AttributeError, IndexError, TypeError):
@@ -195,4 +264,4 @@ if __name__ == '__main__':
   adhoctest()
   process()
   """
-  adhoctest2()
+  adhoctest()
