@@ -108,20 +108,31 @@ class MonetCorrCalculator:
 
   def treat_dates(self):
     """
-    In an older version:
-      # swap positions
-      tmpdate = self.dateini
-      self.dateini = self.datefim
-      self.datefim = tmpdate
+    Info on how to treat both dateini & datefim
+    a) dateini cannot be None, if it is, a ValueError exception will be raised
 
-    self.dateini = intr.introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(self.dateini)
-    self.datefim = intr.introspect_n_convert_strdate_to_date_or_today_w_or_wo_sep_n_posorder(self.datefim)
+    b) datafim can come in (ie be passed in) as None and, in this case,
+      it's interpreted as "getting the default to it"
+    However, if it's not originally None and returns None after make_date_or_none(),
+      a ValueError exception will be raised, meaning an invalid date (or a non-conformant)
+      came in.
+
+    Notice the suttle difference in treatment for datefim, the default should
+      not be applied if date is None after make_date_or_none(), only before it.
     """
     self.dateini = dtfs.make_date_or_none(self.dateini)
     if self.dateini is None:
       error_msg = 'Error: dateini is None.'
       raise ValueError(error_msg)
+    if self.datefim is None:
+      # the default for datefim is today's date
+      self.datefim = datetime.date.today()
+      return
+    orig_datefim = copy.copy(self.datefim)
     self.datefim = dtfs.make_date_or_none(self.datefim)
+    if self.datefim is None:  # at this point, datefim was not originally None
+      error_msg = f'In the multiplication factor, datefim {orig_datefim} is not valid.'
+      raise ValueError(error_msg)
     if self.dateini > self.datefim:
       scrmsg = f"dateini {self.dateini} is greater than datefim {self.datefim}"
       raise ValueError(scrmsg)

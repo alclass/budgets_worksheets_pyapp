@@ -78,3 +78,24 @@ class TestCase(unittest.TestCase):
     # reminding that both mcc's (the previous one at t1 and this at t2) should be the same
     # mcc.__eq__ uses round(f, DECIMALPLACES) where DECIMALPLACES has been configured with 4
     self.assertEqual(mcc, previous_mcc)
+
+  def test_passing_invalid_n_valid_dates_at_construction(self):
+    strdateini, strdatefim = 'foo', 'bar'
+    self.assertRaises(
+      ValueError,
+      mfc.MonetCorrCalculator,
+      dateini=strdateini, datefim=strdatefim,
+    )
+    strdateini, strdatefim = '2023-12-12', 'bar'
+    self.assertRaises(
+      ValueError,
+      mfc.MonetCorrCalculator,
+      dateini=strdateini, datefim=strdatefim,
+    )
+    # dates cannot be in the future, but these below aren't
+    strdateini, strdatefim = '2023-10-12', '2023-11-12'
+    mcc = mfc.MonetCorrCalculator(strdateini, strdatefim)
+    self.assertEqual(
+      mcc,
+      mfc.MonetCorrCalculator(dateini=strdateini, datefim=strdatefim)
+    )
