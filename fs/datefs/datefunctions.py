@@ -551,6 +551,19 @@ def make_tstamp_for_filename(dtime=None):
   return strdt
 
 
+def calc_refmonth_minus_n(pdate, n):
+  try:
+    n = int(n)
+  except (TypeError, ValueError):
+    return None
+  pdate = make_date_or_none(pdate)
+  if pdate is None:
+    return None
+  if pdate.day != 1:
+    pdate = datetime.date(year=pdate.year, month=pdate.month, day=1)
+  return pdate - relativedelta(months=n)
+
+
 def add_or_subtract_to_month(pdate, delta):
   """
   DEPRECATED: use instead relativedelta from dateutils.relativedelta

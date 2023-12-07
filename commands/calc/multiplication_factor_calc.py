@@ -59,28 +59,31 @@ monet_corr_multiplier = (1 + variation_1) * (1 + variation_2)
 --------------
 As commented above, other variations/combinations may be
   implemented in this system in the future.
+
+import fs.datefs.introspect_dates as intr  # for make_refmonth_date_from_str
 """
 import copy
 import datetime
 import pandas as pd
-import fs.datefs.introspect_dates as intr  # for make_refmonth_date_from_str
 from dateutil.relativedelta import relativedelta
+import fs.datefs.datefunctions as dtfs
 import fs.economicfs.bcb.bcb_cotacao_fetcher_from_db_or_api as ftchr  # ftchr.BCBCotacaoFetcher
 import commands.fetch.cpi.read_cpis_from_db as cpi  # cpi.get_cpi_baselineindex_for_refmonth_in_db
 DATAFRAME_COLUMNS = ['dt_i', 'cpi_i', 'exr_i', 'dt_f', 'cpi_f', 'exr_f', 'mult', 'mul1']
+DECIMAL_PLACES_FOR_EQ = 4
 
 
 class MonetCorrCalculator:
-  def __init__(self, dateini, datefim, rowindexfordf=0):
+  def __init__(self, dateini, datefim, rowindexfordf=0, cpi_ini=None, cpi_fim=None, exrate_ini=None, exrate_fim=None):
     self.rowindexfordf = rowindexfordf
     self.dateini = dateini
     self.datefim = datefim
     self.treat_dates()
-    self._cpi_ini = None
-    self._cpi_fim = None
+    self._cpi_ini = cpi_ini
+    self._cpi_fim = cpi_fim
     self._cpi_var_ratio = None
-    self._exrate_ini = None
-    self._exrate_fim = None
+    self._exrate_ini = exrate_ini
+    self._exrate_fim = exrate_fim
     self._exrate_var_ratio = None
     self._multiplication_factor = None
     self._df = None
@@ -104,16 +107,24 @@ class MonetCorrCalculator:
     return False
 
   def treat_dates(self):
-    self.dateini = intr.introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(self.dateini)
-    if self.dateini is None:
-      error_msg = 'Error: dateini is None.'
-      raise ValueError(error_msg)
-    self.datefim = intr.introspect_n_convert_strdate_to_date_or_today_w_or_wo_sep_n_posorder(self.datefim)
-    if self.dateini > self.datefim:
+    """
+    In an older version:
       # swap positions
       tmpdate = self.dateini
       self.dateini = self.datefim
       self.datefim = tmpdate
+
+    self.dateini = intr.introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(self.dateini)
+    self.datefim = intr.introspect_n_convert_strdate_to_date_or_today_w_or_wo_sep_n_posorder(self.datefim)
+    """
+    self.dateini = dtfs.make_date_or_none(self.dateini)
+    if self.dateini is None:
+      error_msg = 'Error: dateini is None.'
+      raise ValueError(error_msg)
+    self.datefim = dtfs.make_date_or_none(self.datefim)
+    if self.dateini > self.datefim:
+      scrmsg = f"dateini {self.dateini} is greater than datefim {self.datefim}"
+      raise ValueError(scrmsg)
 
   @property
   def refmonthini(self):
@@ -298,6 +309,19 @@ class MonetCorrCalculator:
     if self._df is None:
       self._df = pd.DataFrame(self.dfdict, index=idxlist, columns=columns)
     return self._df
+
+  def __eq__(self, o):
+    dpeq = DECIMAL_PLACES_FOR_EQ
+    try:
+      if self.dateini == o.dateini and self.datefim == o.datefim and self.rowindexfordf == o.rowindexfordf:
+        if round(self.cpi_ini, dpeq) == round(o.cpi_ini, dpeq):
+          if round(self.cpi_fim, dpeq) == round(o.cpi_fim, dpeq):
+            if round(self.exrate_ini, dpeq) == round(o.exrate_ini, dpeq):
+              if round(self.exrate_fim, dpeq) == round(o.exrate_fim, dpeq):
+                return True
+    except (AttributeError, TypeError):
+      pass
+    return False
 
   def form_rowdict_with_explainparcels(self):
     parcel1 = f"({self.cpi_fim:.4f}-{self.cpi_ini:.4f})/{self.cpi_ini:.4f}"

@@ -608,6 +608,13 @@ def adhoc_test2():
   print(today, 'sep', sep, 'posorder', posorder, 'zfill', zfill, 'form_strdate...', strdate)
 
 
+def adhoc_test4():
+  strdate = '2023-04-28'
+  pdate = introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
+  scrmsg = f"{strdate} type {type(strdate)}=> {pdate} type {type(pdate)}"
+  print(scrmsg)
+
+
 def adhoc_test3():
   strdate = '2013/12/1'
   pdate = introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
@@ -647,4 +654,4 @@ if __name__ == "__main__":
   """
   process()
   """
-  adhoc_test3()
+  adhoc_test4()

@@ -60,7 +60,7 @@ import fs.datefs.introspect_dates as intr
 import fs.datefs.read_write_datelist_files as rwdl
 import fs.datefs.argparse as ap  # ap.get_args
 import commands.calc.multiplication_factor_calc as mfcalc
-import commands.calc.datamass_for_multfactortable as prices_dmass  #.get_date_n_price_tuplelist
+import commands.calc.datamass_for_multfactortable as prices_dmass  # .get_date_n_price_tuplelist
 
 
 def create_df_w_prices():
@@ -98,6 +98,7 @@ class DatePriceRecordsMonetCorrCalculator:
     self.datelist = datelist
     self._date_n_price_ntlist = date_n_price_ntlist
     self._df = None
+    self.dictlist = None
     # self.df_dates_n_prices = None
     self.trans_dates_into_df()
 
@@ -127,21 +128,27 @@ class DatePriceRecordsMonetCorrCalculator:
       mcc = mfcalc.MonetCorrCalculator(pdate, self.refdate, i)
       self._df.loc[i] = mcc.df.loc[i]
 
-  def set_dates_n_prices_ntlist(self, dates_n_prices_ntlist):
+  def put_prices_from_date_price_ntlist_into_df(self, dates_n_prices_ntlist):
     """
     NT is NTDatesNPrices, fields=['date', 'price']
     """
-    _ = self.dictlist
+    self._df.rename({'dt_i': 'date'}, inplace=True)
+    self._df.set_index('date', inplace=True)
+    local_columns = ['date', 'price']
+    dfaux = pd.DataFrame(columns=local_columns)
     if dates_n_prices_ntlist is None or not iter(dates_n_prices_ntlist):
       return
     if len(dates_n_prices_ntlist) == 0:
       return
-    for nt in dates_n_prices_ntlist:
+    for i, nt in enumerate(dates_n_prices_ntlist):
       try:
-        _ = nt.date
-        _ = nt.price
+        dfrow = pd.DataFrame(nt, index=[0], columns=local_columns)
+        dfaux[i] = dfrow[0]
       except (AttributeError, TypeError):
         return
+    dfaux.set_index('date', inplace=True)
+    pd.merge(self._df, dfaux, left_index=True, right_index=True)
+    print(self._df.to_string())
 
   def integrate_prices_into_dates_dataframe(self, ntlist):
     """
@@ -165,28 +172,22 @@ class DatePriceRecordsMonetCorrCalculator:
     print('Result')
     print(dfres.to_string())
 
-
-  def calc_monetcorr_bw_ref_n_a_comparedate(self, compare_date):
-    """
-
-    """
-    mcc = mfcalc.MonetCorrCalculator(dateini=self.refdate, datefim=compare_date)
-    nrows = self.df.shape[0]
-    multfact = mcc.multiplication_factor
-    scrmsg = f"f{self.refdate} {compare_date} nrows {nrows} mfact={multfact}"
-    print(scrmsg)
-    pdict = mcc.form_rowdict_with_explainparcels()
-    self.dictlist.append(pdict)
-
   def calc_monetcorr_w_datelist_n_refdate(self, strdatelist):
     """
 
     """
     # datelist = gendt.convert_strdatelist_to_datelist(strdatelist)
     datelist = intr.introspect_n_convert_sdlist_to_dates_w_or_wo_sep_n_posorder(strdatelist)
-    for pdate in datelist:
-      self.calc_monetcorr_bw_ref_n_a_comparedate(pdate)
-    self.df = pd.DataFrame(self.dictlist)
+    if datelist is None:
+      error_msg = f"""datelist was introspected as None
+      strdatelist is {strdatelist}"""
+      raise ValueError(error_msg)
+    self._df = pd.DataFrame(columns=mfcalc.DATAFRAME_COLUMNS)
+    for i, pdate in enumerate(datelist):
+      # self.calc_monetcorr_bw_ref_n_a_comparedate(pdate)
+      _ = i
+      pass
+    self._df = pd.DataFrame(self.dictlist, columns=mfcalc.DATAFRAME_COLUMNS)
     print(self.df.to_string())
 
   def update_prices(self):
@@ -195,7 +196,6 @@ class DatePriceRecordsMonetCorrCalculator:
     self.integrate_prices_into_dates_dataframe()
     """
     print(self.df.to_string())
-
 
   def __str__(self):
     outstr = """
