@@ -110,7 +110,7 @@ class Dispatcher:
         return 0
       if datefim > self.today:
         datefim = self.today
-      self.datelist = hilodt.gen_daily_dates_for_daterange(dateini, datefim)
+      self.datelist = hilodt.gen_dailydates_bw_ini_fim_opt_order(dateini, datefim)
       return self.apply()
     if self.args.datelist:
       plist = self.args.datelist
@@ -124,7 +124,7 @@ class Dispatcher:
       if refmonthdate is None:
         print("refmonthdate is None ie it's invalid. Returning.")
         return 0
-      self.datelist = hilodt.gen_daily_dates_for_refmonth(refmonthdate)
+      self.datelist = hilodt.gen_dailydates_for_refmonth_or_empty_opt_order(refmonthdate)
       return self.apply()
     if self.args.date:
       self.datelist = self.args.date  # args.date is already a list

@@ -228,7 +228,7 @@ def process():
   """
   today = datetime.date.today()
   before20days = today - relativedelta(days=31)
-  for pdate in gendt.gen_daily_dates_for_daterange(before20days, today):
+  for pdate in gendt.gen_dailydates_bw_ini_fim_opt_order(before20days, today):
     prefetcher = BCBCotacaoFetcher(pdate)
     print(prefetcher)
 

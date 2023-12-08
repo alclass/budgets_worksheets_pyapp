@@ -135,7 +135,7 @@ class Dispatcher:
         return 0
       if datefim > self.today:
         datefim = self.today
-      plist = gendt.gen_daily_dates_for_daterange(dateini, datefim)
+      plist = gendt.gen_dailydates_bw_ini_fim_opt_order(dateini, datefim)
       return self.apply(plist)
     if self.args.datelist:
       plist = self.args.datelist
@@ -149,7 +149,7 @@ class Dispatcher:
       if refmonthdate is None:
         print("refmonthdate is None ie it's invalid. Returning.")
         return 0
-      plist = gendt.gen_daily_dates_for_refmonth(refmonthdate)
+      plist = gendt.gen_dailydates_for_refmonth_or_empty_opt_order(refmonthdate)
       return self.apply(plist)
     if self.args.date:
       pdate = self.args.date
@@ -162,15 +162,26 @@ class Dispatcher:
 
 def process():
   """
+  limit_hour = datetime.datetime(now.year, now. month, now. day, 16)
+  if now > limit_hour:
+
   """
   args = get_args()
   print('Dispatching', args)
   dispatcher = Dispatcher(args)
   if dispatcher.are_args_empty():
+    today = datetime.date.today()
     yesterday = datetime.date.today() - relativedelta(days=1)
-    print('Adding to args yesterday', yesterday)
-    dispatcher.args.date = yesterday
+    date_1wb_yesterday = yesterday - relativedelta(days=7)
+    daterange = [date_1wb_yesterday, today]
+    # daterange = gendt.get_gendailydates_for_lastweek_opt_order()
+    scrmsg = f"""
+    CLI args were empty.
+    Adding to args daterange [with dates thru lastweek] = f{daterange}"""
+    print(scrmsg)
+    dispatcher.args.daterange = daterange
   dispatcher.dispatch()
+  print('daterange', dispatcher.args.daterange)
 
 
 if __name__ == "__main__":

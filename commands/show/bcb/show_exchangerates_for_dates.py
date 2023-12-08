@@ -43,13 +43,15 @@ import argparse
 def show_exchangerates_between_dates():
   pydates = composite.get_pydates_from_datafile()
   for pdate in pydates:
-    bcb_api_nt = fin.dbfetch_bcb_cotacao_compra_dolar_apifallback(pdate)
-    print(str(pdate), bcb_api_nt.cotacao_venda)
+    bcber = fin.BCBCotacaoFetcher(pdate)
+    ntcotacao = bcber.namedtuple_cotacao
+    print(str(pdate), ntcotacao)
 
 
 def show_exchangerates_for_rangedate(date_ini, date_fim, decrescent=False):
-  for i, pdate in enumerate(gendt.gen_daily_dates_for_daterange(date_ini, date_fim, decrescent)):
-    bcb_api_nt = fin.dbfetch_bcb_cotacao_compra_dolar_apifallback(pdate)
+  for i, pdate in enumerate(gendt.gen_dailydates_bw_ini_fim_opt_order(date_ini, date_fim, decrescent)):
+    bcber = fin.BCBCotacaoFetcher(pdate)
+    bcb_api_nt = bcber.namedtuple_cotacao
     if bcb_api_nt:
       print(i+1, pdate, '|', bcb_api_nt.cotacao_venda)
     else:
@@ -57,7 +59,7 @@ def show_exchangerates_for_rangedate(date_ini, date_fim, decrescent=False):
 
 
 def show_exchangerates_for_refmonth(p_refmonthdate, decrescent=False):
-  refmonthdate = gendt.make_refmonth_from_str_or_none(p_refmonthdate)
+  refmonthdate = gendt.make_refmonth_or_current(p_refmonthdate)
   date_ini = datetime.date(year=refmonthdate.year, month=refmonthdate.month, day=1)
   _, monthslastday = calendar.monthrange(year=refmonthdate.year, month=refmonthdate.month)
   date_fim = datetime.date(year=refmonthdate.year, month=refmonthdate.month, day=monthslastday)
@@ -65,8 +67,9 @@ def show_exchangerates_for_refmonth(p_refmonthdate, decrescent=False):
 
 
 def show_exchangerates_for_last_month(decrescent=False):
-  for i, pdate in enumerate(gendt.gen_daily_dates_for_last_month(decrescent)):
-    bcb_api_nt = fin.dbfetch_bcb_cotacao_compra_dolar_apifallback(pdate)
+  for i, pdate in enumerate(gendt.gen_dailydates_for_last_month_opt_order(decrescent)):
+    bcber = fin.BCBCotacaoFetcher(pdate)
+    bcb_api_nt = bcber.namedtuple_cotacao
     print(i+1, pdate, '|', bcb_api_nt.cotacao_venda)
 
 
@@ -87,20 +90,23 @@ def show_exchangerates_for_yearrange(yearini, yearfim=None, decrescent=False):
   scrmsg = 'year range (%s, %s)' % (str(yearini), str(yearfim))
   print(scrmsg)
   for year in range(yearini, yearfim+1):
-    for i, pdate in enumerate(gendt.gen_daily_dates_for_year(year, decrescent)):
-      bcb_api_nt = fin.dbfetch_bcb_cotacao_compra_dolar_apifallback(pdate)
+    for i, pdate in enumerate(gendt.gen_dailydates_or_empty_for_year_opt_order(year, decrescent)):
+      bcber = fin.BCBCotacaoFetcher(pdate)
+      bcb_api_nt = bcber.namedtuple_cotacao
       print(i+1, pdate, '|', bcb_api_nt.cotacao_venda)
 
 
 def show_exchangerates_for_year(year, decrescent=False):
-  for i, pdate in enumerate(gendt.gen_daily_dates_for_year(year, decrescent)):
-    bcb_api_nt = fin.dbfetch_bcb_cotacao_compra_dolar_apifallback(pdate)
+  for i, pdate in enumerate(gendt.gen_dailydates_or_empty_for_year_opt_order(year, decrescent)):
+    bcber = fin.BCBCotacaoFetcher(pdate)
+    bcb_api_nt = bcber.namedtuple_cotacao
     print(i+1, pdate, '|', bcb_api_nt.cotacao_venda)
 
 
 def show_exchangerates_for_current_year(decrescent=False):
-  for i, pdate in enumerate(gendt.gen_daily_dates_for_current_year(decrescent)):
-    bcb_api_nt = fin.dbfetch_bcb_cotacao_compra_dolar_apifallback(pdate)
+  for i, pdate in enumerate(gendt.gen_dailydates_for_current_year_opt_order(decrescent)):
+    bcber = fin.BCBCotacaoFetcher(pdate)
+    bcb_api_nt = bcber.namedtuple_cotacao
     print(i+1, pdate, '|', bcb_api_nt.cotacao_venda)
 
 
@@ -151,7 +157,8 @@ def get_args_via_argparse():
   )
   parser.add_argument(
       '-rdf', '--readdatefile', action='store_true',
-      help="marker/signal for inputting the dateadhoctests from the conventioned datefile located in the app's data folder",
+      help="marker/signal for inputting the dateadhoctests from"
+           " the conventioned datefile located in the app's data folder",
   )
   parser.add_argument(
     '-cp', '--currencypair', type=str, nargs=1, default='brl/usd',
@@ -185,11 +192,11 @@ def get_args():
       return paramdict
     elif arg.startswith('-ini='):
       strdate = arg[len('-ini='):]
-      date_ini = dtfs.convert_generic_yyyymmdd_strdate_to_dtdate_or_none(strdate)
+      date_ini = dtfs.make_date_or_none(strdate)
       paramdict['date_ini'] = date_ini
     elif arg.startswith('-fim='):
       strdate = arg[len('-fim='):]
-      date_fim = dtfs.convert_generic_yyyymmdd_strdate_to_dtdate_or_none(strdate)
+      date_fim = dtfs.make_date_or_none(strdate)
       paramdict['date_fim'] = date_fim
   return paramdict
 

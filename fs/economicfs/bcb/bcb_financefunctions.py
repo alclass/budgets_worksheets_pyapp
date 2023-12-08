@@ -144,7 +144,7 @@ def monetarily_correct_by_exchange_rate(ini_montant, ini_date, fin_date=None, cu
 def adhoc_test2():
   # converted_money = convert_fromto_currency(10, CURR_USD, CURR_BRL)
   dateini, datefim = '2023-10-10', '2023-11-10'
-  daterange = dtgen.get_daterange(dateini, datefim)
+  daterange = dtgen.get_gendailydates_bw_ini_fim_accfuture(dateini, datefim)
   exchangedate = None
   for refdate in daterange:
     if dtfs.is_date_weekend(refdate):

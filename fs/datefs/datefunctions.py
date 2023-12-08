@@ -410,10 +410,10 @@ def get_daterange_asc_or_desc(pinidate, pfindate, makes_desc=False, accept_futur
   inidate = returns_date_or_today(pinidate)
   findate = returns_date_or_today(pfindate)
   if inidate < findate and makes_desc:
-    return dtgen.get_daterange(findate, inidate, accept_future)
+    return dtgen.get_gendailydates_bw_ini_fim_accfuture(findate, inidate, accept_future)
   if inidate > findate and not makes_desc:
-    return dtgen.get_daterange(findate, inidate, accept_future)
-  return dtgen.get_daterange(inidate, findate, accept_future)
+    return dtgen.get_gendailydates_bw_ini_fim_accfuture(findate, inidate, accept_future)
+  return dtgen.get_gendailydates_bw_ini_fim_accfuture(inidate, findate, accept_future)
 
 
 strdate_separators = ['-', '/', '.']

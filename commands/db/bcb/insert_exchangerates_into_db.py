@@ -125,7 +125,7 @@ class ArgDispatcher:
     if self.month:
       an_option_actioned = True
       monthdate = self.month
-      for pdate in gendt.gen_daily_dates_for_refmonth(monthdate):
+      for pdate in gendt.gen_dailydates_for_refmonth_or_empty_opt_order(monthdate):
         bcb = self.func(pdate)
         print(self.seq, bcb)
         self.bcbs.append(bcb)
@@ -139,13 +139,13 @@ class ArgDispatcher:
           self.bcbs.append(bcb)
     if self.current_year:
       an_option_actioned = True
-      for pdate in gendt.gen_daily_dates_for_current_year():
+      for pdate in gendt.gen_dailydates_for_current_year_opt_order():
         bcb = self.func(pdate)
         print(self.seq, bcb)
         self.bcbs.append(bcb)
     if self.yearrange and isinstance(self.yearrange, list):
       yearini, yearfim = tuple(self.yearrange)
-      for pdate in gendt.gen_daily_dates_for_yearrange_uptotoday(yearini, yearfim):
+      for pdate in gendt.gen_dailydates_f_yearini_t_today_or_empty_opt_order(yearini, yearfim):
         an_option_actioned = True
         bcb = self.func(pdate)
         print(self.seq, bcb)
@@ -164,7 +164,7 @@ class ArgDispatcher:
     print('In adhoctest() yearrange =', self.yearrange)
     if self.yearrange and isinstance(self.yearrange, list):
       yearini, yearfim = tuple(self.yearrange)
-      for pdate in gendt.gen_daily_dates_for_yearrange_uptotoday(yearini, yearfim):
+      for pdate in gendt.gen_dailydates_f_yearini_t_today_or_empty_opt_order(yearini, yearfim):
           print(pdate)
 
   def __str__(self):
