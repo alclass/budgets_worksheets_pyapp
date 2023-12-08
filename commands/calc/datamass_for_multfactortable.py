@@ -5,7 +5,6 @@ commands/calc/datamass_for_multfactortable.py
 """
 import collections
 import fs.datefs.datefunctions as dtfs
-import fs.datefs.introspect_dates as intr
 nt_dateprice_constr = collections.namedtuple('NTDeP', field_names=['date', 'price'])
 
 

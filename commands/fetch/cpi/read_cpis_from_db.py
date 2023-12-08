@@ -5,13 +5,9 @@ commands/fetch/read_cpis_from_db.py
 Acronyms:
   BLS => Burreau of Labor Statistics (USA's)
   CPI => Consumer Price Index (US-measured)
-
-Based on:
-  www.bls.gov/developers/api_python.html
 """
 import collections
 import datetime
-import pandas
 import pandas as pd
 from dateutil.relativedelta import relativedelta
 import settings as sett
@@ -137,11 +133,11 @@ def get_last_available_cpi_n_refmonth_fromdb_by_series(p_seriesid=None):
   return baselineindex, mostrecent_refmonthdate
 
 
-def trans_cpis_refmomths_from_ntist_to_dictlist(ntlist):
+def trans_cpis_refmonths_from_ntist_to_dictlist(ntlist):
   return list(map(lambda e: e.as_dict(), ntlist))
 
 
-def trans_cpis_refmomths_from_tuplelist_to_ntlist(tuplelist):
+def trans_cpis_refmonths_from_tuplelist_to_ntlist(tuplelist):
   output_ntlist = []
   for cpi_n_refmonth in tuplelist:
     cpi, refmonthdate = cpi_n_refmonth
@@ -150,9 +146,9 @@ def trans_cpis_refmomths_from_tuplelist_to_ntlist(tuplelist):
   return output_ntlist
 
 
-def trans_cpis_refmomths_from_tuplelist_to_dictlist(tuplelist):
-  ntlist = trans_cpis_refmomths_from_tuplelist_to_ntlist(tuplelist)
-  return trans_cpis_refmomths_from_ntist_to_dictlist(ntlist)
+def trans_cpis_refmonths_from_tuplelist_to_dictlist(tuplelist):
+  ntlist = trans_cpis_refmonths_from_tuplelist_to_ntlist(tuplelist)
+  return trans_cpis_refmonths_from_ntist_to_dictlist(ntlist)
 
 
 def get_all_cpis_n_refmonths_as_ntlist_fromdb_by_series(p_seriesid=None):
@@ -162,7 +158,7 @@ def get_all_cpis_n_refmonths_as_ntlist_fromdb_by_series(p_seriesid=None):
 
   """
   tuplelist = get_all_cpis_n_refmonths_as_tuplelist_fromdb_by_series(p_seriesid)
-  return trans_cpis_refmomths_from_tuplelist_to_ntlist(tuplelist)
+  return trans_cpis_refmonths_from_tuplelist_to_ntlist(tuplelist)
 
 
 def get_all_cpis_n_refmonths_as_dictlist_fromdb_by_series(p_seriesid=None):
@@ -173,7 +169,7 @@ def get_all_cpis_n_refmonths_as_dictlist_fromdb_by_series(p_seriesid=None):
     outdictlist.append(pdict)
   """
   ntlist = get_all_cpis_n_refmonths_as_ntlist_fromdb_by_series(p_seriesid)
-  return trans_cpis_refmomths_from_ntist_to_dictlist(ntlist)
+  return trans_cpis_refmonths_from_ntist_to_dictlist(ntlist)
 
 
 def get_all_cpis_n_refmonths_as_tuplelist_fromdb_by_series(p_seriesid=None):
@@ -204,12 +200,12 @@ def get_all_cpis_n_refmonths_as_tuplelist_fromdb_by_series(p_seriesid=None):
 
 def get_cpis_n_refmonths_as_dictlist_fromdb_by_year_n_series(year, p_seriesid=None):
   tuplelist = get_cpis_n_refmonths_as_tuplelist_fromdb_by_year_n_series(year, p_seriesid)
-  return trans_cpis_refmomths_from_tuplelist_to_dictlist(tuplelist)
+  return trans_cpis_refmonths_from_tuplelist_to_dictlist(tuplelist)
 
 
 def get_cpis_n_refmonths_as_ntlist_fromdb_by_year_n_series(year, p_seriesid=None):
   tuplelist = get_cpis_n_refmonths_as_tuplelist_fromdb_by_year_n_series(year, p_seriesid)
-  return trans_cpis_refmomths_from_tuplelist_to_ntlist(tuplelist)
+  return trans_cpis_refmonths_from_tuplelist_to_ntlist(tuplelist)
 
 
 def get_cpis_n_refmonths_as_tuplelist_fromdb_by_year_n_series(year, p_seriesid=None):
@@ -242,12 +238,8 @@ def get_cpis_n_refmonths_as_tuplelist_fromdb_by_year_n_series(year, p_seriesid=N
 
 def get_all_cpis_n_refmonths_from_db_as_dataframe(p_seriesid=None):
   ntlist = get_all_cpis_n_refmonths_as_ntlist_fromdb_by_series(p_seriesid)
-  # ntrows = convert_cpi_month_tuplerows_to_namedtuplerows(allrows)
   df = pd.DataFrame(ntlist)
   return df
-
-
-
 
 
 def adhoctest2():
@@ -268,6 +260,9 @@ def adhoctest2():
   print('older_year', older_year)
   newer_year = get_newer_available_year_in_cpi_db()
   print('newer_year', newer_year)
+  df = get_all_cpis_n_refmonths_from_db_as_dataframe()
+  print(df.to_string())
+  print('n rows', df.shape[0])
 
 
 def adhoctest():

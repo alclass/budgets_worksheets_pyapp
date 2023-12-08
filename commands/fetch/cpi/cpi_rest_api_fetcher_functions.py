@@ -30,7 +30,7 @@ import requests
 import settings as sett
 import fs.os.sufix_incrementor as osfs
 BLS_URL = 'https://api.bls.gov/publicAPI/v1/timeseries/data/'
-m_headers = {'Content-type': 'application/json'}
+DEFAULT_HTTP_HEADERS = {'Content-type': 'application/json'}
 DICTKEY_SERIESID_K = 'seriesID'
 
 
@@ -101,7 +101,7 @@ def fetch_json_response_w_restapi_reqjsondata(rest_api_req_m_jsondata, p_headers
 
   """
   if p_headers is None:
-    p_headers = m_headers
+    p_headers = DEFAULT_HTTP_HEADERS
   print('Issuing REST API request to', BLS_URL)
   print('Json REST API Request:', rest_api_req_m_jsondata)
   # the call below may raise requests.exceptions.ConnectionError

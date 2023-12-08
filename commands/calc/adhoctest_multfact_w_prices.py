@@ -6,18 +6,14 @@ commands/calc/adhoctest_multfact_w_prices.py
 import collections
 import datetime
 from dateutil.relativedelta import relativedelta
-import commands.calc.datamass_for_multfactortable as prices_dmass  #.get_date_n_price_tuplelist
-import fs.datefs.datefunctions as dtfs
+import commands.calc.datamass_for_multfactortable as prices_dmass  # .get_date_n_price_tuplelist
 import commands.calc.calc_monet_corr as cmc  # .DatePriceRecordsMonetCorrCalculator
-# intr.introspect_n_convert_sdlist_to_dates_w_or_wo_sep_n_posorder(strdatelist)
-import fs.datefs.introspect_dates as intr
 import fs.datefs.read_write_datelist_files as rwdt
 nt_dateprice_constr = collections.namedtuple('NTDeP', field_names=['date', 'price'])
 
 
 def perform_step1(pdate):
   dates = rwdt.fetch_dates_from_strdates_in_text_wo_sep_but_of_oneform_from_filepath()
-  # dates = intr.introspect_n_convert_sdlist_to_dates_w_or_wo_sep_n_posorder(strdatelist)
   print('step 1 dates', dates)
   recs = cmc.DatePriceRecordsMonetCorrCalculator(refdate=pdate)
   recs.datelist = dates

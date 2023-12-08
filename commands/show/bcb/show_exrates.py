@@ -3,9 +3,12 @@
 calc_monet_corr.py
 SELECT * FROM daily_exchange_rates WHERE quotesdate = "2022-04-01";
 """
+import datetime
+from dateutil.relativedelta import relativedelta
 import models.exrate.exchange_rate_modelmod as exrt  # exrt.ExchangeRateDate()
 import fs.datefs.dategenerators as gendt
 import fs.datefs.datefunctions as dtfs
+import pandas as pd
 # when just needing weekday from date, it can be called directly: adate.weekday() instead of calendar.weekday(adate)
 # import calendar
 
@@ -36,6 +39,7 @@ def show_exrates_on_date(pdate):
     print('weekday', weekday3letter, strdate, exchanger)
   else:
     print('weekday', weekday3letter, ' | ', strdate, 'was not found in db.')
+  return exchanger
 
 
 def adhoctest():
@@ -47,10 +51,29 @@ def adhoctest():
   for pdate in datelist:
     show_exrates_on_date(pdate)
   mrange = ["2022-10-04", "2022-04-03"]
-  """
   dateini, datefim = "2022-03-27", "2022-05-13"
-  for pdate in gendt.gen_daily_dates_for_daterange(dateini, datefim):
+  """
+  today = datetime.date.today()
+  before20days = today - relativedelta(days=31)
+  scrmsg = f"before20days {before20days} | today {today}"
+  print(scrmsg)
+  for pdate in gendt.gen_daily_dates_for_daterange(today, before20days, decrescent=True):
     show_exrates_on_date(pdate)
+  exrate_dictlist = []
+  for pdate in gendt.gen_daily_dates_for_daterange(before20days, today):
+    exchanger = show_exrates_on_date(pdate)
+    if exchanger:
+      try:
+        # sellquote_as_int is null (None) on holidays
+        ratevalue = exchanger.sellquote_as_int / 10000
+      except TypeError:
+        continue
+      pdict = {'date': exchanger.quotesdate, 'rate': ratevalue}
+      exrate_dictlist.append(pdict)
+  df = pd.DataFrame(exrate_dictlist)
+  print(df.to_string())
+  print(df.describe())
+
 
 
 def process():

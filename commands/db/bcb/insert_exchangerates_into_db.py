@@ -55,7 +55,8 @@ def get_args_via_argparse():
   )
   parser.add_argument(
     '-rdf', '--readdatefile', action='store_true',
-    help="marker/signal for inputting the dateadhoctests from the conventioned datefile located in the app's data folder",
+    help="marker/signal for inputting the dateadhoctests from "
+         "the conventioned datefile located in the app's data folder",
   )
   parser.add_argument(
     '-cp', '--currencypair', type=str, nargs=1, default='brl/usd',
@@ -66,7 +67,8 @@ def get_args_via_argparse():
 
 
 class ArgDispatcher:
-  def __init__(self, argnamedtuple=None):
+  def __init__(self, argnamedtuple=None, func=None):
+    self.func = func or fetch_exchangerate_thru_api
     self.seq = 0
     self.bcbs = []
     self.year = None
@@ -112,42 +114,51 @@ class ArgDispatcher:
   def dispatch(self):
     self.seq += 1
     self.day = dtfs.adjust_date_if_str(self.day)
+    an_option_actioned = False
     if self.day:
+      an_option_actioned = True
       pdate = self.day
-      bcb = fetch_exchangerate_thru_api(pdate)
+      bcb = self.func(pdate)
       print(self.seq, bcb)
       self.bcbs.append(bcb)
-      return True
     self.month = dtfs.adjust_date_if_str(self.month)
     if self.month:
+      an_option_actioned = True
       monthdate = self.month
       for pdate in gendt.gen_daily_dates_for_refmonth(monthdate):
-        bcb = fetch_exchangerate_thru_api(pdate)
+        bcb = self.func(pdate)
         print(self.seq, bcb)
         self.bcbs.append(bcb)
-      return True
     self.datelist = dtfs.adjust_datelist_if_str(self.datelist)
     if self.datelist:
       for edate in self.datelist:
         pdate = dtfs.adjust_date_if_str(edate)
         if dtfs.is_date_valid(pdate):
-          bcb = fetch_exchangerate_thru_api(pdate)
+          bcb = self.func(pdate)
           print(self.seq, bcb)
           self.bcbs.append(bcb)
-      return True
     if self.current_year:
+      an_option_actioned = True
       for pdate in gendt.gen_daily_dates_for_current_year():
-        bcb = fetch_exchangerate_thru_api(pdate)
+        bcb = self.func(pdate)
         print(self.seq, bcb)
         self.bcbs.append(bcb)
-      return
     if self.yearrange and isinstance(self.yearrange, list):
       yearini, yearfim = tuple(self.yearrange)
       for pdate in gendt.gen_daily_dates_for_yearrange_uptotoday(yearini, yearfim):
-        bcb = fetch_exchangerate_thru_api(pdate)
+        an_option_actioned = True
+        bcb = self.func(pdate)
         print(self.seq, bcb)
         self.bcbs.append(bcb)
-      return
+    if an_option_actioned:
+      return True
+    # default fallback
+    today = datetime.date.today()
+    print('default fallback', today)
+    bcb = self.func(today)
+    print(self.seq, bcb)
+    self.bcbs.append(bcb)
+    return True
 
   def adhoctest(self):
     print('In adhoctest() yearrange =', self.yearrange)
@@ -188,11 +199,12 @@ def adhoctest2():
   o.dispatch()
   for year in range(2022, 2023+1):
     print(year)
+
+  yearini, yearfim = args.yearrange
+  print('yearini, yearfim = ', yearini, yearfim)
   """
   args = get_args_via_argparse()
   print(args)
-  yearini, yearfim = args.yearrange
-  print('yearini, yearfim = ', yearini, yearfim)
   o = ArgDispatcher(args)
   o.dispatch()
 

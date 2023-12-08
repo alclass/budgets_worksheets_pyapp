@@ -46,23 +46,19 @@ class DatePriceList:
     self.ddmc = None
     self.df = None
 
-  @property
-  def xdates(self):
-    return self._dates
-
   def sort_records_by_date(self):
     sorted(self.records, key=lambda e: e.date)
 
   def extract_dates_from_dateprice_list(self):
-    self._dates = [d.date for d in self.records]
+    self.dates = [d.date for d in self.records]
 
   def extract_prices_from_dateprice_list(self):
-    self._prices = [d.price for d in self.records]
+    self.prices = [d.price for d in self.records]
 
   def process(self):
     self.sort_records_by_date()
     self.extract_dates_from_dateprice_list()
-    print(self._dates)
+    print(self.dates)
     self.ddmc = cmc.DatePriceRecordsMonetCorrCalculator(refdate=self.today)
     self.ddmc.calc_monetcorr_w_datelist_n_refdate(self.dates)
     self.df = self.ddmc.df

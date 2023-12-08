@@ -9,6 +9,7 @@ from dateutil.relativedelta import relativedelta
 import fs.datefs.datefunctions as dtfs
 import commands.fetch.cpi.read_cpis_from_db as cpi  # .get_last_available_cpi_n_refmonth_fromdb_by_series
 import commands.fetch.cpi.bls_cpi_api_fetcher as cftch  # .CPIFetcher
+MIN_REFMONTHS_ELAPSED_FOR_A_NEW_REMOTE_FETCH = 3
 
 
 class Verifier:
@@ -25,7 +26,7 @@ class Verifier:
   def is_time_for_apifetch(self):
     if self.n_months_elapsed is None:
       return False
-    return self.n_months_elapsed > 1
+    return self.n_months_elapsed >= MIN_REFMONTHS_ELAPSED_FOR_A_NEW_REMOTE_FETCH
 
   @property
   def current_refmonthdate(self):
@@ -60,12 +61,13 @@ class Verifier:
       self.api_has_been_fetch = True
 
   def __str__(self):
+    min_n_refmonths = MIN_REFMONTHS_ELAPSED_FOR_A_NEW_REMOTE_FETCH
     outstr = f"""Verifier:
     today = {self.today}
     current refmonth = {self.current_refmonthdate}
     last API-fetch on = {self.mostrecent_refmonthdate_in_db}
     CPI index then = {self.baselineindex}
-    n of months elapsed = {self.n_months_elapsed}
+    n of months elapsed since = {self.n_months_elapsed} | for a new fetch {min_n_refmonths} refmonths should elapse
     is it time for API-fetch = {self.is_time_for_apifetch} (ie more than one month passed relative to last index in db)
     api_has_been_fetch = {self.api_has_been_fetch}
     """

@@ -14,11 +14,13 @@ fs/economicfs/bcb_cotacao_fetcher_from_db_or_api.py
     be input date minus 2 (Friday is 2 days less than Sunday).
 """
 import datetime
+from dateutil.relativedelta import relativedelta
 import calendar
 import logging
 import os
 import random
 import fs.datefs.datefunctions as dtfs
+import fs.datefs.dategenerators as gendt
 import fs.economicfs.bcb.bcb_api_finfunctions as apis
 import fs.economicfs.bcb.bcb_fetchfunctions as fetchfs  # fetchfs.add_exchanger_to_res_bcb_api_namedtuple()
 import settings as sett
@@ -222,10 +224,13 @@ def process():
   bcb_api_nt = dbfetch_bcb_cotacao_compra_dolar_apifallback(pdate)
   print(bcb_api_nt)
   pass
-  """
   pdate = '2023-10-29'
-  prefetcher = BCBCotacaoFetcher(pdate)
-  print(prefetcher)
+  """
+  today = datetime.date.today()
+  before20days = today - relativedelta(days=31)
+  for pdate in gendt.gen_daily_dates_for_daterange(before20days, today):
+    prefetcher = BCBCotacaoFetcher(pdate)
+    print(prefetcher)
 
 
 if __name__ == "__main__":

@@ -11,7 +11,6 @@ import os.path
 import time
 import settings as cfg
 import commands.fetch.cpi.cpi_rest_api_fetcher_functions as ftchfs  # .fetch_json_response_w_restapi_reqdictdata
-# import fs.datefs.datefunctions as dtfs
 
 
 class RestApiJsonRequestParamMaker:
