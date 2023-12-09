@@ -67,7 +67,7 @@ def show_exchangerates_for_refmonth(p_refmonthdate, decrescent=False):
 
 
 def show_exchangerates_for_last_month(decrescent=False):
-  for i, pdate in enumerate(gendt.gen_dailydates_for_last_month_opt_order(decrescent)):
+  for i, pdate in enumerate(gendt.gen_dailydates_for_last_month_opt_order_cday_accfut(decrescent)):
     bcber = fin.BCBCotacaoFetcher(pdate)
     bcb_api_nt = bcber.namedtuple_cotacao
     print(i+1, pdate, '|', bcb_api_nt.cotacao_venda)
@@ -90,21 +90,21 @@ def show_exchangerates_for_yearrange(yearini, yearfim=None, decrescent=False):
   scrmsg = 'year range (%s, %s)' % (str(yearini), str(yearfim))
   print(scrmsg)
   for year in range(yearini, yearfim+1):
-    for i, pdate in enumerate(gendt.gen_dailydates_or_empty_for_year_opt_order(year, decrescent)):
+    for i, pdate in enumerate(gendt.gen_dailydates_or_empty_for_year_opt_order_coff_accfut(year, decrescent)):
       bcber = fin.BCBCotacaoFetcher(pdate)
       bcb_api_nt = bcber.namedtuple_cotacao
       print(i+1, pdate, '|', bcb_api_nt.cotacao_venda)
 
 
 def show_exchangerates_for_year(year, decrescent=False):
-  for i, pdate in enumerate(gendt.gen_dailydates_or_empty_for_year_opt_order(year, decrescent)):
+  for i, pdate in enumerate(gendt.gen_dailydates_or_empty_for_year_opt_order_coff_accfut(year, decrescent)):
     bcber = fin.BCBCotacaoFetcher(pdate)
     bcb_api_nt = bcber.namedtuple_cotacao
     print(i+1, pdate, '|', bcb_api_nt.cotacao_venda)
 
 
 def show_exchangerates_for_current_year(decrescent=False):
-  for i, pdate in enumerate(gendt.gen_dailydates_for_current_year_opt_order(decrescent)):
+  for i, pdate in enumerate(gendt.gen_dailydates_for_current_year_opt_order_coff_accfut(decrescent)):
     bcber = fin.BCBCotacaoFetcher(pdate)
     bcb_api_nt = bcber.namedtuple_cotacao
     print(i+1, pdate, '|', bcb_api_nt.cotacao_venda)

@@ -2,8 +2,12 @@
 """
 settings.py
 
-# First var In lccal_settings.py (not in cvs-repo)
-DATA_FOLDERPATH = None  # the one in settings.py will be used
+# As of 2023-11, the first var in local_settings.py is:
+  DATA_FOLDERPATH = None  # the one in settings.py will be used
+This setting may be used if the user wants to configure a different directory for data.
+
+Notice that script 'local_settings.py' is not included in the git repo of this app,
+  but for mounting (or recreating) it, it suffices look up the importing variables here.
 """
 import os
 import sqlite3

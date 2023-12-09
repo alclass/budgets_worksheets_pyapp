@@ -124,7 +124,7 @@ class Dispatcher:
       if refmonthdate is None:
         print("refmonthdate is None ie it's invalid. Returning.")
         return 0
-      self.datelist = hilodt.gen_dailydates_for_refmonth_or_empty_opt_order(refmonthdate)
+      self.datelist = hilodt.gen_dailydates_for_refmonth_or_empty_opt_order_coff_accfut(refmonthdate)
       return self.apply()
     if self.args.date:
       self.datelist = self.args.date  # args.date is already a list

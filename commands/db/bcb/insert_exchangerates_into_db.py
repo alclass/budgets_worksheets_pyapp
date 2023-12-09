@@ -125,7 +125,7 @@ class ArgDispatcher:
     if self.month:
       an_option_actioned = True
       monthdate = self.month
-      for pdate in gendt.gen_dailydates_for_refmonth_or_empty_opt_order(monthdate):
+      for pdate in gendt.gen_dailydates_for_refmonth_or_empty_opt_order_coff_accfut(monthdate):
         bcb = self.func(pdate)
         print(self.seq, bcb)
         self.bcbs.append(bcb)
@@ -139,7 +139,7 @@ class ArgDispatcher:
           self.bcbs.append(bcb)
     if self.current_year:
       an_option_actioned = True
-      for pdate in gendt.gen_dailydates_for_current_year_opt_order():
+      for pdate in gendt.gen_dailydates_for_current_year_opt_order_coff_accfut():
         bcb = self.func(pdate)
         print(self.seq, bcb)
         self.bcbs.append(bcb)

@@ -149,7 +149,7 @@ class Dispatcher:
       if refmonthdate is None:
         print("refmonthdate is None ie it's invalid. Returning.")
         return 0
-      plist = gendt.gen_dailydates_for_refmonth_or_empty_opt_order(refmonthdate)
+      plist = gendt.gen_dailydates_for_refmonth_or_empty_opt_order_coff_accfut(refmonthdate)
       return self.apply(plist)
     if self.args.date:
       pdate = self.args.date
