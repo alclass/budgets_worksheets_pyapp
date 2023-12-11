@@ -2,7 +2,7 @@
 adhoctests/dateadhoctests/text_with_different_date_formats_adhoctest.py
 """
 import os
-import fs.datefs.datefunctions as dtfs
+import fs.datefs.years_date_functions as dtfs
 import settings as sett
 DEFAULT_TXT_DATES_FILENAME = 'datesfile.txt'
 

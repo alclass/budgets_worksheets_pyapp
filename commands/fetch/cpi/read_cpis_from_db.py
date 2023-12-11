@@ -5,13 +5,14 @@ commands/fetch/read_cpis_from_db.py
 Acronyms:
   BLS => Burreau of Labor Statistics (USA's)
   CPI => Consumer Price Index (US-measured)
+# import fs.datefs.convert_to_date_wo_intr_sep_posorder as cnv
 """
 import collections
 import datetime
 import pandas as pd
 from dateutil.relativedelta import relativedelta
 import settings as sett
-import fs.datefs.datefunctions as dtfs
+import fs.datefs.refmonths_mod as rfm
 cur_seriesid = 'CUUR0000SA0'
 sur_seriesid = 'SUUR0000SA0'
 DEFAULT_SERIESID = 'CUUR0000SA0'
@@ -35,7 +36,7 @@ def get_min_or_max_available_refmonthdate_in_cpi_db(lowest=True, p_seriesid=None
   cursor.execute(sql, tuplevalues)
   try:
     refmonthdate = cursor.fetchone()[0]
-    refmonthdate = dtfs.make_refmonthdate_or_none(refmonthdate)
+    refmonthdate = rfm.make_refmonthdate_or_none(refmonthdate)
   except TypeError:
     refmonthdate = None
   # print('first_baselineindex', first_baselineindex)
@@ -54,12 +55,20 @@ def get_newer_available_refmonthdate_in_cpi_db(seriesid=None):
 
 def get_older_available_year_in_cpi_db(seriesid=None):
   refmonthdate = get_older_available_refmonthdate_in_cpi_db(seriesid)
-  return dtfs.extract_year_from_date_or_none(refmonthdate)
+  try:
+    return refmonthdate.year
+  except (AttributeError, TypeError):
+    pass
+  return None
 
 
 def get_newer_available_year_in_cpi_db(seriesid=None):
   refmonthdate = get_newer_available_refmonthdate_in_cpi_db(seriesid)
-  return dtfs.extract_year_from_date_or_none(refmonthdate)
+  try:
+    return refmonthdate.year
+  except (AttributeError, TypeError):
+    pass
+  return None
 
 
 def convert_cpi_month_tuplerows_to_namedtuplerows(allrows):
@@ -76,7 +85,7 @@ def get_cpi_baselineindex_for_refmonth_m2_in_db(refmonthdate, seriesid=None):
   This function must be ENCAPSULATED in package-module fin
   The input pdate is transformed to an M-2 date ie month minus 2
   """
-  refmonthdate = dtfs.make_refmonthdate_or_none(refmonthdate)
+  refmonthdate = rfm.make_refmonthdate_or_none(refmonthdate)
   if isinstance(refmonthdate, datetime.date):
     # make M-2 (adjust day=1 already happens above with make_refmonthdate_or_none())
     m2_refmonthdate = refmonthdate + relativedelta(months=-2)
@@ -86,7 +95,7 @@ def get_cpi_baselineindex_for_refmonth_m2_in_db(refmonthdate, seriesid=None):
 
 
 def get_cpi_baselineindex_for_refmonth_in_db(refmonthdate, p_seriesid=None):
-  refmonthdate = dtfs.make_refmonthdate_or_none(refmonthdate)
+  refmonthdate = rfm.make_refmonthdate_or_none(refmonthdate)
   if not isinstance(refmonthdate, datetime.date):
     return None
   conn = sett.get_connection()

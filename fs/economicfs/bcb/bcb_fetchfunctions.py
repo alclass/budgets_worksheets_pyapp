@@ -7,13 +7,14 @@ import logging
 import os
 import settings as sett
 import fs.economicfs.bcb.bcb_api_finfunctions as apis
-import fs.datefs.datefunctions as dtfs
+import fs.datefs.convert_to_date_wo_intr_sep_posorder as cnv
+import fs.datefs.convert_to_datetime_wo_intr_sep_posorder as cvdt
 import models.exrate.exchange_rate_modelmod as exmod
 import fs.textfs.logfunctions as logfs  # logfs.log_error_namedtuple
 _, modlevelogfn = os.path.split(__file__)
 modlevelogfn = str(datetime.date.today()) + '_' + modlevelogfn[:-3] + '.log'
 modlevelogfp = os.path.join(sett.get_datafolder_abspath(), modlevelogfn)
-logging.basicConfig(filename=modlevelogfp, filemode='w', format='%(name)s %(levelname)s %(message)s')
+logging.basicConfig(filename=str(modlevelogfp), filemode='w', format='%(name)s %(levelname)s %(message)s')
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)  # DEBUG means it and all others levels will be logged
 
@@ -71,7 +72,7 @@ def dbfetch_bcb_cotdolar_recursive_or_apifallback(pdate, recurse_pass=0):
   if recurse_pass > 5:
     print('recurse_pass > 5 |', recurse_pass)
     return None
-  indate = dtfs.returns_date_or_none(pdate)
+  indate = cnv.make_date_or_none(pdate)
   if indate is None:
     return None
   today = datetime.date.today()
@@ -84,7 +85,7 @@ def dbfetch_bcb_cotdolar_recursive_or_apifallback(pdate, recurse_pass=0):
     # return dbfetch_bcb_cotacao_dolar_or_apifallback(indate, recurse_pass)
     print('Date in the future. Please, reenter dateadhoctests up to the moment.')
     return None
-  if dtfs.is_date_weekend(indate):
+  if cnv.is_date_weekend(indate):
     log_msg = 'Date ' + str(indate) + ' is weekend. Recursing (limit to 5) ' + str(recurse_pass + 1)
     logger.info(log_msg)
     print(log_msg)
@@ -96,6 +97,7 @@ def dbfetch_bcb_cotdolar_recursive_or_apifallback(pdate, recurse_pass=0):
 
 
 def retrieve_cotacao_from_db_or_move_on_to_call_the_api(pdate, recurse_pass):
+  """
   indate = pdate
   session = exmod.consa.get_sa_session()
   db_found_exch = session.query(exmod.ExchangeRateDate). \
@@ -116,8 +118,14 @@ def retrieve_cotacao_from_db_or_move_on_to_call_the_api(pdate, recurse_pass):
       indate = indate - datetime.timedelta(days=1)
       return dbfetch_bcb_cotdolar_recursive_or_apifallback(indate, recurse_pass+1)
     return res_bcb_api1
+
+  res_bcb_api1 = fetch_cotacao_in_db_for_date_or_none(pdate)
+  if res_bcb_api1:
+    return res_bcb_api1
   # at this point, cotacao is not in db & it's not a weekend
   return fetch_cotacao_thru_the_api_for_its_not_in_db(indate)
+  """
+  _, _ = pdate, recurse_pass
 
 
 def fetch_cotacao_thru_the_api_for_its_not_in_db(indate):
@@ -149,7 +157,7 @@ def put_cotacao_into_db_n_return_namedtuple(namedtuple_res_bcb_api1, pdate):
     db_found_exch.sellquote = sellquote
   cotacao_dt = namedtuple_res_bcb_api1.cotacao_datahora
   if cotacao_dt is None:
-    cotacao_dt = dtfs.convert_date_to_datetime_or_none(indate)
+    cotacao_dt = cvdt.convert_date_to_datetime_or_none(indate)
   db_found_exch.quotesdatetime = cotacao_dt
   session.commit()
   log_msg = 'After session.commit() ' + str(db_found_exch)
@@ -159,3 +167,21 @@ def put_cotacao_into_db_n_return_namedtuple(namedtuple_res_bcb_api1, pdate):
   namedtuple_res_bcb_api1 = add_exchanger_to_res_bcb_api_namedtuple(db_found_exch, namedtuple_res_bcb_api1)
   session.close()
   return namedtuple_res_bcb_api1
+
+
+def adhoc_test():
+  pass
+
+
+def process():
+  """
+
+  """
+  pass
+
+
+if __name__ == "__main__":
+  """
+  process()
+  """
+  adhoc_test()

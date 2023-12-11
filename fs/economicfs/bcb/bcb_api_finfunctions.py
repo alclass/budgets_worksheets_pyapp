@@ -59,7 +59,7 @@ import requests
 import time
 from prettytable import PrettyTable
 import settings as sett
-import fs.datefs.datefunctions as dtfs
+import fs.datefs.years_date_functions as dtfs
 import fs.datefs.introspect_dates as dtconv  # .trans_strdate_from_one_format_to_another_w_sep_n_posorder
 
 url_base = 'https://olinda.bcb.gov.br/olinda/servico/PTAX/' \
@@ -197,7 +197,7 @@ def call_api_bcb_cotacao_dolar_on_date(pdate, connection_error_raised=0):
   cotacao_compra = valuedict['cotacaoCompra']
   cotacao_venda = valuedict['cotacaoVenda']
   data_hora_cotacao = valuedict['dataHoraCotacao']
-  datatime_cotacao = dtfs.convert_strdatetime_to_datetime_or_none(data_hora_cotacao)
+  datatime_cotacao = dtfs.convert_str_or_attrsobj_to_datetime_or_none(data_hora_cotacao)
   res_bcb_api = namedtuple_bcb_api1(
     cotacao_compra=cotacao_compra, cotacao_venda=cotacao_venda, cotacao_datahora=datatime_cotacao,
     param_date=refdate,

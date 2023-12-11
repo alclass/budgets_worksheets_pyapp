@@ -12,7 +12,7 @@
 """
 import collections as coll
 import datetime
-import fs.datefs.datefunctions as dtfs
+import fs.datefs.years_date_functions as dtfs
 import fs.datefs.dategenerators as dtgen
 import fs.economicfs.bcb.bcb_api_finfunctions as apis
 import fs.datefs.introspect_dates as intr
@@ -35,7 +35,7 @@ DEFAULT_CURRENCY = CURR_BRL
 
 
 def fetch_cotacao_brl_per_usd_for_datelist(datelist):
-  # datelist = dtfs.prepare_datelist_uniq_n_in_desc_order(datelist)
+  # datelist = dtfs.trans_datelist_uniq_n_desc(datelist)
   quote_n_date_resultlist = []
   for pdate in datelist:
     mdy_strdate = intr.trans_strdate_from_one_format_to_another_w_sep_n_posorder(

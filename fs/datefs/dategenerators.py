@@ -7,44 +7,15 @@ Example of one such functions:
   => gen_dailydates_for_last_month_opt_order_cday_accfut()
   A generator function that returns all daily dates of last month
     (relative to the system's current date)
+
+import fs.datefs.introspect_dates as intr
 """
 import calendar
 import copy
 import datetime
 from dateutil.relativedelta import relativedelta
-
-
-def make_refmonth_or_none(refmonth):
-  """
-  Notice: differently from make_date_or_none(), this function does not include the 'day' field in a date,
-    though it returns a date with day=1
-  """
-  if refmonth is None:
-    return None
-  try:
-    y = int(refmonth.year)
-    m = int(refmonth.month)
-    return datetime.date(year=y, month=m, day=1)
-  except (AttributeError, TypeError, ValueError):
-    # pass on for a new try below
-    pass
-  try:
-    ppp = str(refmonth).split(' ')
-    pp = ppp[0].split('-')
-    year = int(pp[0])
-    month = int(pp[1])
-    return datetime.date(year=year, month=month, day=1)
-  except (IndexError, ValueError):
-    pass
-  return None
-
-
-def make_refmonth_or_current(str_or_date_refmonth=None):
-  refmonthdate = make_refmonth_or_none(str_or_date_refmonth)
-  if refmonthdate is not None:
-    return refmonthdate
-  today = datetime.date.today()
-  return datetime.date(year=today.year, month=today.month, day=1)
+import fs.datefs.convert_to_date_wo_intr_sep_posorder as cnv
+import fs.datefs.refmonths_mod as rfm
 
 
 def convert_strdatelist_to_datelist(strdatelist):
@@ -53,59 +24,11 @@ def convert_strdatelist_to_datelist(strdatelist):
     if isinstance(strdate, datetime.date):
       datelist.append(strdate)
       continue
-    pdate = make_date_from_str_or_none(strdate)
+    pdate = cnv.make_date_or_none(strdate)
     if pdate is None:
       continue
     datelist.append(pdate)
   return datelist
-
-
-def make_date_or_none(pdate):
-  """
-  The input is tested for 'date' in 3 subsequent conversion-tests, ie:
-    1 if it's a datetime. date itself or a subclass of it (which is returned rightaway) or
-    2 if it's an object that contains, as properties, the int attributes year, month & day
-    3 if it's an object whose str-repr has the prefix form "yyyy-mm-dd" ie,
-    at_least_1digit_year-1or2digit_month-1or2digit_day
-  param: pdate object | string | None
-  output: datetime. date | None
-
-  if issubclass(pdate, datetime. date):
-    return pdate
-
-  """
-  if isinstance(pdate, datetime.date):
-    return pdate
-  try:
-    y = int(pdate.year)
-    m = int(pdate.month)
-    d = int(pdate.day)
-    return datetime.date(year=y, month=m, day=d)
-  except (AttributeError, TypeError, ValueError):
-    # pass on for a new try below
-    pass
-  try:
-    pdate = str(pdate)
-    ppp = pdate.split(' ')
-    pp = ppp[0].split('-')
-    year = int(pp[0])
-    month = int(pp[1])
-    day = int(pp[2])
-    return datetime.date(year=year, month=month, day=day)
-  except (IndexError, TypeError, ValueError):
-    pass
-  return None
-
-
-def make_date_or_today(pdate):
-  pdate = make_date_or_none(pdate)
-  if pdate is None:
-    return datetime.date.today()
-  return pdate
-
-
-def make_date_from_str_or_none(strdate):
-  return make_date_or_none(strdate)
 
 
 def gen_dailydates_bw_ini_fim_asc(startpoint, finishpoint, accfuture=True):
@@ -146,12 +69,13 @@ def gen_dailydates_bw_ini_fim_desc(startpoint, finishpoint, accfuture=True):
   return
 
 
-def gen_dailydates_bw_ini_fim_opt_order(date_ini, date_fim, decrescent=False):
-  try:
-    date_ini = make_date_from_str_or_none(date_ini)
-    date_fim = make_date_from_str_or_none(date_fim)
-  except TypeError:
-    return []
+def gen_dailydates_or_empty_bw_ini_fim_opt_order(date_ini, date_fim, decrescent=False):
+  date_ini = cnv.make_date_or_none(date_ini)
+  if date_ini is None:
+    return
+  date_fim = cnv.make_date_or_none(date_fim)
+  if date_fim is None:
+    return
   if decrescent:
     startpoint = date_fim
     finishpoint = date_ini
@@ -161,24 +85,55 @@ def gen_dailydates_bw_ini_fim_opt_order(date_ini, date_fim, decrescent=False):
   return gen_dailydates_bw_ini_fim_asc(startpoint, finishpoint)
 
 
-def gen_dailydates_for_lastweek_opt_order(decrescent=False):
+def gen_dailydates_for_weekdate_opt_order(date_ini, decrescent=False, cutoff_idx=None, accfuture=False):
+  dateini = cnv.make_date_or_today(date_ini)
+  if dateini is None:
+    return []
+  today = datetime.date.today()
+  n_days_in_a_week = 7
+  n_days_a_first_for_adding = n_days_in_a_week - 1
+  datefim = dateini + relativedelta(days=n_days_a_first_for_adding)
+  try:
+    cutoff_idx = int(cutoff_idx)
+  except (TypeError, ValueError):
+    cutoff_idx = None
+  if cutoff_idx:
+    if cutoff_idx > n_days_a_first_for_adding:
+      return []
+    datefim = dateini + relativedelta(days=cutoff_idx)
+  if not accfuture:
+    # relative future (ie relative to 'today') is not allowed when accfuture=False
+    if dateini > today:
+      return []
+    if dateini <= today < datefim:
+      datefim = today
+  return gen_dailydates_or_empty_bw_ini_fim_opt_order(date_ini=dateini, date_fim=datefim, decrescent=decrescent)
+
+
+def get_gendailydates_for_weekdate_opt_order(date_ini, decrescent=False, cutoff_idx=None, accfuture=False):
+  return list(gen_dailydates_for_weekdate_opt_order(date_ini, decrescent, cutoff_idx, accfuture))
+
+
+def gen_dailydates_for_lastweek_incl_today_opt_order(decrescent=False):
   """
-    Generates daily dates for one whole past week with its 7 days INCLUDING 'today' as an 8th day
-    @see also gen_dailydates_for_lastweek_wo_today_opt_order() which does not include 'today'
+    Generates daily dates for one whole past week with its 7 days INCLUDING 'today'
+    @see also gen_dailydates_for_lastweek_wo_today_opt_order() which ends up on 'yesterday'
   """
   today = datetime.date.today()
-  seven_days_before = today - relativedelta(days=7)
-  return gen_dailydates_bw_ini_fim_opt_order(seven_days_before, today, decrescent)
+  n_days_in_a_week = 7
+  n_days_to_add_a_first_day_in_a_week = n_days_in_a_week - 1
+  seven_days_before = today - relativedelta(days=n_days_to_add_a_first_day_in_a_week)
+  return gen_dailydates_or_empty_bw_ini_fim_opt_order(seven_days_before, today, decrescent)
 
 
-def get_gendailydates_for_lastweek_opt_order(decrescent=False):
+def get_gendailydates_for_lastweek_incl_today_opt_order(decrescent=False):
   """
   datelist = []
   for pdate in gen_dailydates_for_last7days_opt_order(decrescent):
     datelist.append(pdate)
   return datelist
   """
-  return list(gen_dailydates_for_lastweek_opt_order(decrescent))
+  return list(gen_dailydates_for_lastweek_incl_today_opt_order(decrescent))
 
 
 def gen_dailydates_for_lastweek_wo_today_opt_order(decrescent=False):
@@ -187,7 +142,10 @@ def gen_dailydates_for_lastweek_wo_today_opt_order(decrescent=False):
     the "wo" in the function's name means "without"
   """
   today = datetime.date.today()
-  for pdate in gen_dailydates_for_lastweek_opt_order(decrescent):
+  n_days_in_a_week = 7
+  first_date = today - relativedelta(days=n_days_in_a_week)  # it's 7 not 6 because today is not included
+  yield first_date
+  for pdate in gen_dailydates_for_lastweek_incl_today_opt_order(decrescent):
     if pdate < today:
       yield pdate
   return
@@ -215,7 +173,7 @@ def get_gendailydates_for_last_month_opt_order_cday_accfut(decrescent=False):
 def gen_dailydates_for_current_refmonth_opt_order_cday_accfut(
     decrescent=False, cutoff_day=None, accfuture=False
 ):
-  refmonthdate = make_refmonth_or_current()
+  refmonthdate = rfm.make_refmonth_or_current()
   return gen_dailydates_for_refmonth_or_empty_opt_order_coff_accfut(refmonthdate, decrescent, cutoff_day, accfuture)
 
 
@@ -228,7 +186,7 @@ def get_gendailydates_for_current_refmonth_opt_order_cday_accfut(
 def gen_dailydates_for_refmonth_or_current_opt_order_cday_accfut(
     refmonthdate=None, decrescent=False, cutoff_day=None, accfuture=False
 ):
-  refmonthdate = make_refmonth_or_none(refmonthdate)
+  refmonthdate = rfm.make_refmonth_or_none(refmonthdate)
   if refmonthdate is None:
     return gen_dailydates_for_current_refmonth_opt_order_cday_accfut(decrescent, cutoff_day, accfuture)
   return gen_dailydates_for_refmonth_or_empty_opt_order_coff_accfut(refmonthdate, decrescent, cutoff_day, accfuture)
@@ -247,7 +205,7 @@ def get_gendailydates_for_refmonth_or_current_opt_order_cday_accfut(
 def gen_dailydates_for_refmonth_or_lastmonth_opt_order_cday_accfut(
     refmonthdate=None, decrescent=False, cutoff_day=None, accfuture=False
 ):
-  refmonthdate = make_refmonth_or_none(refmonthdate)
+  refmonthdate = rfm.make_refmonth_or_none(refmonthdate)
   if refmonthdate is None:
     return gen_dailydates_for_last_month_opt_order_cday_accfut(decrescent, cutoff_day, accfuture)
   return gen_dailydates_for_refmonth_or_empty_opt_order_coff_accfut(refmonthdate, decrescent, cutoff_day, accfuture)
@@ -266,7 +224,7 @@ def get_gendailydates_for_refmonth_or_lastmonth_opt_order_cday_accfut(
 def gen_dailydates_for_refmonth_or_empty_opt_order_coff_accfut(
     refmonthdate, decrescent=False, cutoff_day=None, accfuture=False
 ):
-  refmonthdate = make_refmonth_or_none(refmonthdate)
+  refmonthdate = rfm.make_refmonth_or_none(refmonthdate)
   if refmonthdate is None:
     return []
   year = refmonthdate.year
@@ -302,7 +260,7 @@ def gen_dailydates_or_empty_for_year_opt_order_coff_accfut(pyear, decrescent=Fal
     return []
   firstdayinyear = datetime.date(year=pyear, month=1, day=1)
   lastday_in_range = datetime.date(year=pyear, month=12, day=31)
-  cutoff_date = make_date_or_none(cutoff_date)
+  cutoff_date = cnv.make_date_or_none(cutoff_date)
   if cutoff_date and cutoff_date < lastday_in_range:
     if cutoff_date >= firstdayinyear:
       lastday_in_range = cutoff_date
@@ -359,7 +317,7 @@ def gen_dailydates_for_yearrange_or_empty_opt_order_coff_accfut(
     return []
   first_date = datetime.date(year=yearini, month=1, day=1)
   last_date = datetime.date(year=yearfim, month=12, day=31)
-  cutoff_date = make_date_or_none(cutoff_date)
+  cutoff_date = cnv.make_date_or_none(cutoff_date)
   if cutoff_date:
     if first_date <= cutoff_date <= last_date:
       # cutoff_date is in between first & last dates, set it to last_date_in_yearfim
@@ -448,6 +406,35 @@ def adhoc_test2():
   print(len(datelist), 'datelist', datelist)
 
 
+def adhoc_test3():
+  """
+  returned_datelist = get_gendailydates_for_weekdate_opt_order(yesterday, decrescent=False, accfuture=True)
+  print(n_days_in_a_week, len(returned_datelist))
+  print(yesterday, returned_datelist[0])
+  print(sixdays_a_yesterdar, returned_datelist[-1])
+
+  """
+  # t3 test week with cutoff & future
+  today = datetime.date.today()
+  yesterday = today - relativedelta(days=1)
+  # n_days_in_a_week = 7
+  # sixdays_a_yesterdar = yesterday + relativedelta(days=n_days_in_a_week - 1)
+  # t3 gen_dailydates_for_weekdate_opt_order() with accfuture=True
+  # t4 as t3 with accfuture=False
+  returned_datelist = get_gendailydates_for_weekdate_opt_order(yesterday, decrescent=False, accfuture=False)
+  # there should be only yesterday and today in returned_datelist, so 2 elements
+  n_days_not_in_future_yet = 2
+  print(n_days_not_in_future_yet, len(returned_datelist))
+  print(yesterday, returned_datelist[0])
+  print(today, returned_datelist[-1])
+  datelist = get_gendailydates_for_lastweek_wo_today_opt_order()
+  print(len(datelist), 'datelist', datelist)
+  datelist = get_gendailydates_for_weekdate_opt_order(today, accfuture=True)
+  print(len(datelist), 'asc datelist', datelist)
+  datelist = get_gendailydates_for_weekdate_opt_order(today, decrescent=True, accfuture=True)
+  print(len(datelist), 'desc datelist', datelist)
+
+
 def process():
   pass
 
@@ -457,4 +444,4 @@ if __name__ == "__main__":
   adhoc_test()
   process()
   """
-  adhoc_test2()
+  adhoc_test3()

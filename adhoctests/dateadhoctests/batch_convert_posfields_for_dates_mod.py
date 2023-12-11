@@ -6,7 +6,7 @@ batch_convert_posfields_for_dates_mod.py
 # import os, pathlib
 # import xlsxwriter
 # import fs.economicfs.financefunctions as finfs
-import fs.datefs.datefunctions as dtfs
+import fs.datefs.years_date_functions as dtfs
 
 
 def get_datelist(datestext):
@@ -21,7 +21,7 @@ def get_datelist(datestext):
   datelist = datestext.split(' ')
   datelist = list(filter(lambda x: x != '', datelist))
   # the line below only works for the y-m-d pos-&-sep case
-  # datelist = dtfs.prepare_datelist_uniq_n_in_desc_order(datelist)
+  # datelist = dtfs.trans_datelist_uniq_n_desc(datelist)
   return datelist
 
 

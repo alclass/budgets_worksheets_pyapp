@@ -22,13 +22,16 @@ def get_args():
 def adhoctest():
   datelist = get_args()
   for argdate in datelist:
-    res_bcb_api1 = prefs.dbfetch_bcb_cotacao_compra_dolar_apifallback(argdate)
+    bcb = prefs.BCBCotacaoFetcher(argdate)
+    res_bcb_api1 = bcb.namedtuple_cotacao
     print(res_bcb_api1)
   today = datetime.date.today()
-  res_bcb_api1 = prefs.dbfetch_bcb_cotacao_compra_dolar_apifallback(today)
+  bcb = prefs.BCBCotacaoFetcher(today)
+  res_bcb_api1 = bcb.namedtuple_cotacao
   print(res_bcb_api1)
   pdate = '2020-03-31'
-  res_bcb_api1 = prefs.dbfetch_bcb_cotacao_compra_dolar_apifallback(pdate)
+  bcb = prefs.BCBCotacaoFetcher(pdate)
+  res_bcb_api1 = bcb.namedtuple_cotacao
   print(res_bcb_api1)
 
 
@@ -37,4 +40,8 @@ def process():
 
 
 if __name__ == "__main__":
+  """
+  adhoctest()
+  """
   process()
+  adhoctest()

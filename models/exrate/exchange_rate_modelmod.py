@@ -5,10 +5,11 @@ models/exrate/exchange_rate_modelmod.py
 """
 import datetime
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, Date, String, Time
+from sqlalchemy import Column, Integer, Date, Time  # String,
 from sqlalchemy.sql.expression import asc
 import settings as sett
-import fs.datefs.datefunctions as dtfs
+import fs.datefs.convert_to_date_wo_intr_sep_posorder as cnv
+import fs.datefs.convert_to_datetime_wo_intr_sep_posorder as cvdt
 import fs.db.conn_sa as consa
 Base = declarative_base()
 
@@ -51,7 +52,7 @@ class ExchangeRateDate(Base):
   def quotesdatetime(self, pdatetime):
     if pdatetime is None:
       return
-    pdate, ptime = dtfs.split_date_n_time_from_datetime(pdatetime)
+    pdate, ptime = cvdt.split_date_n_time_from_datetime(pdatetime)
     self.quotesdate = pdate
     self.quotesdaytime = ptime
 
@@ -107,7 +108,7 @@ class ExchangeRateDate(Base):
 
 def ahdoc_test_insert_etc():
   session = consa.get_sa_session()
-  quotesdate = dtfs.returns_date_or_today('2019-12-31')
+  quotesdate = cnv.make_date_or_today('2019-12-31')
   exrate = session.query(ExchangeRateDate).filter(ExchangeRateDate.quotesdate == quotesdate).first()
   if exrate is None:
     print(quotesdate, 'does not exist in db')

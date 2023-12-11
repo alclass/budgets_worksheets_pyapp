@@ -34,7 +34,7 @@ import datetime
 import settings as cfg
 import fs.economicfs.bcb.bcb_cotacao_fetcher_from_db_or_api as bcbfetch  # bcbfetch.BCBCotacaoFetcher
 import commands.fetch.cpi.read_cpis_from_db as ftcpi  # ftcpi.get_cpi_baselineindex_for_refmonth_m2_in_db
-import fs.datefs.datefunctions as dtfs
+import fs.datefs.years_date_functions as dtfs
 from prettytable import PrettyTable
 DEFAULT_DATESFILENAME = 'datesfile.dat'
 

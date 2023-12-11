@@ -4,15 +4,15 @@ fs/datefs/test_dategenerators.py
   unit-tests to fs/datefs/dategenerators functions.
 
 As of 2023-12-08 there are 7 tests and about 30 "subtests" (input/output hypotheses)
+
+import collections
 """
 import calendar
-import collections
 import datetime
 from dateutil.relativedelta import relativedelta
 import unittest
 import fs.datefs.dategenerators as gendt
-nt_dtymd_constr = collections.namedtuple('NTymd', field_names=['year', 'month', 'day'])
-nt_dtym_refmo_constr = collections.namedtuple('NTrefmo', field_names=['year', 'month'])
+import fs.datefs.refmonths_mod as rfm
 
 
 class Test(unittest.TestCase):
@@ -20,107 +20,74 @@ class Test(unittest.TestCase):
   def setUp(self):
     self.today = datetime.date.today()
 
-  def test_build_dates_n_refmonths_1(self):
-    # t1 pass a ymd namedtuple and expect a datetime.date back
-    y, m, d = 2023, 11, 11
-    ntdate = nt_dtymd_constr(year=y, month=m, day=d)
-    exp_date = datetime.date(year=y, month=m, day=d)
-    ret_date = gendt.make_date_or_none(ntdate)
-    self.assertEqual(exp_date, ret_date)
-    # t2 variation of t1, ie the namedtuple is not the created datetime.date
-    self.assertNotEqual(ntdate, ret_date)
-    # t3 pass a non-dateable value and expect None
-    ret_date = gendt.make_date_or_none('bla foo')
-    self.assertIsNone(ret_date)
-    # t4 pass a non-dateable value and expect 'today'
-    ret_date = gendt.make_date_or_today('bla foo')
-    self.assertEqual(self.today, ret_date)
-    nt_refmo = nt_dtym_refmo_constr(year=y, month=m)
-    exp_refmo = datetime.date(year=y, month=m, day=1)
-    # t5 same as t1 but with refmonth which needs only year & month
-    ret_refmo = gendt.make_refmonth_or_none(nt_refmo)
-    self.assertEqual(exp_refmo, ret_refmo)
-    # t6 sends in a non-refmonthable and expects None
-    ret_refmo = gendt.make_refmonth_or_none('bla bar')
-    self.assertIsNone(ret_refmo)
-    # t7 sends in a non-refmonthable and expects current refmonth
-    ret_refmo = gendt.make_refmonth_or_current('bla bar')
-    exp_refmo = self.today
-    if exp_refmo.day != 1:
-      exp_refmo = datetime.date(year=exp_refmo.year, month=exp_refmo.month, day=1)
-    self.assertEqual(exp_refmo, ret_refmo)
-
-  def test_build_dates_n_refmonths_2(self):
-    # t1 unit-testing make_date_or_none() & make_date_or_today()
-    y, m, d = 2023, 11, 11
-    anystrdate = f'{y}-{m}-{d}'
-    expect_date = datetime.date(year=y, month=m, day=d)
-    returned_date = gendt.make_date_from_str_or_none(anystrdate)
-    self.assertEqual(returned_date, expect_date)
-    returned_date = gendt.make_date_or_none(anystrdate)
-    self.assertEqual(returned_date, expect_date)
-    # t2 unit-testing make_refmonth_or_none() & make_refmonth_or_current()
-    y, m = 2023, 11
-    anystrdate = f'{y}-{m} bla bla'
-    expect_date = datetime.date(year=y, month=m, day=1)
-    returned_date = gendt.make_refmonth_or_none(anystrdate)
-    self.assertEqual(returned_date, expect_date)
-    returned_date = gendt.make_refmonth_or_current('bla foo')
-    current_refmonthdate = self.today
-    if current_refmonthdate.day != 1:
-      current_refmonthdate = datetime.date(year=self.today.year, month=self.today.month, day=1)
-    self.assertEqual(returned_date, current_refmonthdate)
-    # reminding that anystrdate is not complete
-    # t3 same as t1 but with the str that was used for refmonth with day
-    returned_date = gendt.make_date_or_none(anystrdate)
-    self.assertIsNone(returned_date)
-    returned_date = gendt.make_date_or_today(anystrdate)
-    today = datetime.date.today()
-    self.assertEqual(returned_date, today)
-    # t4 test convert_strdatelist_to_datelist()
-    expect_datelist, strdatelist = [], []
-    y, m, d = 2023, 11, 11
-    anystrdate = f'{y}-{m}-{d}'
-    strdatelist.append(anystrdate)
-    pdate = datetime.date(year=y, month=m, day=d)
-    expect_datelist.append(pdate)
-    y, m, d = 2022, 12, 13
-    anystrdate = f'{y}-{m}-{d}'
-    strdatelist.append(anystrdate)
-    pdate = datetime.date(year=y, month=m, day=d)
-    expect_datelist.append(pdate)
-    returned_datelist = gendt.convert_strdatelist_to_datelist(strdatelist)
-    self.assertEqual(returned_datelist, expect_datelist)
-
   def test_gen_dateranges_weeks(self):
-    # t1 gen_dailydates_for_lastweek_opt_order()
-    # ie, generates one whole past week with its 7 days PLUS today as an 8th day
-    sevendaysbefore = self.today - relativedelta(days=7)
+    # t1 gen_dailydates_for_lastweek_incl_today_opt_order()
+    # ie, generates one whole past week with its 7 but today is included as its last day
+    # @see below function version that ends on yesterday
+    n_days_in_a_week = 7
+    sevendaysbefore = self.today - relativedelta(days=n_days_in_a_week-1)
     exp_datelist = []
     ret_datelist = []
     idate = sevendaysbefore
-    for pdate in gendt.gen_dailydates_for_lastweek_opt_order():
+    for pdate in gendt.gen_dailydates_for_lastweek_incl_today_opt_order():
       exp_datelist.append(idate)
       idate = idate + relativedelta(days=1)
       ret_datelist.append(pdate)
+    self.assertEqual(n_days_in_a_week, len(ret_datelist))
     self.assertEqual(exp_datelist, ret_datelist)
     self.assertEqual(sevendaysbefore, ret_datelist[0])
     self.assertEqual(self.today, ret_datelist[-1])
-    # len is 7 + 1 for the interator range is inconclusive
-    # ie, in "range(dateini, datefim)", datefim is inconcluded
-    n_days = 8
-    self.assertEqual(n_days, len(ret_datelist))
-    # t2 get_gendailydates_for_lastweek_wo_today_opt_order()
-    # ie, generates one whole past week with its 7 days NOT INCLUDING today as an 8th day
+    self.assertEqual(n_days_in_a_week, len(ret_datelist))
+    # t2 same as t1 but without 'today', ie get_gendailydates_for_lastweek_wo_today_opt_order()
+    # ie, generates one whole past week with its 7 days having 'yesterday' as its last day
     ret2_datelist = gendt.get_gendailydates_for_lastweek_wo_today_opt_order()
-    n_days = 7
-    self.assertEqual(n_days, len(ret2_datelist))
+    self.assertEqual(n_days_in_a_week, len(ret2_datelist))
     yesterday = self.today - relativedelta(days=1)
     self.assertEqual(yesterday, ret2_datelist[-1])
-    self.assertEqual(sevendaysbefore, ret2_datelist[0])
+    # "_b_" means "before"
+    sixdays_b_yesterdar = yesterday - relativedelta(days=n_days_in_a_week-1)
+    self.assertEqual(sixdays_b_yesterdar, ret2_datelist[0])
+    yesterday = self.today - relativedelta(days=1)
+    # t3 gen_dailydates_for_weekdate_opt_order() with accfuture=True ie "accept future"
+    returned_datelist = gendt.get_gendailydates_for_weekdate_opt_order(
+      yesterday, decrescent=False, cutoff_idx=None, accfuture=True
+    )
+    self.assertEqual(n_days_in_a_week, len(returned_datelist))
+    self.assertEqual(yesterday, returned_datelist[0])
+    # "_a_" means "after"
+    sixdays_a_yesterdar = yesterday + relativedelta(days=n_days_in_a_week-1)
+    self.assertEqual(sixdays_a_yesterdar, returned_datelist[-1])
+    # t4 same as t3 with accfuture=False
+    returned_datelist = gendt.get_gendailydates_for_weekdate_opt_order(
+      yesterday, decrescent=False, cutoff_idx=None, accfuture=False
+    )
+    # there should be only yesterday and today in returned_datelist, so 2 elements (the others are in future)
+    n_days_not_in_future_yet = 2
+    self.assertEqual(n_days_not_in_future_yet, len(returned_datelist))
+    self.assertEqual(yesterday, returned_datelist[0])
+    self.assertEqual(self.today, returned_datelist[-1])
+    # t5 same as t4 with cutoff_idx=0 (meaning it's picking up only one day from the list of the subtest above)
+    cutoff_idx = 0
+    returned_datelist = gendt.get_gendailydates_for_weekdate_opt_order(
+      yesterday, decrescent=False, cutoff_idx=cutoff_idx, accfuture=False
+    )
+    self.assertEqual(n_days_not_in_future_yet, len(returned_datelist))
+    self.assertEqual(yesterday, returned_datelist[0])
+    # t5 subtesting parameter decrescent=True along side with list.reverse()
+    ret_datelist_asc = gendt.get_gendailydates_for_weekdate_opt_order(
+      self.today, decrescent=False, cutoff_idx=None, accfuture=True
+    )
+    # notice that date_ini (today in this case) is the same, only the element order gets changed (reversed)
+    ret_datelist_desc = gendt.get_gendailydates_for_weekdate_opt_order(
+      self.today, decrescent=True, cutoff_idx=None, accfuture=True
+    )
+    self.assertEqual(ret_datelist_asc[0], ret_datelist_desc[-1])
+    self.assertEqual(ret_datelist_asc[-1], ret_datelist_desc[0])
+    ret_datelist_asc.reverse()
+    self.assertEqual(ret_datelist_asc, ret_datelist_desc)
 
   def test_gen_dateranges_upto_months_1(self):
-    # t1 gen_dailydates_bw_ini_fim_opt_order() choosing one whole month range
+    # t1 gen_dailydates_or_empty_bw_ini_fim_opt_order() choosing one whole month range
     y, m, d = 2023, 10, 1
     ini_strdate = f'{y}-{m}-{d}'
     inidate = datetime.date(year=y, month=m, day=d)
@@ -128,7 +95,7 @@ class Test(unittest.TestCase):
     fim_strdate = f'{y}-{m}-{d}'
     fimdate = datetime.date(year=y, month=m, day=d)
     exp_datelist, ret_datelist = [], []
-    genfunc = gendt.gen_dailydates_bw_ini_fim_opt_order(ini_strdate, fim_strdate)
+    genfunc = gendt.gen_dailydates_or_empty_bw_ini_fim_opt_order(ini_strdate, fim_strdate)
     for i, pdate in enumerate(genfunc):
       idate = inidate + relativedelta(days=i)
       exp_datelist.append(idate)
@@ -142,7 +109,7 @@ class Test(unittest.TestCase):
     inidate = fimdate
     fimdate = tmpdate
     exp_datelist, ret_datelist = [], []
-    genfunc = gendt.gen_dailydates_bw_ini_fim_opt_order(ini_strdate, fim_strdate, decrescent=True)
+    genfunc = gendt.gen_dailydates_or_empty_bw_ini_fim_opt_order(ini_strdate, fim_strdate, decrescent=True)
     for i, pdate in enumerate(genfunc):
       idate = inidate - relativedelta(days=i)
       exp_datelist.append(idate)
@@ -164,7 +131,7 @@ class Test(unittest.TestCase):
     self.assertEqual(ret_desc_datelist, ret_datelist)
     # t5 same as t3 but with current refmonthdate and allowing "future"
     ret_datelist = gendt.get_gendailydates_for_current_refmonth_opt_order_cday_accfut(accfuture=True)
-    curr_refmo = gendt.make_refmonth_or_current()
+    curr_refmo = rfm.make_refmonth_or_current()
     _, n_days = calendar.monthrange(curr_refmo.year, curr_refmo.month)
     last_day_inmo = datetime.date(year=curr_refmo.year, month=curr_refmo.month, day=n_days)
     self.assertEqual(n_days, len(ret_datelist))
@@ -190,7 +157,7 @@ class Test(unittest.TestCase):
     self.assertEqual(n_days_in_bw, len(datelist))
     self.assertEqual(datelist[0], firstdate)
     self.assertEqual(datelist[-1], lastdate)
-    # t2 same as t1 but letting it fall back to its default (still last month)
+    # t2 same as t1 but letting it fall back to its default (still last month's)
     str_refmonth = 'bla foo bar'  # sends in rubish to get lastmonth
     datelist = gendt.get_gendailydates_for_refmonth_or_lastmonth_opt_order_cday_accfut(str_refmonth)
     self.assertEqual(n_days_in_bw, len(datelist))
@@ -211,10 +178,10 @@ class Test(unittest.TestCase):
 
   def test_gen_dateranges_upto_months_3(self):
     # t1 generates dates for lastweek
-    seven_days_before = self.today - relativedelta(days=7)
+    seven_days_before = self.today - relativedelta(days=6)
     idate = seven_days_before
     exp_datelist, ret_datelist = [], []
-    for i, pdate in enumerate(gendt.gen_dailydates_for_lastweek_opt_order()):
+    for i, pdate in enumerate(gendt.gen_dailydates_for_lastweek_incl_today_opt_order()):
       exp_datelist.append(idate)
       idate = idate + relativedelta(days=1)
       ret_datelist.append(pdate)
@@ -222,22 +189,27 @@ class Test(unittest.TestCase):
     self.assertEqual(self.today, ret_datelist[-1])
     self.assertEqual(seven_days_before, ret_datelist[0])
     # t2 same as t1 but desc ie with decrescent=True
-    ret2_datelist = gendt.get_gendailydates_for_lastweek_opt_order(decrescent=True)
+    ret2_datelist = gendt.get_gendailydates_for_lastweek_incl_today_opt_order(decrescent=True)
     exp_datelist.reverse()
     self.assertEqual(exp_datelist, ret2_datelist)
     self.assertEqual(self.today, ret2_datelist[0])
     self.assertEqual(seven_days_before, ret2_datelist[-1])
+    # unreverse it because of the decrescent=True
+    exp_datelist.reverse()
     # t3 same as t2 but with 7 days (without 'today') instead of 8 and back to asc ie decrescent=False
     ret3_datelist = gendt.get_gendailydates_for_lastweek_wo_today_opt_order()
-    # reverse it back
-    exp_datelist.reverse()
-    # remove the last element which should be 'today'
-    exp_today = exp_datelist.pop()
+    # remove the last element which should be 'today' and included a new one at the beginning
+    # ie shift it one day before
+    exp_today = exp_datelist[-1]
+    exp_datelist = exp_datelist[:-1]
+    first_elem = exp_datelist[0]
+    new_first = first_elem - relativedelta(days=1)
+    exp_datelist.insert(0, new_first)
     self.assertEqual(self.today, exp_today)
     self.assertEqual(exp_datelist, ret3_datelist)
     yesterday = self.today - relativedelta(days=1)
     self.assertEqual(yesterday, ret3_datelist[-1])
-    self.assertEqual(seven_days_before, ret3_datelist[0])
+    self.assertEqual(new_first, ret3_datelist[0])
 
   def test_gen_dateranges_beyond_months(self):
     # t1 gen_dailydates_f_yearini_t_today_or_empty_opt_order()
@@ -263,3 +235,9 @@ class Test(unittest.TestCase):
       ret_year_no_future_allowed_datelist.append(pdate)
     exp_datelist = list(filter(lambda d: d <= self.today, ret_fullyear_list))
     self.assertEqual(ret_year_no_future_allowed_datelist, exp_datelist)
+    # t4 subtest empty lists returned (ask a year in the future, but do not allow "accept future" (ie, accfuture=False)
+    y = self.today.year + 1
+    returned_datelist = gendt.get_gendailydates_for_yearrange_or_empty_opt_order_coff_accfut(
+      y, y, False, None, accfuture=False
+    )
+    self.assertEqual([], returned_datelist)

@@ -3,28 +3,34 @@
 fs/datefs/test_introspect_dates.py
   unit-tests to fs/datefs/introspect_dates.py functions.
 
-Notice that not all functions in module introspect_dates.py are tested,
-  because, naturally, some functions are 'sort of' private, ie,
-  they are called from others that themselves are under unit-test here.
+Notice that NOT all functions in module introspect_dates.py are explicitly tested.
+  The idea is that, at the end, functions not present here will be tested through functions in here.
 
 Example:
   function introspect_possible_month_position_in_date() is not tested here,
-    because it's tested indirectly via other functions.
+    because it's tested indirectly via other functions
+    (those that 'introspect' dates without receiving posorder as paramater).
+
   Another detail of introspect_possible_month_position_in_date() is that
-    it is used in a 'composite way', ie, to find posorder [ymd, ydm, dmy, mdy],
-    two fields among the three (year, month & day) must be found conclusively,
-    so the function mentioned above is also used together with other functions.
+    it is used in a 'composite way', ie, to find posorder [ymd, ydm, dmy, mdy].
+  In that, it is necessary that two fields (among the three: year, month & day) be found conclusively
+    so that it's able to generate a datetime.date.
+  This above function, though it's not present here as of the time of this writing, it may in the future.
 
 Conclusive vs unconclusive strdates:
-    # in a strdate, year is 'conclusive' if above 31 (ie, it does not confuse with day)
-    # in a strdate, day is 'conclusive' if above 12 (ie, it does not confuse with month)
+    # in a strdate, year is 'conclusive' if above 31 (ie, it does not confuse iself with day)
+    # in a strdate, day is 'conclusive' if above 12 (ie, day does not confuse itself with month)
 Examples:
     a) unconclusive strdates
   2023.1.3 is unconclusive, because one does not know whether digit 1 is day or month, same to 3;
   13-1-3 is also unconclusive, because, adding to the above, one does not know whether 13 is day or year;
     b) conclusive strdates
   2023-1-13 is conclusive, for 2023 is greater than 31 and 13 greater than 12 (sep='-', posorder='ymd'
-  2/22/2022 is conclusive, idem as above, though different in sep & posorder (sep='/', posorder='mdy'
+  2/22/2022 is also conclusive, idem as above, though different in sep & posorder (sep='/', posorder='mdy'
+
+As of 2023-12-09, there are 9 tests here with about 40 subtests
+  (a test is a method prefixed with 'test_')
+  (a subtest is generally a variation hypothesis inside a test)
 """
 import datetime
 import unittest
@@ -181,6 +187,38 @@ class Test(unittest.TestCase):
     returned_date = intr.introspect_n_convert_strdate_to_date_or_today(rubbish_to_pass_in)
     expected_date = self.today
     self.assertEqual(returned_date, expected_date)
+
+  def test_transform_transpose_strdate_to_date_under_posfield_variations(self):
+    # t1 transform/transpose an arbitrary strdate giving its sep & posorder
+    strdate = '2020-7-15'
+    fromsep, tosep = '-', '/'
+    from_posorder, to_posorder = 'ymd', 'mdy'
+    returned_strdate = intr.trans_strdate_from_one_format_to_another_w_sep_n_posorder(
+      strdate, fromsep, from_posorder, tosep, to_posorder, zfill=2
+    )
+    expected_strdate = '07/15/2020'
+    self.assertEqual(expected_strdate, returned_strdate)
+    # 2 same as t1 with a different input set
+    strdate = '7/8/2020'
+    fromsep, tosep = '/', '-'
+    from_posorder, to_posorder = 'mdy', 'ymd'
+    expected_strdate = '2020-07-08'
+    returned_strdate = intr.trans_strdate_from_one_format_to_another_w_sep_n_posorder(
+      strdate, fromsep, from_posorder, tosep, to_posorder, zfill=2
+    )
+    self.assertEqual(expected_strdate, returned_strdate)
+    # 3 same as 2 but with leftzero in d & m in input str
+    strdate = '07/08/2020'
+    returned_strdate = intr.trans_strdate_from_one_format_to_another_w_sep_n_posorder(
+      strdate, fromsep, from_posorder, tosep, to_posorder, zfill=2
+    )
+    self.assertEqual(expected_strdate, returned_strdate)
+    # 4 same as 2 & 3 but with no leftzero in d & m in output str, ie without zfill=2
+    returned_strdate = intr.trans_strdate_from_one_format_to_another_w_sep_n_posorder(
+      strdate, fromsep, from_posorder, tosep, to_posorder
+    )
+    expected_strdate = '2020-7-8'
+    self.assertEqual(expected_strdate, returned_strdate)
 
   def test_find_sep_n_posorder_from_a_strdatelist(self):
     """

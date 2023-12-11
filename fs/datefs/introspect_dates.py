@@ -37,6 +37,20 @@ def convert_date_to_strmmddyyyy_or_itsreprtoday_opt_sep_zfill(pdate, sep='/', zf
   return convert_date_to_strmmddyyyy_or_none_opt_sep_zfill(today, sep, zfill)
 
 
+def convert_date_to_strmmddyyyy_or_none_opt_sep_zfill(pdate, sep='/', zfill=None):
+  target_posorder = 'mdy'
+  # strdate
+  return form_strdate_w_date_sep_posorder_opt_zfill(pdate, sep, target_posorder, zfill)
+
+
+def convert_date_to_strmmddyyyy_or_itsreprtoday_opt_sep_zfill(pdate, sep='/', zfill=0):
+  strdate = convert_date_to_strmmddyyyy_or_none_opt_sep_zfill(pdate, sep, zfill)
+  if strdate is not None:
+    return strdate
+  today = datetime.date.today()
+  return convert_date_to_strmmddyyyy_or_none_opt_sep_zfill(today, sep, zfill)
+
+
 def convert_strdate_to_date_or_none_w_sep_n_posorder(strdate, sep='-', orderpos='ymd'):
   try:
     ppp = strdate.split(' ')
@@ -68,6 +82,35 @@ def convert_strdate_to_date_or_none_w_sep_n_posorder(strdate, sep='-', orderpos=
 
 def convert_strdate_to_date_or_none_wo_sep_n_fieldorder(strdate):
   return introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
+
+
+def convert_strdate_to_date_or_none_w_sep_n_posorder(strdate, sep='-', orderpos='ymd'):
+  try:
+    ppp = strdate.split(' ')
+    pp = ppp[0].split(sep)
+    year = None
+    month = None
+    day = None
+    if orderpos == 'ymd':
+      year = int(pp[0])
+      month = int(pp[1])
+      day = int(pp[2])
+    elif orderpos == 'ydm':
+      year = int(pp[0])
+      month = int(pp[2])
+      day = int(pp[1])
+    elif orderpos == 'dmy':
+      year = int(pp[2])
+      month = int(pp[1])
+      day = int(pp[0])
+    elif orderpos == 'mdy':
+      year = int(pp[2])
+      month = int(pp[0])
+      day = int(pp[1])
+    return datetime.date(year=year, month=month, day=day)
+  except (AttributeError, IndexError, TypeError, ValueError):
+    pass
+  return None
 
 
 def trans_from_date_to_strdate_w_sep_posorder_n_zfill(pdate, sep='-', posorder='ymd', zfill=0):
@@ -220,11 +263,9 @@ def introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
   if strdate is None:
     return None
   if isinstance(strdate, datetime.date):
-    pdate = strdate
-    return pdate
-  if isinstance(strdate, datetime.datetime):
-    pdate = strdate
-    return pdate
+    # a datetime.datetime may have come in, reinstantiate to datetime.date
+    o = strdate
+    return datetime.date(year=o.year, month=o.month, day=o.day)
   try:
     if hasattr(strdate, 'year') and hasattr(strdate, 'month') and hasattr(strdate, 'day'):
       y = int(strdate.year)
@@ -316,38 +357,6 @@ def introspect_n_convert_strdate_to_date_or_today_w_or_wo_sep_n_posorder(strdate
   if pdate is None:
     return datetime.date.today()
   return pdate
-
-
-def find_sep_n_posorder_from_a_strdatelist(p_datelist):
-  """
-  private function: only to be called from below introspect_n_convert_strdatelist_to_dates(p_datelist)
-  """
-  if p_datelist is None or len(p_datelist) == 0:
-    return None, None
-  first_str_date = p_datelist[0]
-  firstdate = str(first_str_date)
-  sep = introspect_sep_char_in_strdate(firstdate)
-  n_of_strdates = len(p_datelist)
-  if sep is None:
-    # sep was not found, raise ValueError
-    error_msg = f"""At this point, the date separator character was not found in
-    function find_sep_n_orderpos_from_a_strdatelist() [confirm it in stack trace]
-    first_str_date = {first_str_date} in {n_of_strdates} strdates"""
-    raise ValueError(error_msg)
-  last_str_date = None
-  for strdate in p_datelist:
-    positionstr = introspect_year_month_day_field_order_in_date(strdate, sep)
-    if positionstr:
-      return sep, positionstr
-    last_str_date = strdate
-  # positionstr was not found, raise ValueError
-  error_msg = f"""Field order in dates were not found. Separator found is "{sep}"
-  Field order can be either ymd, dmy or mdy; 
-     where: y is year, m is month, d is day
-  Example of ymd is: "2023{sep}12{sep}03"
-  first_str_date = {first_str_date}
-  last_str_date = {last_str_date}"""
-  raise ValueError(error_msg)
 
 
 def introspect_n_convert_sdlist_to_dates_w_or_wo_sep_n_posorder(strdatelist):
@@ -496,6 +505,38 @@ def introspect_year_month_day_field_order_in_date(strdate, sep):
   positiondict = introspect_possible_month_position_in_date(strdate, sep, positiondict)
   positionstr = trans_positiondict_to_strpositions(positiondict)
   return positionstr
+
+
+def find_sep_n_posorder_from_a_strdatelist(p_datelist):
+  """
+  private function: only to be called from below introspect_n_convert_strdatelist_to_dates(p_datelist)
+  """
+  if p_datelist is None or len(p_datelist) == 0:
+    return None, None
+  first_str_date = p_datelist[0]
+  firstdate = str(first_str_date)
+  sep = introspect_sep_char_in_strdate(firstdate)
+  n_of_strdates = len(p_datelist)
+  if sep is None:
+    # sep was not found, raise ValueError
+    error_msg = f"""At this point, the date separator character was not found in
+    function find_sep_n_orderpos_from_a_strdatelist() [confirm it in stack trace]
+    first_str_date = {first_str_date} in {n_of_strdates} strdates"""
+    raise ValueError(error_msg)
+  last_str_date = None
+  for strdate in p_datelist:
+    positionstr = introspect_year_month_day_field_order_in_date(strdate, sep)
+    if positionstr:
+      return sep, positionstr
+    last_str_date = strdate
+  # positionstr was not found, raise ValueError
+  error_msg = f"""Field order in dates were not found. Separator found is "{sep}"
+  Field order can be either ymd, dmy or mdy; 
+     where: y is year, m is month, d is day
+  Example of ymd is: "2023{sep}12{sep}03"
+  first_str_date = {first_str_date}
+  last_str_date = {last_str_date}"""
+  raise ValueError(error_msg)
 
 
 def find_with_a_strdatelist_the_year_month_day_positioning(strdatelist):

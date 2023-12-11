@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
 """
-  docstring
+models/exrate/histprices_mod.py
 
+The namedtuple for the BCB API response data is the following:
   namedtuple_bcb_api1 = coll.namedtuple(
     'BCBAPI1DataStr',
     'cotacao_compra cotacao_venda cotacao_datahora param_date error_msg gen_msg exchanger'
   )
-
-
+import xlsxwriter
+import fs.numberfs.tableaufunctions as tblfs
 """
 import csv
 import datetime
 import os
-import xlsxwriter
-import fs.datefs.datefunctions as dtfs
-import fs.economicfs.bcb_cotacao_fetcher_from_db_or_api as prefs
-import fs.economicfs.bcb_financefunctions as finfs
-import fs.numberfs.tableaufunctions as tblfs
-import settings
+import fs.datefs.convert_to_date_wo_intr_sep_posorder as cnv
+import fs.datefs.introspect_dates as intr
+import fs.economicfs.bcb.bcb_fetchfunctions as prefs
+import fs.economicfs.bcb.bcb_financefunctions as finfs
+import settings as sett
 
 
 class HistPrice:
@@ -27,7 +27,7 @@ class HistPrice:
     the rate on the price's past date and the rate on the target date (defaulted to today (*)).
 
   (*) It's defaulted to yesterday depending on time of day or availability.
-      Also there is no exchange rates on weekend days and holidays, in theses cases,
+      Also, there is no exchange rates on weekend days and holidays, in these cases,
       the system looks up a previous available exchange rate.
 
   In words, the price is index-adjusted by the exchange rate on the origin price's date
@@ -37,13 +37,15 @@ class HistPrice:
   At the time of writing, this class invokes a db (or API) for BRL-USD/USD rates from BCB data.
   """
 
-  def __init__(self, source_price, source_date,
-               saporder=None, target_date=None, source_currency=None, target_currency=None):
+  def __init__(
+      self, source_price, source_date,
+      saporder=None, target_date=None, source_currency=None, target_currency=None
+  ):
     self.source_price = float(source_price)
     self.source_date = source_date
     try:
       self.saporder = int(saporder)
-    except ValueError:
+    except (TypeError, ValueError):
       self.saporder = 99999999999  # attribrarily given, it's not processed here & probably does not exist in db
     self.quotes_source_datetime = None
     self.target_date = target_date
@@ -59,11 +61,11 @@ class HistPrice:
     self.fetch_source_n_target_exchange_rates()
 
   def treat_dates(self):
-    self.source_date = dtfs.returns_date_or_none(self.source_date)
+    self.source_date = cnv.make_date_or_none(self.source_date)
     if self.source_date is None:
       error_msg = "Invalid price's source date (%s) for class HistPrice." % str(self.source_date)
       raise ValueError(error_msg)
-    self.target_date = dtfs.returns_date_or_today(self.target_date)
+    self.target_date = cnv.make_date_or_today(self.target_date)
     if self.target_date == datetime.date.today():
       # prefer yesterday, for today's exchange rate depends on the hour rate is closed
       self.target_date = self.target_date - datetime.timedelta(days=1)
@@ -83,7 +85,7 @@ class HistPrice:
       raise ValueError(error_msg)
 
   def fetch_source_n_target_exchange_rates(self):
-    resbcbapi1 = prefs.dbfetch_bcb_cotacao_compra_dolar_apifallback(self.source_date)
+    resbcbapi1 = prefs.dbfetch_bcb_cotdolar_recursive_or_apifallback(self.source_date)
     if resbcbapi1.error_msg:
       raise ValueError(resbcbapi1.error_msg)
     if resbcbapi1.cotacao_compra is None:
@@ -92,7 +94,7 @@ class HistPrice:
     self.source_quote = resbcbapi1.cotacao_compra
     self.quotes_source_datetime = resbcbapi1.cotacao_datahora
     # self.source_quote_date = resbcbapi1.cotacao_data
-    resbcbapi1 = prefs.dbfetch_bcb_cotacao_compra_dolar_apifallback(self.target_date)
+    resbcbapi1 = prefs.dbfetch_bcb_cotdolar_recursive_or_apifallback(self.target_date)
     if resbcbapi1.error_msg:
       raise ValueError(resbcbapi1.error_msg)
     if resbcbapi1.cotacao_compra is None:
@@ -152,62 +154,6 @@ class HistPrice:
     return outstr
 
 
-class HistPriceWorkbook:
-
-  def __init__(self, histprices, wb_filepath=None):
-    self.wb_filepath = wb_filepath
-    self.set_wb_filepath()
-    self.histprices = histprices
-    self.cellref = 'A3'
-    self._totalprice = 0
-    self.worksheet = None
-
-  def set_wb_filepath(self):
-    filename = 'histprices.xlsx'
-    if self.wb_filepath is None:
-      datafolder_abspath = config.get_datafolder_abspath()
-      self.wb_filepath = os.path.join(datafolder_abspath, filename)
-
-  def generate_xlsx(self):
-    workbook = xlsxwriter.Workbook(self.wb_filepath)
-    self.worksheet = workbook.add_worksheet()
-    self.cellref = 'C2'
-    self.worksheet.write(self.cellref, 'Preços Históricos')
-    self.cellref = 'A5'
-    for histpriceitem in self.histprices:
-      self.add_row_to_worksheet(histpriceitem)
-      self.cellref = tblfs.move_cell_along_tableau(self.cellref, -7, 1)
-    print('Closing ', self.wb_filepath)
-    workbook.close()
-
-  def add_row_to_worksheet(self, histpriceitem):
-    self.cellref = tblfs.move_cell_along_columns(self.cellref, 1)
-    self.worksheet.write(self.cellref, histpriceitem.source_date)
-    self.cellref = tblfs.move_cell_along_columns(self.cellref, 1)
-    self.worksheet.write(self.cellref, histpriceitem.source_price)
-    self.cellref = tblfs.move_cell_along_columns(self.cellref, 1)
-    self.worksheet.write(self.cellref, histpriceitem.source_quote)
-    self.cellref = tblfs.move_cell_along_columns(self.cellref, 1)
-    self.worksheet.write(self.cellref, histpriceitem.target_quote)
-    self.cellref = tblfs.move_cell_along_columns(self.cellref, 1)
-    self.worksheet.write(self.cellref, histpriceitem.monet_corr_index)
-    self.cellref = tblfs.move_cell_along_columns(self.cellref, 1)
-    self.worksheet.write(self.cellref, histpriceitem.target_price)
-    self.cellref = tblfs.move_cell_along_columns(self.cellref, 1)
-    self.worksheet.write(self.cellref, histpriceitem.target_date)
-
-  @property
-  def totalprice(self):
-    if self._totalprice is not None:
-      return self._totalprice
-    for hpi in self.histprices:
-      self._totalprice += hpi.target_price
-    return self._totalprice
-
-  def __str__(self):
-    return '<HistPriceWorkbook n_of_rows=%d totalprice=%.2f>' % (len(self.histprices), self.totalprice)
-
-
 class TripleHistPrice:
   """
     data	        Preço líq.  Nº pedido (int saporder)
@@ -233,19 +179,20 @@ class TripleHistPrice:
     _ = self.pdate  # force first convertion to pdate
     if self.pdate is None:  # can't continue
       return None
-    self._dmybardate = dtfs.\
-        convert_sep_or_datefields_position_for_ymdstrdate(self.pdate, tosep='/', targetposorder='dmy')
+    self._dmybardate = intr.trans_from_date_to_strdate_w_sep_posorder_n_zfill(
+      self.pdate, sep='/', posorder='dmy', zfill=2
+    )
     return self._dmybardate
 
   @property
   def pdate(self):
-    if self.dmydotdate is None:  # needed for the convertion/calculation below
-      return
     if self._pdate is not None:
       return self._pdate
-    strdate = dtfs.\
-        convert_sep_or_datefields_position_for_ymdstrdate(self.dmydotdate, sourceposorder='dmy')
-    self._pdate = dtfs.returns_date_or_none(strdate)
+    if self.dmydotdate is None:  # needed for the convertion/calculation below
+      return
+    self._pdate = intr.convert_strdate_to_date_or_none_w_sep_n_posorder(
+        strdate=self.dmydotdate, sep='.', orderpos='dmy'
+    )
     return self._pdate
 
   @property
@@ -296,31 +243,9 @@ def get_example_adhoctest_data():
   return tuplelist
 
 
-def process_triplehistprices(triplehistprices):
-  histprices = []
-  for triplehistprice in triplehistprices:
-    histprice = HistPrice(
-      source_price=triplehistprice.price,
-      source_date=triplehistprice.pdate,
-      saporder=triplehistprice.saporder,
-    )
-    histprices.append(histprice)
-    # print('-+'*30)
-  workbook = HistPriceWorkbook(histprices)
-  workbook.generate_xlsx()
-
-
-def adhoc_test():
-  source_price = '100'
-  source_date = '2019-12-12'
-  hptiem = HistPrice(source_price, source_date)
-  print(hptiem)
-  print('-'*30)
-
-
 def read_csv_n_get_triplehistprices(pdelimiter='\t'):
   filename = 'triplehistprices.csv'
-  datafolder_abspath = config.get_datafolder_abspath()
+  datafolder_abspath = sett.get_datafolder_abspath()
   filepath = os.path.join(datafolder_abspath, filename)
   print('Reading input csv', datafolder_abspath, filepath)
   triplehistprices = []
@@ -340,11 +265,18 @@ def read_csv_n_get_triplehistprices(pdelimiter='\t'):
   return triplehistprices
 
 
+def adhoc_test():
+  source_price = '100'
+  source_date = '2019-12-12'
+  hptiem = HistPrice(source_price, source_date)
+  print(hptiem)
+  print('-'*30)
+
+
 def process():
-  triplehistprices = read_csv_n_get_triplehistprices()
-  print('Processing ', len(triplehistprices), 'rows')
-  process_triplehistprices(triplehistprices)
+  pass
 
 
 if __name__ == "__main__":
   process()
+  adhoc_test()

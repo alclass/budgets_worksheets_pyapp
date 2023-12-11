@@ -2,13 +2,27 @@
 """
 fs/datefs/read_write_datelist_files.py
 """
+import datetime
 import os
-import fs.datefs.introspect_dates as fromto
 import fs.os.sufix_incrementor as sfx_incr
 import fs.datefs.introspect_dates as intr  # .convert_strdate_to_date_or_none_w_sep_n_order
+import fs.datefs.convert_to_date_wo_intr_sep_posorder as cnv  # .convert_str_or_attrsobj_to_date_or_none
 import settings as sett
 DEFAULT_TXT_INPUT_DATES_FILENAME = 'datesfile.txt'
 DEFAULT_TXT_OUTPUT_DATES_FILENAME = 'datesfile_processed_to_norm_yyyy-mm-dd.txt'
+
+
+def get_datafolder_abspath_for_filename_w_tstamp(filename):
+  strdt = make_tstamp_for_filename()
+  name, ext = os.path.splitext(filename)
+  if name.find(' ') > -1:
+    filename = name + ' ' + strdt + ext
+    filename.replace('  ', ' ')
+  else:
+    filename = name + '_' + strdt + ext
+  datafolder_abspath = sett.get_datafolder_abspath()
+  filepath = os.path.join(datafolder_abspath, filename)
+  return filepath
 
 
 def fetch_wordlist_from_textfile_w_filepath(p_filepath=None):
@@ -37,12 +51,42 @@ def fetch_dates_from_strdates_in_text_wo_sep_but_of_oneform_from_filepath(filepa
   strdates without a sep can only be an 8-digit stringnumber
   """
   strdatelist = fetch_wordlist_from_textfile_w_filepath(filepath)
+  return convert_strdatelist_to_datelist_wo_sep_n_posorder((strdatelist))
+
+
+
+def convert_strdatelist_to_datelist_wo_sep_n_posorder(strdatelist):
+  if strdatelist is None or len(strdatelist):
+    return []
   datelist = intr.introspect_n_convert_sdlist_to_dates_w_or_wo_sep_n_posorder(strdatelist)
-  datelist = sorted(filter(lambda e: e is not None, datelist))
-  return sorted(datelist)
+  return list(filter(lambda e: e is not None, datelist))
+
+
+def convert_strdatelist_to_datelist_w_sep_n_posorder(strdatelist, sep='-', posorder='ymd'):
+  if strdatelist is None or len(strdatelist) == 0:
+    return []
+  outdatelist = []
+  for strdate in strdatelist:
+    pdate = intr.convert_strdate_to_date_or_none_w_sep_n_posorder(strdate, sep, posorder)
+    if pdate:
+      outdatelist.append(pdate)
+  return list(filter(lambda e: e is not None, outdatelist))
+
+
+def fetch_dates_from_strdates_intext_from_filepath_finding_sep_n_posorder(filepath=None):
+  strdatelist = fetch_wordlist_from_textfile_w_filepath(filepath)
+  sep, posorder = intr.find_sep_n_posorder_from_a_strdatelist(strdatelist)
+  if sep and posorder:
+    return fetch_dates_w_strdates_sep_n_posorder(strdatelist, sep, posorder)
+  return []
 
 
 def fetch_dates_from_strdates_intext_from_filepath_w_sep_n_posorder(filepath=None, sep='/', posorder='dmy'):
+  strdatelist = fetch_wordlist_from_textfile_w_filepath(filepath)
+  return fetch_dates_w_strdates_sep_n_posorder(strdatelist, sep, posorder)
+
+
+def fetch_dates_w_strdates_sep_n_posorder(strdates, sep='/', posorder='dmy'):
   """
   This function extracts dates from files but dates must conform to sep & posorder
   @see other functions in this module that extracts dates under other ways
@@ -53,8 +97,7 @@ def fetch_dates_from_strdates_intext_from_filepath_w_sep_n_posorder(filepath=Non
   # notice that dates may be in some different formats (eg "2021-01-21" or "21/1/2021")
   # among these strdates, those that return as "datetime.date" go into datelist
   """
-  strdatelist = fetch_wordlist_from_textfile_w_filepath(filepath)
-  datelist = intr.extract_datelist_from_strdatelist_w_sep_n_posorder(strdatelist, sep, posorder)
+  datelist = map(lambda sd: intr.trans_strdate_from_one_format_to_another_w_sep_n_posorder(sd, sep, posorder), strdates)
   datelist = sorted(filter(lambda e: e is not None, datelist))
   return sorted(datelist)
 
@@ -88,11 +131,38 @@ def form_default_datesfilepath():
   return form_datesfilepath_w_folderpath_n_filename(None, None)
 
 
+def get_appsroot_abspath_for_filename_w_tstamp(filename):
+  strdt = make_tstamp_for_filename()
+  name, ext = os.path.splitext(filename)
+  if name.find(' ') > -1:
+    filename = name + ' ' + strdt + ext
+    filename.replace('  ', ' ')
+  else:
+    filename = name + '_' + strdt + ext
+  return sett.get_appsroot_abspath_for_filename(filename)
+
+
 def save_without_existence_check_text_to_file(text, output_filepath):
   fd = open(output_filepath, 'w', encoding='utf-8')
   fd.write(text)
   fd.close()
   return output_filepath
+
+
+def make_tstamp_for_filename(dtime=None):
+  if dtime is None or isinstance(dtime, datetime.datetime):
+    dtime = datetime.datetime.now()
+  strdt = str(dtime)
+  strdt = strdt.split('.')[0]
+  strdt = strdt.replace(':', '')
+  strdt = strdt.replace('-', '')
+  strdt = strdt.replace(' ', 'T')
+  return strdt
+
+
+def transform_strdatelist_to_datelist_excl_nones(strdatelist):
+  outlist = map(lambda sd: cnv.make_date_or_none(sd), strdatelist)
+  return list(filter(lambda d: d is not None, outlist))
 
 
 def save_without_existence_check_genarator_to_file(genfunc, output_filepath):
@@ -225,17 +295,18 @@ class DateFileReaderWriter:
       n_lines = self.n_dates
     else:
       # second option, go through the generator
-      genfunc = self.gen_dates_converting_one_by_one
+      genfunc = self.gen_dates_converting_strdates_w_or_wo_sep_n_posorder
       n_lines = save_without_existence_check_genarator_to_file(genfunc, self.output_filepath)
     print(f'Saved n_dates {self.n_dates} | n_lines {n_lines} lines')
     return True
 
-  def get_dates_converting_all_at_once(self, sort_them=True):
+  def fetch_dates_converting_from_strlist_w_sep_n_posorder(self, sort_them=True):
     self.bool_generator_ongoing = False
     words_to_del = []
     self.datelist = []
     for word in self.strdatelist:
-      pdate = fromto.convert_strdate_to_date_or_none_w_sep_n_fieldorder(word, self.sep, self.orderpos)
+      # pdate = intr.convert_strdate_to_date_or_none_wo_sep_n_fieldorder(word, self.sep, self.orderpos)
+      pdate = intr.introspect_n_convert_strdate_to_date_or_today(word, self.sep, self.orderpos)
       if pdate is None:
         words_to_del.append(word)
         continue
@@ -246,14 +317,14 @@ class DateFileReaderWriter:
       sorted(self.datelist)
     return self.datelist
 
-  def gen_dates_converting_one_by_one(self):
+  def gen_dates_converting_strdates_w_or_wo_sep_n_posorder(self):
     self.bool_generator_ongoing = True
     words_to_del = []
     for word in self.strdatelist:
       if self.bool_keep_sep_n_posorder_fix:
-        pdate = fromto.convert_strdate_to_date_or_none_w_sep_n_fieldorder(word, self.sep, self.orderpos)
+        pdate = intr.convert_strdate_to_date_or_none_w_sep_n_posorder(word, self.sep, self.orderpos)
       else:
-        pdate = fromto.convert_strdate_to_date_or_none_w_sep_n_fieldorder(word, self.sep, self.orderpos)
+        pdate = intr.convert_strdate_to_date_or_none_wo_sep_n_fieldorder(word)
       if pdate is None:
         words_to_del.append(word)
         continue
@@ -269,7 +340,7 @@ class DateFileReaderWriter:
     if self.words is None:
       self.read_datefile_get_words_n_first_sep_n_posorder()
     if self.datelist is None:
-      self.get_dates_converting_all_at_once()
+      self.fetch_dates_converting_from_strlist_w_sep_n_posorder()
     for i, pdate in enumerate(self.datelist):
       scrmsg = f"{i+1} orig={self.words[i]} | strdate={self.strdatelist[i]} | date={pdate}"
       print(scrmsg)
@@ -278,17 +349,36 @@ class DateFileReaderWriter:
 def adhoc_test():
   dates_rw = DateFileReaderWriter()
   dates_rw.bool_keep_sep_n_posorder_fix = False
-  for i, pdate in enumerate(dates_rw.gen_dates_converting_one_by_one()):
+  for i, pdate in enumerate(dates_rw.gen_dates_converting_strdates_w_or_wo_sep_n_posorder()):
     print(i+1, pdate)
   print('n dates', dates_rw.n_dates)
   dates_rw.show_input_outside_side_by_side()
-  dates_rw.save_output_datelist_to_file()
+  # dates_rw.save_output_datelist_to_file()
   output_filepath = dates_rw.output_filepath
   print(output_filepath)
   dates_rw2 = DateFileReaderWriter()
   dates_rw2.bool_keep_sep_n_posorder_fix = True
   print('='*40)
   dates_rw2.show_input_outside_side_by_side()
+
+
+def adhoc_test2():
+  expect_datelist, strdatelist = [], []
+  # strdate 1
+  y, m, d = 2023, 11, 11
+  strdate = f'{y}-{m}-{d}'
+  strdatelist.append(strdate)
+  pdate = datetime.date(year=y, month=m, day=d)
+  expect_datelist.append(pdate)
+  # strdate 2
+  y, m, d = 2022, 12, 13
+  strdate = f'{y}-{m}-{d}'
+  strdatelist.append(strdate)
+  pdate = datetime.date(year=y, month=m, day=d)
+  expect_datelist.append(pdate)
+  returned_datelist = convert_strdatelist_to_datelist_w_sep_n_posorder(strdatelist, sep='-', posorder='ymd')
+  print('strdatelist', strdatelist, 'expect_datelist', expect_datelist)
+  print('returned_datelist', returned_datelist)
 
 
 def process():
@@ -302,4 +392,4 @@ if __name__ == "__main__":
   """
   process()
   """
-  adhoc_test()
+  adhoc_test2()

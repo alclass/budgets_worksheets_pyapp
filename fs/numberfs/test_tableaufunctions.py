@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
-'''
-Unit Tests for tableaufunctions.py
-'''
+"""
+
+fs/numberfs/test_tableaufunctions.py
+  Unit Tests for tableaufunctions.py
+"""
 import unittest
 import fs.numberfs.tableaufunctions as tblfs
+
 
 class TestCaseNumFunctions(unittest.TestCase):
 
@@ -24,7 +27,7 @@ class TestCaseNumFunctions(unittest.TestCase):
 
     # 2 forward
     cell_letters = 'Ac'
-    expected_number = 1*self.NBASE**1 + 3 # it's 1*27**1+3 = 27+3=30
+    expected_number = 1*self.NBASE**1 + 3  # it's 1*27**1+3 = 27+3=30
     returned_number = tblfs.convert_columnletters_to_number_nonrecursively(cell_letters)
     self.assertEqual(expected_number, returned_number)
     # 2 backward
@@ -74,11 +77,11 @@ class TestCaseNumFunctions(unittest.TestCase):
 
     # 7 forward
     cell_letters = ''
-    expected_number = None
+    # _ = expected_number = None
     returned_number = tblfs.convert_columnletters_to_number_nonrecursively(cell_letters)
     self.assertIsNone(returned_number)
     # 7 backward
-    expected_cell_letters = cell_letters.upper()
+    # expected_cell_letters = cell_letters.upper()
     returned_cell_letters = tblfs.convert_number_to_columnletters_nonrecursively(0)
     self.assertIsNone(returned_cell_letters)
 
@@ -95,7 +98,7 @@ class TestCaseNumFunctions(unittest.TestCase):
 
     # 2 forward
     cell_letters = 'Ac'
-    expected_number = 1*self.NBASE**1 + 3 # it's 1*27**1+3 = 27+3=30
+    expected_number = 1*self.NBASE**1 + 3  # it's 1*27**1+3 = 27+3=30
     returned_number = tblfs.convert_columnletters_to_number_recursively_entrance(cell_letters)
     self.assertEqual(expected_number, returned_number)
     # 2 backward
@@ -144,21 +147,21 @@ class TestCaseNumFunctions(unittest.TestCase):
     self.assertEqual(expected_cell_letters, returned_cell_letters)
 
   def test_move_thru_tableau(self):
-    cellref = 'a5'; ncolumns = 2; nrows = 3
+    cellref, ncolumns, nrows = 'a5', 2, 3
     expected_cellref = 'c8'.upper()
     returned_cellref = tblfs.move_cell_along_tableau(cellref, ncolumns, nrows)
     self.assertEqual(expected_cellref, returned_cellref)
-    cellref = returned_cellref; ncolumns = -2; nrows = -3
+    cellref, ncolumns, nrows = returned_cellref, -2, -3
     expected_cellref = 'a5'.upper()
     returned_cellref = tblfs.move_cell_along_tableau(cellref, ncolumns, nrows)
     self.assertEqual(expected_cellref, returned_cellref)
 
-    cellref = 'a5'; ncolumns = -1; nrows = 3
+    cellref, ncolumns, nrows = 'a5', -1, 3
     self.assertRaises(IndexError, tblfs.move_cell_along_tableau, cellref, ncolumns, nrows)
-    cellref = 'a5'; ncolumns = 3; nrows = -8
+    cellref, ncolumns, nrows = 'a5', 3, -8
     self.assertRaises(IndexError, tblfs.move_cell_along_tableau, cellref, ncolumns, nrows)
 
-    cellref = 'a5'; ncolumns = 0; nrows = 0
+    cellref, ncolumns, nrows = 'a5', 0, 0
     expected_cellref = cellref.upper()
     returned_cellref = tblfs.move_cell_along_tableau(cellref, ncolumns, nrows)
     self.assertEqual(expected_cellref, returned_cellref)
@@ -175,48 +178,47 @@ class TestCaseNumFunctions(unittest.TestCase):
     self.assertEqual(rec_letters, nonrec_letters)
 
   def test_uniqueness_of_lettercolumns_addition_nonrecursive(self):
-    # 1 from a to 0 should raise IndexError
-    cell_letters = 'a'; ncolumns = -1
+    # 1 from "a" to 0 should raise IndexError
+    cell_letters, ncolumns = 'a', -1
     self.assertRaises(IndexError, tblfs.move_columns_by, cell_letters, ncolumns)
     # 2 from z to 0 should raise IndexError
-    cell_letters = 'z'; ncolumns = -26
+    cell_letters, ncolumns = 'z', -26
     self.assertRaises(IndexError, tblfs.move_columns_by, cell_letters, ncolumns)
     # 3 z plus 1 should be aa
-    cell_letters = 'z'; ncolumns = 1
+    cell_letters, ncolumns = 'z', 1
     expected_cellref = 'aa'.upper()
     returned_cellref = tblfs.move_columns_by(cell_letters, ncolumns)
     self.assertEqual(expected_cellref, returned_cellref)
     # 4 aa minus 1 should be z (commutative to the above operation)
-    cell_letters = 'aa'; ncolumns = -1
+    cell_letters, ncolumns = 'aa', -1
     expected_cellref = 'z'.upper()
     returned_cellref = tblfs.move_columns_by(cell_letters, ncolumns)
     self.assertEqual(expected_cellref, returned_cellref)
     # 5 two jumps to see if they can be reversed
 
   def ztest_uniqueness_of_lettercolumns_addition_recursive(self):
-    '''
+    """
 
       NOT PASSING this by now.
         The nonrecursive is working.
         The recursive is not yet working.
 
     :return:
-    '''
-    # 1 from a to 0 should raise IndexError
-    cell_letters = 'a'; ncolumns = -1
+  """
+    # 1 from "a" to 0 should raise IndexError
+    cell_letters, ncolumns = 'a', -1
     self.assertRaises(IndexError, tblfs.move_columns_by, cell_letters, ncolumns, True)
     # 2 from z to 0 should raise IndexError
-    cell_letters = 'z'; ncolumns = -26
+    cell_letters, ncolumns = 'z', -26
     self.assertRaises(IndexError, tblfs.move_columns_by, cell_letters, ncolumns, True)
     # 3 z plus 1 should be aa
-    cell_letters = 'z'; ncolumns = 1
+    cell_letters, ncolumns = 'z', 1
     expected_cellref = 'aa'.upper()
     returned_cellref = tblfs.move_columns_by(cell_letters, ncolumns, True)
     self.assertEqual(expected_cellref, returned_cellref)
     # 4 aa minus 1 should be z (commutative to the above operation)
-    cell_letters = 'aa'; ncolumns = -1
+    cell_letters, ncolumns = 'aa', -1
     expected_cellref = 'z'.upper()
     returned_cellref = tblfs.move_columns_by(cell_letters, ncolumns, True)
     self.assertEqual(expected_cellref, returned_cellref)
     # 5 two jumps to see if they can be reversed
-

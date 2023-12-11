@@ -6,7 +6,7 @@ commands/fetch/verify_n_update_local_cpi_db.py
 """
 import datetime
 from dateutil.relativedelta import relativedelta
-import fs.datefs.datefunctions as dtfs
+import fs.datefs.years_date_functions as dtfs
 import commands.fetch.cpi.read_cpis_from_db as cpi  # .get_last_available_cpi_n_refmonth_fromdb_by_series
 import commands.fetch.cpi.bls_cpi_api_fetcher as cftch  # .CPIFetcher
 MIN_REFMONTHS_ELAPSED_FOR_A_NEW_REMOTE_FETCH = 3

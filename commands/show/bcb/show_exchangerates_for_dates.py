@@ -36,7 +36,7 @@ import sys
 import commands.show.show_table_with_variations_from_filedates_vs_mostrecent as composite
 import fs.economicfs.bcb.bcb_cotacao_fetcher_from_db_or_api as fin
 import fs.datefs.dategenerators as gendt
-import fs.datefs.datefunctions as dtfs
+import fs.datefs.years_date_functions as dtfs
 import argparse
 
 
@@ -49,7 +49,7 @@ def show_exchangerates_between_dates():
 
 
 def show_exchangerates_for_rangedate(date_ini, date_fim, decrescent=False):
-  for i, pdate in enumerate(gendt.gen_dailydates_bw_ini_fim_opt_order(date_ini, date_fim, decrescent)):
+  for i, pdate in enumerate(gendt.gen_dailydates_or_empty_bw_ini_fim_opt_order(date_ini, date_fim, decrescent)):
     bcber = fin.BCBCotacaoFetcher(pdate)
     bcb_api_nt = bcber.namedtuple_cotacao
     if bcb_api_nt:

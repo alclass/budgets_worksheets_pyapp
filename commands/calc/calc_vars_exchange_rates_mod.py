@@ -3,7 +3,7 @@ import sys
 import models.exrate.exchange_rate_modelmod as mmod
 import fs.db.conn_sa as confs
 import fs.economicfs.bcb.bcb_cotacao_fetcher_from_db_or_api as preapi
-import fs.datefs.datefunctions as dtfs
+import fs.datefs.years_date_functions as dtfs
 
 
 class MinMax:

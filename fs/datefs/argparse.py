@@ -6,7 +6,7 @@ fs/datesetc/argparse_dates.py
 import argparse
 import datetime
 import fs.datefs.dategenerators as hilodt
-import fs.datefs.datefunctions as dtfs
+import fs.datefs.years_date_functions as dtfs
 import fs.datefs.introspect_dates as intr  # intr.introspect_possible_month_position_in_date
 import fs.datefs.read_write_datelist_files as rwdt  # .fetch_dates_from_textfile_w_filepath
 DEFAULT_TXT_DATES_FILENAME = 'datesfile.txt'
@@ -110,7 +110,7 @@ class Dispatcher:
         return 0
       if datefim > self.today:
         datefim = self.today
-      self.datelist = hilodt.gen_dailydates_bw_ini_fim_opt_order(dateini, datefim)
+      self.datelist = hilodt.gen_dailydates_or_empty_bw_ini_fim_opt_order(dateini, datefim)
       return self.apply()
     if self.args.datelist:
       plist = self.args.datelist

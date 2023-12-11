@@ -2,14 +2,15 @@
 """
 insert_exchangerates_into_db.py
 
-from dateutil.relativedelta import relativedelta
+from dateutil. relativedelta import relativedelta
+import fs.datefs.convert_to_date_wo_intr_sep_posorder as cnv
+import settings as sett
 """
 import argparse
 import datetime
 import fs.economicfs.bcb.bcb_cotacao_fetcher_from_db_or_api as fin
 import fs.datefs.dategenerators as gendt
-import fs.datefs.datefunctions as dtfs
-# import settings as sett
+import fs.datefs.read_write_datelist_files as rwdt
 
 
 def fetch_exchangerate_thru_api(pdate):
@@ -68,6 +69,7 @@ def get_args_via_argparse():
 
 class ArgDispatcher:
   def __init__(self, argnamedtuple=None, func=None):
+    self.today = datetime.date.today()
     self.func = func or fetch_exchangerate_thru_api
     self.seq = 0
     self.bcbs = []
@@ -113,30 +115,28 @@ class ArgDispatcher:
 
   def dispatch(self):
     self.seq += 1
-    self.day = dtfs.adjust_date_if_str(self.day)
     an_option_actioned = False
     if self.day:
       an_option_actioned = True
-      pdate = self.day
+      y, m, d = self.today.year, self.today.month, int(self.day)
+      pdate = datetime.date(year=y, month=m, day=d)
       bcb = self.func(pdate)
       print(self.seq, bcb)
       self.bcbs.append(bcb)
-    self.month = dtfs.adjust_date_if_str(self.month)
     if self.month:
       an_option_actioned = True
-      monthdate = self.month
-      for pdate in gendt.gen_dailydates_for_refmonth_or_empty_opt_order_coff_accfut(monthdate):
+      y, m = self.today.year, int(self.month)
+      refmonthdate = datetime.date(year=y, month=m, day=1)
+      for pdate in gendt.gen_dailydates_for_refmonth_or_empty_opt_order_coff_accfut(refmonthdate):
         bcb = self.func(pdate)
         print(self.seq, bcb)
         self.bcbs.append(bcb)
-    self.datelist = dtfs.adjust_datelist_if_str(self.datelist)
+    self.datelist = rwdt.convert_strdatelist_to_datelist_wo_sep_n_posorder(self.datelist)
     if self.datelist:
-      for edate in self.datelist:
-        pdate = dtfs.adjust_date_if_str(edate)
-        if dtfs.is_date_valid(pdate):
-          bcb = self.func(pdate)
-          print(self.seq, bcb)
-          self.bcbs.append(bcb)
+      for pdate in self.datelist:
+        bcb = self.func(pdate)
+        print(self.seq, bcb)
+        self.bcbs.append(bcb)
     if self.current_year:
       an_option_actioned = True
       for pdate in gendt.gen_dailydates_for_current_year_opt_order_coff_accfut():
@@ -201,7 +201,7 @@ def adhoctest2():
     print(year)
 
   yearini, yearfim = args.yearrange
-  print('yearini, yearfim = ', yearini, yearfim)
+  print('yearini, yearfim = ', yearini, yearfim
   """
   args = get_args_via_argparse()
   print(args)

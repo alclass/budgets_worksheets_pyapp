@@ -66,7 +66,7 @@ import copy
 import datetime
 import pandas as pd
 from dateutil.relativedelta import relativedelta
-import fs.datefs.datefunctions as dtfs
+import fs.datefs.convert_to_date_wo_intr_sep_posorder as cnv
 import fs.economicfs.bcb.bcb_cotacao_fetcher_from_db_or_api as ftchr  # ftchr.BCBCotacaoFetcher
 import commands.fetch.cpi.read_cpis_from_db as cpi  # cpi.get_cpi_baselineindex_for_refmonth_in_db
 DATAFRAME_COLUMNS = ['dt_i', 'cpi_i', 'exr_i', 'dt_f', 'cpi_f', 'exr_f', 'mult', 'mul1']
@@ -120,7 +120,7 @@ class MonetCorrCalculator:
     Notice the suttle difference in treatment for datefim, the default should
       not be applied if date is None after make_date_or_none(), only before it.
     """
-    self.dateini = dtfs.make_date_or_none(self.dateini)
+    self.dateini = cnv.make_date_or_none(self.dateini)
     if self.dateini is None:
       error_msg = 'Error: dateini is None.'
       raise ValueError(error_msg)
@@ -129,7 +129,7 @@ class MonetCorrCalculator:
       self.datefim = datetime.date.today()
       return
     orig_datefim = copy.copy(self.datefim)
-    self.datefim = dtfs.make_date_or_none(self.datefim)
+    self.datefim = cnv.make_date_or_none(self.datefim)
     if self.datefim is None:  # at this point, datefim was not originally None
       error_msg = f'In the multiplication factor, datefim {orig_datefim} is not valid.'
       raise ValueError(error_msg)

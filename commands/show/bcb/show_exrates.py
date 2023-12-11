@@ -7,7 +7,7 @@ import datetime
 from dateutil.relativedelta import relativedelta
 import models.exrate.exchange_rate_modelmod as exrt  # exrt.ExchangeRateDate()
 import fs.datefs.dategenerators as gendt
-import fs.datefs.datefunctions as dtfs
+import fs.datefs.years_date_functions as dtfs
 import pandas as pd
 # when just needing weekday from date, it can be called directly: adate.weekday() instead of calendar.weekday(adate)
 # import calendar
@@ -46,10 +46,10 @@ def show_exrates_up_to(lastdate):
   before20days = lastdate - relativedelta(days=31)
   scrmsg = f"before20days {before20days} | lastdate {lastdate}"
   print(scrmsg)
-  for pdate in gendt.gen_dailydates_bw_ini_fim_opt_order(lastdate, before20days, decrescent=True):
+  for pdate in gendt.gen_dailydates_or_empty_bw_ini_fim_opt_order(lastdate, before20days, decrescent=True):
     show_exrates_on_date(pdate)
   exrate_dictlist = []
-  for pdate in gendt.gen_dailydates_bw_ini_fim_opt_order(before20days, lastdate):
+  for pdate in gendt.gen_dailydates_or_empty_bw_ini_fim_opt_order(before20days, lastdate):
     exchanger = show_exrates_on_date(pdate)
     if exchanger:
       try:

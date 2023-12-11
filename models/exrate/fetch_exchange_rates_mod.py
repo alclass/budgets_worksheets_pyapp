@@ -7,6 +7,7 @@
 """
 import sys
 import fs.economicfs.bcb.bcb_financefunctions as finfs
+import fs.datefs.dategenerators as gendt
 
 
 def get_args():
@@ -26,6 +27,9 @@ def get_args():
 
 
 def adhoctest():
+  """
+  TO-DO: adapt the argparse library for this adhoctest()
+  """
   argsdict = get_args()
   if len(argsdict) == 0:
     return
@@ -37,7 +41,8 @@ def adhoctest():
     daterange = argsdict['procdaterange']
     inidate, findate = daterange
     print('Parameter procdaterange = ', daterange)
-    finfs.fetch_cotacao_brl_per_usd_for_datelist(inidate, findate)
+    datelist = gendt.gen_dailydates_or_empty_bw_ini_fim_opt_order(inidate, findate)
+    finfs.fetch_cotacao_brl_per_usd_for_datelist(datelist)
 
 
 def process():
@@ -45,4 +50,8 @@ def process():
 
 
 if __name__ == "__main__":
+  """
+  adhoctest()
+  """
   process()
+  adhoctest()

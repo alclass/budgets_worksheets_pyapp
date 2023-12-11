@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
-import math # for math.log(n, base)
-import string # for ZERO_PLUS_UPPERCASE_ASCII_LETTERS
+"""
+fs/numberfs/tableaufunctions.py
+  contains functions to help construct/mount a spreadsheet workbook
 
+"""
+import math  # for math.log(n, base)
+import string  # for ZERO_PLUS_UPPERCASE_ASCII_LETTERS
 import fs.textfs.strfs as strfs
-
 ZERO_PLUS_UPPERCASE_ASCII_LETTERS = '0' + string.ascii_uppercase
 NSYSTEM27SIZE = len(ZERO_PLUS_UPPERCASE_ASCII_LETTERS)
+
 
 def pick_up_letter_n_number_from_cellref(cellref):
   if cellref is None:
@@ -21,8 +25,9 @@ def pick_up_letter_n_number_from_cellref(cellref):
   number = int(strnumber)
   return letters, number
 
+
 def convert_columnletters_to_number_nonrecursively(cell_letters):
-  '''
+  """
   Instead of "consuming and recursing", this routine calculates "number" as a series sumation.
 
   Example:
@@ -36,7 +41,7 @@ def convert_columnletters_to_number_nonrecursively(cell_letters):
 
   :param cell_letters:
   :return: (int) number
-  '''
+  """
   if cell_letters is None or cell_letters == '':
     return None
   cell_letters = cell_letters.upper()
@@ -48,8 +53,9 @@ def convert_columnletters_to_number_nonrecursively(cell_letters):
     number += parcel
   return number
 
+
 def convert_columnletters_to_number_recursively(cell_letters, to_number=0, pos_order=0):
-  '''
+  """
   This function is PRIVATE, ie, it should only be called by:
     convert_columnletters_to_number_recursively_entrance(cell_letters):
 
@@ -69,29 +75,33 @@ def convert_columnletters_to_number_recursively(cell_letters, to_number=0, pos_o
   :param to_number:
   :param pos_order:
   :return:
-  '''
+  """
   cell_letters = cell_letters.upper()
   if len(cell_letters) > 0:
-    pos_letter, cell_letters = strfs.pop_str(cell_letters) # simulates a str.pop() similar to list.pop()
+    pos_letter, cell_letters = strfs.pop_str(cell_letters)  # simulates a str.pop() similar to list.pop()
     pos_number = ZERO_PLUS_UPPERCASE_ASCII_LETTERS.index(pos_letter)
     to_number += pos_number * (NSYSTEM27SIZE ** pos_order)
   if len(cell_letters) > 0:
     return convert_columnletters_to_number_recursively(cell_letters, to_number, pos_order + 1)
   return to_number
 
+
 def convert_columnletters_to_number_recursively_entrance(cell_letters):
   if cell_letters is None or cell_letters == '':
     return None
   return convert_columnletters_to_number_recursively(cell_letters)
 
+
 def convert_number_to_columnletters_nonrecursively(number):
   letters = ''
-  if number == 0: # number cannot be 0, return None
+  if number == 0:  # number cannot be 0, return None
     return None
   decimal_place = int(math.log(number, NSYSTEM27SIZE))
   remainder = number % NSYSTEM27SIZE
-  if remainder == 0: # a shift happens in these cases, eg, Z+1 is A0, but A0 should be jumped over arriving at AA (this is a one-forward shift)
-    return None # the move call is able to treat this
+  # a shift happens in these cases, eg, Z+1 is A0,
+  # but A0 should be jumped over arriving at AA (this is a one-forward shift)
+  if remainder == 0:
+    return None  # the move call is able to treat this
   left_to_right_letter = ZERO_PLUS_UPPERCASE_ASCII_LETTERS[remainder]
   letters = left_to_right_letter + letters
   while decimal_place > 0:
@@ -105,15 +115,12 @@ def convert_number_to_columnletters_nonrecursively(number):
     number = number - remainder
   return letters
 
-def convert_number_to_columnletters_recursively(number, letters=''):
-  '''
 
-  :param cell_letters:
-  :param to_number:
-  :param pos_order:
-  :return:
-  '''
-  multiple  = number // NSYSTEM27SIZE
+def convert_number_to_columnletters_recursively(number, letters=''):
+  """
+
+  """
+  multiple = number // NSYSTEM27SIZE
   remainder = number % NSYSTEM27SIZE
   leftwards_digit = ZERO_PLUS_UPPERCASE_ASCII_LETTERS[remainder]
   letters = leftwards_digit + letters
@@ -123,8 +130,9 @@ def convert_number_to_columnletters_recursively(number, letters=''):
     number = (number - remainder) // NSYSTEM27SIZE
     return convert_number_to_columnletters_recursively(number, letters)
 
+
 def move_columns_by(cell_letters, ncolumns, with_recursive=False):
-  '''
+  """
 
   IMPORTANT:
     There's a limitation in the algorithms here so that addition results are,
@@ -143,10 +151,7 @@ def move_columns_by(cell_letters, ncolumns, with_recursive=False):
        and then allow only one possible jump (1-shift).
        ie, moves across the tableau should be below 27 places (cells).
 
-  :param cell_letters:
-  :param ncolumns:
-  :return:
-  '''
+  """
   if cell_letters is None:
     return None
   cell_letters = cell_letters.upper()
@@ -157,7 +162,7 @@ def move_columns_by(cell_letters, ncolumns, with_recursive=False):
     fromcolumn = convert_columnletters_to_number_nonrecursively(cell_letters)
   next_column = fromcolumn + ncolumns
   if next_column <= 0:
-    error_msg = 'Moved column outside the tableu (negative columns %d)' %next_column
+    error_msg = 'Moved column outside the tableu (negative columns %d)' % next_column
     raise IndexError(error_msg)
   if with_recursive:
     next_cell_letters = convert_number_to_columnletters_recursively(next_column)
@@ -179,17 +184,20 @@ def move_columns_by(cell_letters, ncolumns, with_recursive=False):
         next_cell_letters = convert_number_to_columnletters_recursively(next_column)
       else:
         next_cell_letters = convert_number_to_columnletters_nonrecursively(next_column)
-
   return next_cell_letters
 
+
 def move_rows_by(number, nrows):
+  """
+  """
   if nrows == 0:
     return number
   next_number = number + nrows
   if next_number < 0:
-    error_msg = 'Moved row outside the tableu (negative nrows %d)' %next_number
+    error_msg = 'Moved row outside the tableu (negative nrows %d)' % next_number
     raise IndexError(error_msg)
   return next_number
+
 
 def move_cell_along_columns(cellref, ncolumns):
   if cellref is None:
@@ -204,14 +212,16 @@ def move_cell_along_columns(cellref, ncolumns):
   next_cellref = next_letters + str(row_number)
   return next_cellref
 
+
 def move_cell_along_rows(cellref, nrows):
   if cellref is None:
     return None
   cellref = cellref.upper()
   cell_letters, number = pick_up_letter_n_number_from_cellref(cellref)
   number = move_rows_by(number, nrows)
-  next_cellref = '%s%d' %(cell_letters, number)
+  next_cellref = '%s%d' % (cell_letters, number)
   return next_cellref
+
 
 def move_cell_along_tableau(cellref, ncolumns, nrows):
   if cellref is None:
@@ -227,15 +237,21 @@ def move_cell_along_tableau(cellref, ncolumns, nrows):
     next_cellref = move_cell_along_columns(next_cellref, ncolumns)
   return next_cellref
 
+
 def adhoc_test():
-  '''
+  """
     See adhoc tests as a module in the same folder as this file's one.
   :return:
-  '''
+  """
   pass
+
 
 def process():
   adhoc_test()
 
+
 if __name__ == "__main__":
+  """
+  adhoc_test()
+  """
   process()

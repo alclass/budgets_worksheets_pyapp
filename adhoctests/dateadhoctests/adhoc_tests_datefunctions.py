@@ -2,7 +2,7 @@
 """
   docstring
 """
-from fs.datefs.datefunctions import *
+from fs.datefs.years_date_functions import *
 
 
 def adhoc_test1():
@@ -86,14 +86,14 @@ def adhoc_test4():
   datelist.append(d)
   datelist.append(d)
   datelist.append(d)
-  prepdatelist = prepare_datelist_uniq_n_in_desc_order(datelist)
+  prepdatelist = trans_datelist_uniq_n_desc(datelist)
   print(datelist)
   print(prepdatelist)
 
 
 def adhoc_test5():
   strdatetime = '2012-12-12 12:12:12.123'
-  pdatetime = convert_strdatetime_to_datetime_or_none(strdatetime)
+  pdatetime = convert_str_or_attrsobj_to_datetime_or_none(strdatetime)
   print('strdatetime', strdatetime, '=>', 'pdatetime', pdatetime)
 
 

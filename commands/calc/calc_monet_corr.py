@@ -55,7 +55,7 @@ This fact is import if one considers not using a negative
 import datetime
 from dateutil.relativedelta import relativedelta
 import pandas as pd
-import fs.datefs.datefunctions as dtfs
+import fs.datefs.convert_to_date_wo_intr_sep_posorder as cnv
 import fs.datefs.introspect_dates as intr
 import fs.datefs.read_write_datelist_files as rwdl
 import fs.datefs.argparse as ap  # ap.get_args
@@ -94,7 +94,7 @@ class DatePriceRecordsMonetCorrCalculator:
     on the first DataFrame on their dates.
   """
   def __init__(self, refdate=None, datelist=None, date_n_price_ntlist=None):
-    self.refdate = dtfs.make_date_or_today(refdate)
+    self.refdate = cnv.make_date_or_today(refdate)
     self.datelist = datelist
     self._date_n_price_ntlist = date_n_price_ntlist
     self._df = None
@@ -230,8 +230,8 @@ def adhoctest2():
   args = ap.get_args()
   print(args)
   try:
-    dateini = dtfs.make_date_or_none(args.ini[0])
-    datefim = dtfs.make_date_or_none(args.fim[0])
+    dateini = cnv.make_date_or_none(args.ini[0])
+    datefim = cnv.make_date_or_none(args.fim[0])
     print('i', dateini, 'f', datefim)
     mcc = mfcalc.MonetCorrCalculator(dateini, datefim)
     print(mcc.multiplication_factor)

@@ -19,13 +19,15 @@ import calendar
 import logging
 import os
 import random
-import fs.datefs.datefunctions as dtfs
+import fs.datefs.convert_to_date_wo_intr_sep_posorder as cnv
+# import fs.datefs.introspect_dates as intr
 import fs.datefs.dategenerators as gendt
 import fs.economicfs.bcb.bcb_api_finfunctions as apis
 import fs.economicfs.bcb.bcb_fetchfunctions as fetchfs  # fetchfs.add_exchanger_to_res_bcb_api_namedtuple()
 import settings as sett
 _, modlevelogfn = os.path.split(__file__)
-modlevelogfn = str(datetime.date.today()) + '_' + modlevelogfn[:-3] + '.log'
+modlevelogfn_extless = os.path.splitext(modlevelogfn)[0]
+modlevelogfn = str(datetime.date.today()) + '_' + str(modlevelogfn_extless) + '.log'
 modlevelogfp = os.path.join(sett.get_datafolder_abspath(), modlevelogfn)
 logging.basicConfig(filename=modlevelogfp, filemode='w', format='%(name)s %(levelname)s %(message)s')
 logger = logging.getLogger(__name__)
@@ -70,7 +72,7 @@ def create_dates_stack_for_n_last_days(pdate, dates_stack_size=None):
   """
   The 'stack' is a list.
   """
-  pdate = dtfs.make_date_or_none(pdate)
+  pdate = cnv.make_date_or_none(pdate)
   if dates_stack_size is None:
     dates_stack_size = DATES_STACK_SIZE
   dates_stack = [pdate]
@@ -143,7 +145,7 @@ class BCBCotacaoFetcher:
 
   def treat_date(self):
     pdate = self.date
-    self.date = dtfs.make_date_or_none(pdate)
+    self.date = cnv.make_date_or_none(pdate)
     if self.date is None:
       error_msg = 'Data error: Date entered [%s] is not valid.' % pdate
       raise ValueError(error_msg)
@@ -228,7 +230,7 @@ def process():
   """
   today = datetime.date.today()
   before20days = today - relativedelta(days=31)
-  for pdate in gendt.gen_dailydates_bw_ini_fim_opt_order(before20days, today):
+  for pdate in gendt.gen_dailydates_or_empty_bw_ini_fim_opt_order(before20days, today):
     prefetcher = BCBCotacaoFetcher(pdate)
     print(prefetcher)
 

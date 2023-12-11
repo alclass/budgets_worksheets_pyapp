@@ -16,7 +16,8 @@ import argparse
 import collections
 import datetime
 from dateutil.relativedelta import relativedelta
-import fs.datefs.datefunctions as dtfs
+import fs.datefs.convert_to_date_wo_intr_sep_posorder as cnv
+import fs.datefs.refmonths_mod as rfm
 import fs.datefs.dategenerators as gendt
 import fs.economicfs.bcb.bcb_cotacao_fetcher_from_db_or_api as bcbfetch  # bcbfetch.BCBCotacaoFetcher
 
@@ -24,7 +25,7 @@ import fs.economicfs.bcb.bcb_cotacao_fetcher_from_db_or_api as bcbfetch  # bcbfe
 def convert_dates(pdates):
   odates = []
   for pdate in pdates:
-    odate = dtfs.returns_date_or_none(pdate)
+    odate = cnv.make_date_or_none(pdate)
     odates.append(odate)
   return odates
 
@@ -126,8 +127,8 @@ class Dispatcher:
 
   def dispatch(self):
     if self.args.daterange:
-      dateini = dtfs.make_date_or_none(self.args.daterange[0])
-      datefim = dtfs.make_date_or_none(self.args.daterange[1])
+      dateini = cnv.make_date_or_none(self.args.daterange[0])
+      datefim = cnv.make_date_or_none(self.args.daterange[1])
       if dateini is None or datefim is None:
         print('dateini is None or datefim is None. Returning.')
         return 0
@@ -135,17 +136,17 @@ class Dispatcher:
         return 0
       if datefim > self.today:
         datefim = self.today
-      plist = gendt.gen_dailydates_bw_ini_fim_opt_order(dateini, datefim)
+      plist = gendt.gen_dailydates_or_empty_bw_ini_fim_opt_order(dateini, datefim)
       return self.apply(plist)
     if self.args.datelist:
       plist = self.args.datelist
-      plist = map(lambda d: dtfs.make_date_or_none(d), plist)
+      plist = map(lambda d: cnv.make_date_or_none(d), plist)
       plist = filter(lambda d: d is not None, plist)
       plist = sorted(filter(lambda d: d <= self.today, plist))
       return self.apply(plist)
     if self.args.refmonthdate:
       refmonthdate = self.args.refmonthdate[0]
-      refmonthdate = dtfs.make_refmonthdate_or_none(refmonthdate)
+      refmonthdate = rfm.make_refmonthdate_or_none(refmonthdate)
       if refmonthdate is None:
         print("refmonthdate is None ie it's invalid. Returning.")
         return 0
@@ -174,7 +175,7 @@ def process():
     yesterday = datetime.date.today() - relativedelta(days=1)
     date_1wb_yesterday = yesterday - relativedelta(days=7)
     daterange = [date_1wb_yesterday, today]
-    # daterange = gendt.get_gendailydates_for_lastweek_opt_order()
+    # daterange = gendt.get_gendailydates_for_lastweek_incl_today_opt_order()
     scrmsg = f"""
     CLI args were empty.
     Adding to args daterange [with dates thru lastweek] = f{daterange}"""
