@@ -19,7 +19,7 @@ from dateutil.relativedelta import relativedelta
 import fs.datefs.convert_to_date_wo_intr_sep_posorder as cnv
 import fs.datefs.refmonths_mod as rfm
 import fs.datefs.dategenerators as gendt
-import fs.economicfs.bcb.bcb_cotacao_fetcher_from_db_or_api as bcbfetch  # bcbfetch.BCBCotacaoFetcher
+import fs.economicfs.bcb.bcb_cotacao_fetcher_from_db_or_api as bcbf  # bcbfetch.BCBCotacaoFetcher
 
 
 def convert_dates(pdates):
@@ -121,7 +121,7 @@ class Dispatcher:
         continue
       self.n_rolls += 1
       print(self.n_rolls, 'Rolling date', pdate)
-      fetcher = bcbfetch.BCBCotacaoFetcher(pdate)
+      fetcher = bcbf.BCBCotacaoFetcher(pdate)
       print(fetcher)
     return self.n_rolls
 

@@ -59,7 +59,8 @@ import requests
 import time
 from prettytable import PrettyTable
 import settings as sett
-import fs.datefs.years_date_functions as dtfs
+import fs.datefs.convert_to_date_wo_intr_sep_posorder as cnv
+import fs.datefs.convert_to_datetime_wo_intr_sep_posorder as dtcv
 import fs.datefs.introspect_dates as dtconv  # .trans_strdate_from_one_format_to_another_w_sep_n_posorder
 
 url_base = 'https://olinda.bcb.gov.br/olinda/servico/PTAX/' \
@@ -125,7 +126,7 @@ def call_api_bcb_cotacao_dolar_on_date(pdate, connection_error_raised=0):
   if connection_error_raised > 10:
     error_msg = 'connection_error_raised > 10 (%d)' % connection_error_raised
     raise requests.exceptions.ConnectionError(error_msg)
-  refdate = dtfs.returns_date_or_none(pdate)
+  refdate = cnv.make_date_or_none(pdate)
   if refdate is None:
     pdatetime = datetime.datetime.now()
     error_msg = 'Given date (%s) is None' % str(pdate)
@@ -173,7 +174,7 @@ def call_api_bcb_cotacao_dolar_on_date(pdate, connection_error_raised=0):
   except IndexError:
     # in general, this case means that the date does not have quotes as happens for holidays and weekend days
     # but the important fact is that the response came with a 200 OK status code
-    datatime_cotacao = dtfs.convert_date_to_datetime_or_none(refdate)
+    datatime_cotacao = cnv.convert_date_to_datetime_or_none(refdate)
     gen_msg = 'BCB API day with no quotes'
     print(gen_msg, refdate, datatime_cotacao)
     res_bcb_api = namedtuple_bcb_api1(
@@ -185,7 +186,7 @@ def call_api_bcb_cotacao_dolar_on_date(pdate, connection_error_raised=0):
     return res_bcb_api
   if len(valuedict) == 0:
     # maybe this case never happens, and it's the above case when holidays or weekend days happen
-    datatime_cotacao = dtfs.convert_date_to_datetime_or_none(refdate)
+    datatime_cotacao = cnv.convert_date_to_datetime_or_none(refdate)
     res_bcb_api = namedtuple_bcb_api1(
       cotacao_compra=None, cotacao_venda=None, cotacao_datahora=datatime_cotacao,
       param_date=refdate,
@@ -197,7 +198,7 @@ def call_api_bcb_cotacao_dolar_on_date(pdate, connection_error_raised=0):
   cotacao_compra = valuedict['cotacaoCompra']
   cotacao_venda = valuedict['cotacaoVenda']
   data_hora_cotacao = valuedict['dataHoraCotacao']
-  datatime_cotacao = dtfs.convert_str_or_attrsobj_to_datetime_or_none(data_hora_cotacao)
+  datatime_cotacao = dtcv.convert_str_or_attrsobj_to_datetime_or_none(data_hora_cotacao)
   res_bcb_api = namedtuple_bcb_api1(
     cotacao_compra=cotacao_compra, cotacao_venda=cotacao_venda, cotacao_datahora=datatime_cotacao,
     param_date=refdate,
@@ -244,11 +245,11 @@ def pretry_print_api_list(res_bcb_api1_list):
 def adhoc_test():
   dates = []
   strdate = '2020-07-30'
-  pdate = dtfs.returns_date_or_today(strdate)
+  pdate = cnv.returns_date_or_today(strdate)
   dates.append(pdate)
   # pdate = dtfs.returns_date_or_today()
   strdate = '2020-07-31'
-  pdate = dtfs.returns_date_or_today(strdate)
+  pdate = cnv.returns_date_or_today(strdate)
   dates.append(pdate)
   res_bcb_api1_list = []
   for pdate in dates:

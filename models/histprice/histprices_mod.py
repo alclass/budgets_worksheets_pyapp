@@ -15,8 +15,8 @@ import datetime
 import os
 import fs.datefs.convert_to_date_wo_intr_sep_posorder as cnv
 import fs.datefs.introspect_dates as intr
-import fs.economicfs.bcb.bcb_fetchfunctions as prefs
 import fs.economicfs.bcb.bcb_financefunctions as finfs
+import commands.calc.multiplication_factor_calc as mfc  # .MonetCorrCalculator
 import settings as sett
 
 
@@ -38,119 +38,145 @@ class HistPrice:
   """
 
   def __init__(
-      self, source_price, source_date,
-      saporder=None, target_date=None, source_currency=None, target_currency=None
+      self, price_ini, date_ini, date_fim=None,
+      sap_order=None, curr_numerator=None, curr_denominator=None
   ):
-    self.source_price = float(source_price)
-    self.source_date = source_date
+    self.price_ini = float(price_ini)
+    self._price_fim = None  # to be calculated to the same proportional of cotacao_compra_orig/cotacao_compra_dest
+    self.date_ini = date_ini
     try:
-      self.saporder = int(saporder)
+      self.sap_order = int(sap_order)
     except (TypeError, ValueError):
-      self.saporder = 99999999999  # attribrarily given, it's not processed here & probably does not exist in db
-    self.quotes_source_datetime = None
-    self.target_date = target_date
-    self.quotes_target_datetime = None
-    self.source_currency = source_currency  # None means DEFAULT which is, by now, BRL
-    self.target_currency = target_currency  # None means DEFAULT which is, by now, USD
-    self.source_quote = None  # quote is the exchange rate on a date
-    self.target_quote = None
-    self._target_price = None  # to be calculated to the same proportional of cotacao_compra_orig/cotacao_compra_dest
-    self._monet_corr_index = None
+      self.sap_order = 99999999999  # attribrarily given, it's not processed here & probably does not exist in db
+    self.quotes_ini_dt = None
+    self.quotes_fim_dt = None
+    self.date_fim = date_fim
+    self._mcc = None
+    self.curr_numerator = curr_numerator  # None means DEFAULT which is, by now, BRL
+    self.curr_denominator = curr_denominator  # None means DEFAULT which is, by now, USD
     self.treat_dates()
     self.treat_currency()
-    self.fetch_source_n_target_exchange_rates()
+    _ = self.mcc  # self.enclose_mul_fac_obj()
+    # self.fetch_source_n_target_exchange_rates()
+    # self.fetch_source_n_target_cpis()
+
+  @property
+  def n_days(self):
+    try:
+      return self.mcc.n_days
+    except TypeError:
+      pass
+    return -1
+
+  @property
+  def exrate_ini(self):
+    try:
+      return self.mcc.exrate_ini
+    except TypeError:
+      pass
+    return None
+
+  @property
+  def exrate_fim(self):
+    try:
+      return self.mcc.exrate_fim
+    except TypeError:
+      pass
+    return None
+
+  @property
+  def cpi_ini(self):
+    try:
+      return self.mcc.cpi_ini
+    except TypeError:
+      pass
+    return None
+
+  @property
+  def cpi_fim(self):
+    try:
+      return self.mcc.cpi_fim
+    except TypeError:
+      pass
+    return None
+
+  @property
+  def mcc(self):
+    if self._mcc is None:
+      self._mcc = mfc.MonetCorrCalculator(self.date_ini, self.date_fim)
+    return self._mcc
 
   def treat_dates(self):
-    self.source_date = cnv.make_date_or_none(self.source_date)
-    if self.source_date is None:
-      error_msg = "Invalid price's source date (%s) for class HistPrice." % str(self.source_date)
-      raise ValueError(error_msg)
-    self.target_date = cnv.make_date_or_today(self.target_date)
-    if self.target_date == datetime.date.today():
-      # prefer yesterday, for today's exchange rate depends on the hour rate is closed
-      self.target_date = self.target_date - datetime.timedelta(days=1)
-    self.quotes_source_datetime = None
-    self.quotes_target_datetime = None
+    self.date_ini = cnv.make_date_or_none(self.date_ini)
+    if self.date_ini is None:
+      # second try: extract date from the dot separated strdate (dd.mm.yyyy)
+      # this date dmy dot-format is expected in the csv input files
+      self.date_ini = intr.convert_strdate_to_date_or_none_w_sep_n_posorder(self.date_ini, sep='.', orderpos='dmy')
+      if self.date_ini is None:
+        error_msg = "Invalid price's source date (%s) for class HistPrice." % str(self.date_ini)
+        raise ValueError(error_msg)
+    self.date_fim = cnv.make_date_or_today(self.date_fim)
+    if self.date_fim == datetime.date.today():
+      # prefer yesterday, for today's exchange rate depends on the hour rate as 'closed'
+      self.date_fim = self.date_fim - datetime.timedelta(days=1)
+    self.quotes_ini_dt = None
+    self.quotes_fim_dt = None
 
   def treat_currency(self):
-    if self.source_currency is None:
-      self.source_currency = finfs.CURR_BRL  # reais
-    if self.source_currency not in finfs.CURRENCIES:
-      error_msg = 'Currency %s is not within %s' % (self.source_currency, str(finfs.CURRENCIES))
+    if self.curr_numerator is None:
+      self.curr_numerator = finfs.CURR_BRL  # reais
+    if self.curr_numerator not in finfs.CURRENCIES:
+      error_msg = 'Currency %s is not within %s' % (self.curr_numerator, str(finfs.CURRENCIES))
       raise ValueError(error_msg)
-    if self.target_currency is None:
-      self.target_currency = finfs.CURR_USD  # dólares
-    if self.target_currency not in finfs.CURRENCIES:
-      error_msg = 'Currency %s is not within %s' % (self.target_currency, str(finfs.CURRENCIES))
+    if self.curr_denominator is None:
+      self.curr_denominator = finfs.CURR_USD  # dólares
+    if self.curr_denominator not in finfs.CURRENCIES:
+      error_msg = 'Currency %s is not within %s' % (self.curr_denominator, str(finfs.CURRENCIES))
       raise ValueError(error_msg)
-
-  def fetch_source_n_target_exchange_rates(self):
-    resbcbapi1 = prefs.dbfetch_bcb_cotdolar_recursive_or_apifallback(self.source_date)
-    if resbcbapi1.error_msg:
-      raise ValueError(resbcbapi1.error_msg)
-    if resbcbapi1.cotacao_compra is None:
-      print('resbcbapi1.cotacao_compra is None')
-      return
-    self.source_quote = resbcbapi1.cotacao_compra
-    self.quotes_source_datetime = resbcbapi1.cotacao_datahora
-    # self.source_quote_date = resbcbapi1.cotacao_data
-    resbcbapi1 = prefs.dbfetch_bcb_cotdolar_recursive_or_apifallback(self.target_date)
-    if resbcbapi1.error_msg:
-      raise ValueError(resbcbapi1.error_msg)
-    if resbcbapi1.cotacao_compra is None:
-      print('resbcbapi1.cotacao_compra is None')
-      return
-    self.target_quote = resbcbapi1.cotacao_compra
-    self.quotes_target_datetime = resbcbapi1.cotacao_datahora
 
   @property
-  def target_price(self):
-    if self._target_price is None:
-      self.fetch_source_n_target_exchange_rates()
-    if self.source_quote is None or self.target_quote is None or self.source_quote == 0:
-      print('Data unavailable')
-      return None
-    self._monet_corr_index = abs(self.source_quote - self.target_quote) / self.source_quote
-    factor = 1 + self._monet_corr_index
-    self._target_price = self.source_price * factor
-    return self._target_price
+  def price_fim(self):
+    if self._price_fim is None:
+      try:
+        self._price_fim = self.price_ini * self.monecorr_mul_fac
+      except TypeError:
+        pass
+    return self._price_fim
 
   @property
-  def monet_corr_index(self):
-    if self._monet_corr_index is None:
-      _ = self.target_price  # to trigger fetch routine
-      if self._monet_corr_index is None:  # second try, do not retrigger fetch routine at this point
-        return None
-    return self._monet_corr_index
+  def monecorr_mul_fac(self):
+    try:
+      return self.mcc.multiplication_factor
+    except TypeError:
+      pass
+    return None
 
   def as_dict(self):
     outdict = {
-      'source_date': self.source_date,
-      'quotes_source_datetime': self.quotes_source_datetime,
-      'source_quote': self.source_quote,
-      'source_price': self.source_price,
-      'saporder': self.saporder,
-      'target_date': self.target_date,
-      'quotes_target_datetime': self.quotes_target_datetime,
-      'target_quote': self.target_quote,
-      'target_price': self.target_price,
-      'monet_corr_index': self.monet_corr_index,
+      'source_date': self.date_ini,
+      'quotes_source_datetime': self.quotes_ini_dt,
+      'source_quote': self.exrate_ini,
+      'source_price': self.price_ini,
+      'saporder': self.sap_order,
+      'target_date': self.date_fim,
+      'quotes_target_datetime': self.quotes_fim_dt,
+      'target_quote': self.exrate_fim,
+      'target_price': self.price_fim,
+      'monet_corr_index': self.monecorr_mul_fac,
     }
     return outdict
 
   def __str__(self):
-    outstr = '''
-  source_date  = %(source_date)s
-  quotes_source_datetime = %(quotes_source_datetime)s,
-  source_quote = %(source_quote).4f
-  source_price = %(source_price).2f
-  saporder = %(saporder)d
-  target_date  = %(target_date)s
-  quotes_target_datetime = %(quotes_target_datetime)s,
-  target_quote = %(target_quote).4f
-  target_price = %(target_price).2f
-  monet_corr_index = %(monet_corr_index).4f
-    ''' % self.as_dict()
+    outstr = f'''
+  saporder = {self.sap_order}
+  quotes_source_datetime = {self.quotes_ini_dt}
+  quotes_target_datetime = {self.quotes_fim_dt}
+  date_ini  = {self.date_ini} | cpi_i = {self.cpi_ini}
+  date_fim  = {self.date_fim} | cpi_f = {self.cpi_fim}
+  price_ini = {self.price_ini:02f} | exr_i = {self.exrate_ini:04f} 
+  price_fim = {self.price_fim:02f} | exr_f = {self.exrate_fim:04f}
+  mul_fac = {self.monecorr_mul_fac:04f} | days = {self.n_days}
+    '''
     return outstr
 
 
@@ -208,7 +234,7 @@ class TripleHistPrice:
   def histpriceitem(self):
     if self._histpriceitem is not None:
       return self._histpriceitem
-    self._histpriceitem = HistPrice(self.price, self.pdate)
+    self._histpriceitem = HistPrice(price_ini=self.price, date_ini=self.pdate)
 
   def as_dict(self):
     outdict = {
@@ -219,7 +245,7 @@ class TripleHistPrice:
     return outdict
 
   def __str__(self):
-    outstr = '''
+    outstr = f""""""'''
   pricesdate  = %(pricesdate)s
   price = %(price).2f
   saporder = %(saporder)d

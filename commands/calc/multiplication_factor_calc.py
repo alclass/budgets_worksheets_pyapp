@@ -166,6 +166,15 @@ class MonetCorrCalculator:
     return self.refmonthfim + relativedelta(months=-2)
 
   @property
+  def n_days(self):
+    try:
+      deltadays = self.datefim - self.dateini
+      return deltadays.days
+    except TypeError:
+      pass
+    return -1
+
+  @property
   def cpi_ini(self):
     if self._cpi_ini is None:
       self._cpi_ini = cpi.get_cpi_baselineindex_for_refmonth_in_db(self.dateini_m2)
@@ -324,7 +333,7 @@ class MonetCorrCalculator:
   def __eq__(self, o):
     dpeq = DECIMAL_PLACES_FOR_EQ
     try:
-      if self.dateini == o.dateini and self.datefim == o.datefim and self.rowindexfordf == o.rowindexfordf:
+      if self.dateini == o.date_ini and self.datefim == o.datefim and self.rowindexfordf == o.rowindexfordf:
         if round(self.cpi_ini, dpeq) == round(o.cpi_ini, dpeq):
           if round(self.cpi_fim, dpeq) == round(o.cpi_fim, dpeq):
             if round(self.exrate_ini, dpeq) == round(o.exrate_ini, dpeq):
