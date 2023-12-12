@@ -18,7 +18,8 @@ import os
 import xlsxwriter
 import fs.datefs.introspect_dates as intr
 import fs.numberfs.tableaufunctions as tblfs
-import models.histprice.histprices_mod as hispri
+import models.histprice.histprice_mod as hispri
+import fs.numberfs.tableaufunctions as tbfs  # .Tableau
 import settings as sett
 HISTPRICE_FOLDERNAME = 'histprices'
 OUTPUT_HISTPRICE_EXCEL_FILENAME = 'histprices.xlsx'
@@ -30,7 +31,10 @@ class HistPriceWorkbook:
     self.wb_filepath = wb_filepath
     self.set_wb_filepath_as_default_if_none()
     self.histprice_obj = histprice_obj
-    self.cellref = 'A3'
+    self.tableau = tbfs.Tableau()
+    self.tableau.cellref = 'a3'
+    self.tableau.insert_columns = ['date', 'price_i', 'cpi', 'exr', 'mul', 'price_f']
+    self.tableau.fixref_fields = ['date_f', 'cpi_f', 'exr_f']
     self._totalprice = 0
     self.worksheet = None
 
@@ -53,34 +57,34 @@ class HistPriceWorkbook:
       print('For saving file', wb_filename)
     workbook = xlsxwriter.Workbook(self.wb_filepath)
     self.worksheet = workbook.add_worksheet()
-    self.cellref = 'C2'
-    self.worksheet.write(self.cellref, 'Preços Históricos')
-    self.cellref = 'A5'
+    self.tableau = 'C2'
+    self.worksheet.write(self.tableau, 'Preços Históricos')
+    self.tableau = 'A5'
     for histpriceitem in self.histprice_obj:
       self.add_row_to_worksheet(histpriceitem)
-      self.cellref = tblfs.move_cell_along_tableau(self.cellref, -11, 1)
+      self.tableau = tblfs.move_cell_along_tableau(self.tableau, -11, 1)
     print('Closing ', self.wb_filepath)
     workbook.close()
 
   def add_row_to_worksheet(self, histpriceitem):
-    self.cellref = tblfs.move_cell_along_columns(self.cellref, 1)
-    self.worksheet.write(self.cellref, histpriceitem.date_ini)
-    self.cellref = tblfs.move_cell_along_columns(self.cellref, 1)
-    self.worksheet.write(self.cellref, histpriceitem.price_ini)
-    self.cellref = tblfs.move_cell_along_columns(self.cellref, 1)
-    self.worksheet.write(self.cellref, histpriceitem.cpi_ini)
-    self.cellref = tblfs.move_cell_along_columns(self.cellref, 1)
-    self.worksheet.write(self.cellref, histpriceitem.cpi_fim)
-    self.cellref = tblfs.move_cell_along_columns(self.cellref, 1)
-    self.worksheet.write(self.cellref, histpriceitem.exrate_ini)
-    self.cellref = tblfs.move_cell_along_columns(self.cellref, 1)
-    self.worksheet.write(self.cellref, histpriceitem.exrate_fim)
-    self.cellref = tblfs.move_cell_along_columns(self.cellref, 1)
-    self.worksheet.write(self.cellref, histpriceitem.monecorr_mul_fac)
-    self.cellref = tblfs.move_cell_along_columns(self.cellref, 1)
-    self.worksheet.write(self.cellref, histpriceitem.price_fim)
-    self.cellref = tblfs.move_cell_along_columns(self.cellref, 1)
-    self.worksheet.write(self.cellref, histpriceitem.date_fim)
+    self.tableau = tblfs.move_cell_along_columns(self.tableau, 1)
+    self.worksheet.write(self.tableau, histpriceitem.date_ini)
+    self.tableau = tblfs.move_cell_along_columns(self.tableau, 1)
+    self.worksheet.write(self.tableau, histpriceitem.price_ini)
+    self.tableau = tblfs.move_cell_along_columns(self.tableau, 1)
+    self.worksheet.write(self.tableau, histpriceitem.cpi_ini)
+    self.tableau = tblfs.move_cell_along_columns(self.tableau, 1)
+    self.worksheet.write(self.tableau, histpriceitem.cpi_fim)
+    self.tableau = tblfs.move_cell_along_columns(self.tableau, 1)
+    self.worksheet.write(self.tableau, histpriceitem.exrate_ini)
+    self.tableau = tblfs.move_cell_along_columns(self.tableau, 1)
+    self.worksheet.write(self.tableau, histpriceitem.exrate_fim)
+    self.tableau = tblfs.move_cell_along_columns(self.tableau, 1)
+    self.worksheet.write(self.tableau, histpriceitem.monecorr_mul_fac)
+    self.tableau = tblfs.move_cell_along_columns(self.tableau, 1)
+    self.worksheet.write(self.tableau, histpriceitem.price_fim)
+    self.tableau = tblfs.move_cell_along_columns(self.tableau, 1)
+    self.worksheet.write(self.tableau, histpriceitem.date_fim)
 
   @property
   def totalprice(self):
@@ -96,44 +100,59 @@ class HistPriceWorkbook:
 
 class TripleHistPrice:
   """
+  This is a sort of "helper class" that instantiate an object
+    with the following 3 atrributes:
+      a) dmydotdate,
+      b) commadecimalprice,
+      c) sap_order
+
+  a) the dmydotdate is a date in format {'sep': '.', posorder='dmy'},
+  example: 30.07.2013; notice 30.7.2013 (with the leftzero in month) is also valid;
+
+  b) the commadecimalprice is a float date in money format
+  {'thousands_sep': '.', 'decimalplaces_sep': ',' }, example: 2.466,44
+
+  c) sap_order is the order number and is just informative and identificational
+  and does not take any effect in here;
+
+An example "altogether":
     data	        Preço líq.  Nº pedido (int saporder)
     30.07.2013	  2.466,44 	  4505421893
     11.07.2016	  4.454,58 	  4507292659
     (...)
-
   """
 
   def __init__(self, dmydotdate=None, commadecimalprice='1,00', sap_order=None):
     self.dmydotdate = dmydotdate
     self.commadecimalprice = commadecimalprice
     self.sap_order = sap_order
-    self._pdate = None
+    self._date = None  # converted from the dmydotdate
     self._dmybardate = None
-    self._price = None
+    self._price = None  # converted from the commadecimalprice
     self._histpriceitem = None
 
   @property
   def dmybardate(self):
     if self._dmybardate is not None:
       return self._dmybardate
-    _ = self.pdate  # force first convertion to pdate
-    if self.pdate is None:  # can't continue
+    _ = self.date  # force first convertion to pdate
+    if self.date is None:  # can't continue
       return None
     self._dmybardate = intr.trans_from_date_to_strdate_w_sep_posorder_n_zfill(
-      self.pdate, sep='/', posorder='dmy', zfill=2
+      self.date, sep='/', posorder='dmy', zfill=2
     )
     return self._dmybardate
 
   @property
-  def pdate(self):
-    if self._pdate is not None:
-      return self._pdate
+  def date(self):
+    if self._date is not None:
+      return self._date
     if self.dmydotdate is None:  # needed for the convertion/calculation below
       return
-    self._pdate = intr.convert_strdate_to_date_or_none_w_sep_n_posorder(
+    self._date = intr.convert_strdate_to_date_or_none_w_sep_n_posorder(
         strdate=self.dmydotdate, sep='.', orderpos='dmy'
     )
-    return self._pdate
+    return self._date
 
   @property
   def price(self):
@@ -148,7 +167,7 @@ class TripleHistPrice:
   def histpriceitem(self):
     if self._histpriceitem is not None:
       return self._histpriceitem
-    self._histpriceitem = hispri.HistPrice(self.price, self.pdate)
+    self._histpriceitem = hispri.HistPrice(self.price, self.date)
 
   def as_dict(self):
     outdict = {
@@ -188,7 +207,7 @@ def process_triplehistprices(triplehistprices):
   for triplehistprice in triplehistprices:
     histprice = hispri.HistPrice(
       price_ini=triplehistprice.price,
-      date_ini=triplehistprice.pdate,
+      date_ini=triplehistprice.date,
       sap_order=triplehistprice.sap_order,
     )
     histprices.append(histprice)

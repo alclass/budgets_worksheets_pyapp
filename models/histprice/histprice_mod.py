@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-models/exrate/histprices_mod.py
+models/exrate/histprice_mod.py
 
 The namedtuple for the BCB API response data is the following:
   namedtuple_bcb_api1 = coll.namedtuple(

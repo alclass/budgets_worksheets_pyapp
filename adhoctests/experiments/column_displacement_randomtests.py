@@ -59,6 +59,7 @@ innerloopruns = [3, 15, 45, 100]
 
 
 def generate_random_numbers(innerlooprun):  # innerlooprun = innerloopruns[decimalplace]
+  tbl = tblfs.Tableau()
   ongoing_conv_letters = 'a'
   baknumber = 0
   total = 0
@@ -79,11 +80,11 @@ def generate_random_numbers(innerlooprun):  # innerlooprun = innerloopruns[decim
         # print (' => throwing away parcel  %d | total %d' %(parcel, total))
         continue
       total += parcel
-      ongoing_conv_letters = tblfs.move_columns_by(ongoing_conv_letters, parcel)
+      ongoing_conv_letters = tbl.move_columns_by(ongoing_conv_letters, parcel)
       # print(parcelcounter, 'total %d | parcel %d | decimalplace %d ' %(total, parcel, decimalplace))
     # print ('positnumcount', positnumcount, 'negatnumcount', negatnumcount, positnumcount+negatnumcount)
     # print('ongoing_conv_letters', ongoing_conv_letters)
-    baknumber = tblfs.convert_columnletters_to_number_nonrecursively(ongoing_conv_letters)
+    baknumber = tbl.convert_columnletters_to_number_nonrecursively(ongoing_conv_letters)
     # print('baknumber', baknumber)
   quad = total, baknumber, total - baknumber, innerlooprun
   quad_totalint_totalcells_nparcels.append(quad)
@@ -110,8 +111,8 @@ def lesser_number_test(nruns):
     if parcel == 0 or (total + parcel) <= 0:
       continue
     total += parcel
-    ongoing_conv_letters = tblfs.move_columns_by(ongoing_conv_letters, parcel)
-    baknumber = tblfs.convert_columnletters_to_number_nonrecursively(ongoing_conv_letters)
+    ongoing_conv_letters = tbl.move_columns_by(ongoing_conv_letters, parcel)
+    baknumber = tbl.convert_columnletters_to_number_nonrecursively(ongoing_conv_letters)
   # adjust baknumber with -1 for 'a' is 1 and algo the origin
   baknumber -= 1
   print('nruns =', nruns, '| total =', total, '| baknumber =', baknumber, '| dif =', total - baknumber)

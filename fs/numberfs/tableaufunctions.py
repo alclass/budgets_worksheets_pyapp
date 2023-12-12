@@ -7,16 +7,25 @@ fs/numberfs/tableaufunctions.py
 import math  # for math.log(n, base)
 import string  # for ZERO_PLUS_UPPERCASE_ASCII_LETTERS
 import fs.textfs.strfs as strfs
+import fs.numberfs.numfunctions as nfs
 ZERO_PLUS_UPPERCASE_ASCII_LETTERS = '0' + string.ascii_uppercase
 NSYSTEM27SIZE = len(ZERO_PLUS_UPPERCASE_ASCII_LETTERS)
-
 
 
 class Tableau:
 
   def __init__(self):
+    self.x = 0
+    self.y = 0
     self.cellref = None
     self.cell_letters = None
+
+  def x_to_letters(self):
+    """
+    Implements function y = f(x) that converts
+      index x into the letter-notation
+    """
+    self.xletters = nfs.idx_to_letters(self.x)
 
   def pick_up_number_from_cellref(self):
     if self.cellref is None:
