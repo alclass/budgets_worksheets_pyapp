@@ -7,7 +7,7 @@ This script reads a dateadhoctests data (text) file inside the app's data folder
 
 The output text contains:
 This scripts fetches both exchange rates and CPI indices.
-The purpose is to generate an output with day to day
+The purpose is to generate_first_n_letterindices an output with day to day
   composite money financial update indices.
 """
 import datetime

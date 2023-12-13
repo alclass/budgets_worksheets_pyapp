@@ -14,7 +14,7 @@ Example:
   Another detail of introspect_possible_month_position_in_date() is that
     it is used in a 'composite way', ie, to find posorder [ymd, ydm, dmy, mdy].
   In that, it is necessary that two fields (among the three: year, month & day) be found conclusively
-    so that it's able to generate a datetime.date.
+    so that it's able to generate_first_n_letterindices a datetime.date.
   This above function, though it's not present here as of the time of this writing, it may in the future.
 
 Conclusive vs unconclusive strdates:

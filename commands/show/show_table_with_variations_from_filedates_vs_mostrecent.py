@@ -5,7 +5,7 @@
 commands/show/show_table_with_variations_from_filedates_vs_mostrecent.py
   Script to fetch both exchange rates and CPI indices.
 
-The purpose is to generate an output with day to day
+The purpose is to generate_first_n_letterindices an output with day to day
   composite money financial update indices, each day contrasted to the most-recent data, ie,
   today or the last day that has results
 
