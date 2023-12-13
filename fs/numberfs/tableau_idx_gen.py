@@ -27,12 +27,11 @@ More examples:
 @see also unit-tests for perceiving that there are "assert-equal's" one to the other.
 """
 import string
+MAX_LOOP_CYCLES = 200
+ASCII_26_UPPERCASE_LETTERS = string.ascii_uppercase
 
 
 class TableauLetterIndexGenerator:
-
-  MAX_LOOP_CYCLES = 200
-  ASCII_26_UPPERCASE_LETTERS = string.ascii_uppercase
 
   def __init__(self):
     self.ongoing_letter_digits = []
@@ -51,8 +50,8 @@ class TableauLetterIndexGenerator:
       changed_letter = 'A'
       vai_um = True
     else:
-      idx = self.ASCII_26_UPPERCASE_LETTERS.index(letter)
-      changed_letter = self.ASCII_26_UPPERCASE_LETTERS[idx + 1]
+      idx = ASCII_26_UPPERCASE_LETTERS.index(letter)
+      changed_letter = ASCII_26_UPPERCASE_LETTERS[idx + 1]
     return changed_letter, vai_um
 
   def add_one_to_letter_index_recursive_left_to_right_letter(self, pos=0):
@@ -73,7 +72,34 @@ class TableauLetterIndexGenerator:
       self.add_one_to_letter_index_recursive_left_to_right_letter()
       yield self.rolling_letter_index
 
+
+class TableauLetterIndex:
+
+  def __init__(self):
+    self.ongoing_letter_digits = []
+
+  @property
+  def rolling_letter_index(self):
+    if len(self.ongoing_letter_digits) == 0:
+      return ''
+    letter_list = reversed(self.ongoing_letter_digits)
+    return ''.join(letter_list)
+
+
   def get_letteridx_from_a_1basedidx(self, b1idx, recursed=False):
+    """
+    Returns the letteridx associated with the base1_index input.
+    Examples:
+      b1idx 1 => letteridx A
+      b1idx 2 => letteridx B
+      b1idx 3 => letteridx C
+      (...)
+      b1idx 26 => letteridx Z
+      b1idx 27 => letteridx AA
+      (...)
+      b1idx 52 => letteridx AZ
+      (...)
+    """
     if not recursed:
       self.ongoing_letter_digits = []
     digit_idx = b1idx % 26
@@ -126,7 +152,7 @@ def adhoctest1():
   letteridx = sg.get_letteridx_from_a_1basedidx(b1idx)
   print('letteridx for b1idx', b1idx, letteridx)
   """
-  sg = TableauLetterIndexGenerator()
+  sg = TableauLetterIndex()
   total_to_gen = 800
   letterindices = list(sg.generate_first_n_letterindices(total_to_gen))
   b1indices = list(sg.generate_first_n_base1indices(total_to_gen))
@@ -140,7 +166,7 @@ def adhoctest1():
 
 
 def adhoctest2():
-  sg = TableauLetterIndexGenerator()
+  sg = TableauLetterIndex()
   li = list(sg.generate_first_n_letterindices(53))
   print(li)
   for i in range(25, 54):

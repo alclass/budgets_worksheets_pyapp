@@ -12,7 +12,7 @@ import fs.numberfs.tableau_idx_gen as ligen  # .TableauLetterIndexGenerator
 class TestCaseTableuFunctions(unittest.TestCase):
 
   def setUp(self):
-    self.idxgen = ligen.TableauLetterIndexGenerator()
+    self.idxgen = ligen.TableauLetterIndex()
 
   def test_generate_some(self):
     expected_letter = 'a'.upper()
