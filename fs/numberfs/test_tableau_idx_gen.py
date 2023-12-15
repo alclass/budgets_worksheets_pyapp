@@ -26,7 +26,7 @@ class TestCaseTableuFunctions(unittest.TestCase):
     # t2 does the t1 comeback comparison
     self.assertEqual(expected_b1idx, returned_b1idx)
 
-  def ztest_comparing_the_800_first_gen_indices(self):
+  def test_comparing_the_800_first_gen_indices(self):
     """
     Obs: the generator, specially for letterindices, generates sequencially started at 0-based index 0.
     If an arbitrary "high" index is wanted, it may be gotten from the functions tested above.

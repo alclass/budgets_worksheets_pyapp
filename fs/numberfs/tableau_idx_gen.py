@@ -31,6 +31,59 @@ MAX_LOOP_CYCLES = 200
 ASCII_26_UPPERCASE_LETTERS = string.ascii_uppercase
 
 
+class LetterList(list):
+  """
+  def __init__(self):
+    super().__init__()
+    self.e = None
+
+  """
+  e = None
+
+  def __new__(self, plist=[]):
+    try:
+      _ = iter(plist)
+    except TypeError:
+      plist = []
+    try:
+      plist = filter(lambda e: e is not None, plist)
+      plist = map(lambda e: str(e).upper(), plist)
+      plist = filter(lambda e: e in ASCII_26_UPPERCASE_LETTERS, plist)
+      _ = [self.append(e) for e in plist]
+    except (TypeError, ValueError):
+      pass
+
+  def __setitem__(self, pos, e):
+    self.e = e
+    self.check_element_or_raise()
+    self.check_position_or_raise(pos)
+    self[pos] = e
+
+  def check_element_or_raise(self):
+    self.e = str(self.e).upper()
+    if self.e not in ASCII_26_UPPERCASE_LETTERS:
+      error_msg = f'attempt to append/insert element {self.e} not belonging to {ASCII_26_UPPERCASE_LETTERS}'
+      raise ValueError(error_msg)
+
+  def check_position_or_raise(self, pos):
+    pos = pos or 0
+    pos = int(pos)
+    if abs(pos) > len(self) - 1:
+      error_msg = f'attempt to insert element {self.e} at position {pos} when size = {len(self)}'
+      raise ValueError(error_msg)
+
+  def append(self, e):
+    self.e = e
+    self.check_element_or_raise()
+    super().append(e)
+
+  def insert(self, pos, e):
+    self.e = e
+    self.check_element_or_raise(e)
+    self.check_position_or_raise(pos)
+    super().insert(pos, e)
+
+
 class TableauLetterIndex:
   """
   Contains two transforming function, one from letteridx to 1-based_idx and another to its reserve.
@@ -49,28 +102,17 @@ class TableauLetterIndex:
         self.ongoing_letter_digits = plist
 
     """
-    self._ongoing_letter_digits = []
-
-  @property
-  def ongoing_letter_digits(self):
-    return self._ongoing_letter_digits or []
-
-  @ongoing_letter_digits.setter
-  def ongoing_letter_digits(self, plist):
-    try:
-      plist = map(lambda c: c.upper(), plist)
-      plist = filter(lambda c: c in ASCII_26_UPPERCASE_LETTERS, plist)
-      self._ongoing_letter_digits = list(plist)
-    except (TypeError, ValueError):
-      pass
+    self.ongoing_letter_digits = LetterList()  # instantiated from a child class of 'list'
 
   def set_letteridx_for_trans(self, letteridx):
+    """
     try:
-      plist = list(letteridx)
-      plist = reversed(plist)
-      self.ongoing_letter_digits = plist
     except TypeError:
-      self.ongoing_letter_digits = []
+      self.ongoing_letter_digits = LetterList()
+    """
+    plist = list(letteridx)
+    plist = reversed(plist)
+    self.ongoing_letter_digits = LetterList(plist)
 
   @property
   def letteridx(self):
@@ -79,7 +121,7 @@ class TableauLetterIndex:
   def mount_letteridx_from_innerlist(self):
     if len(self.ongoing_letter_digits) == 0:
       return ''
-    letter_list = reversed(self.ongoing_letter_digits)
+    letter_list = reversed(list(self.ongoing_letter_digits))
     return ''.join(letter_list)
 
   def transpose_to_letteridx_from_a_given_1basedidx(self, b1idx, recursed=False):
@@ -102,13 +144,13 @@ class TableauLetterIndex:
       (...)
     """
     if not recursed:
-      self.ongoing_letter_digits = []
+      self.ongoing_letter_digits = LetterList()
     digit_idx = b1idx % 26
     letter = ASCII_26_UPPERCASE_LETTERS[digit_idx-1]
     # self.ongoing_letter_digits is private, so extract, append and set
-    plist = self.ongoing_letter_digits
-    plist.append(letter)
-    self.ongoing_letter_digits = plist
+    if self.ongoing_letter_digits is None:
+      self.ongoing_letter_digits = LetterList()
+    self.ongoing_letter_digits.append(letter)
     # this is necessary to adjust the "vai_um", ie after Z it's AA, after AZ, it's BA and so on
     # without the adjusting "minus 1", the Z above would be AZ and AZ would be BZ...
     b1idx -= 1
@@ -123,7 +165,7 @@ class TableauLetterIndex:
       idx_as_soma += (idx(c[i])+1) * 26 ** pwr
     where c[i] represents the characters in word & idx(c[i]) is the index of character from 0 (A) to 25 (Z).
     """
-    self.ongoing_letter_digits = []
+    self.ongoing_letter_digits = LetterList()
     word = word.upper()
     wordlist = list(word)
     rev_wl = reversed(wordlist)
@@ -149,7 +191,7 @@ class TableauLetterIndexGenerator(TableauLetterIndex):
   def rolling_letter_index(self):
     if len(self.ongoing_letter_digits) == 0:
       return ''
-    letter_list = reversed(self.ongoing_letter_digits)
+    letter_list = reversed(list(self.ongoing_letter_digits))
     return ''.join(letter_list)
 
   @staticmethod
@@ -181,6 +223,8 @@ class TableauLetterIndexGenerator(TableauLetterIndex):
     """
     """
     if pos == len(self.ongoing_letter_digits):
+      # because ongoing_letter_digits is private,
+      # insert must be indirect
       self.ongoing_letter_digits.insert(0, 'A')
       return
     letter = self.ongoing_letter_digits[pos]
@@ -207,8 +251,8 @@ class TableauLetterIndexGenerator(TableauLetterIndex):
   def letteridx_minus_1(self):
     return self.subtract_one_to_letter_index_recursive_left_to_right_letter()
 
-  def generate_first_n_letterindices(self, first_n=53):
-    self.ongoing_letter_digits = []
+  def generate_first_n_letterindices(self, first_n=3):
+    self.ongoing_letter_digits = LetterList()
     for i in range(first_n):
       self.add_one_to_letter_index_recursive_left_to_right_letter()
       yield self.rolling_letter_index
@@ -226,7 +270,7 @@ class TableauLetterIndexGenerator(TableauLetterIndex):
     else:
       if start < end:
         return
-    self.ongoing_letter_digits = []
+    self.ongoing_letter_digits = LetterList([])
     self.transpose_to_letteridx_from_0basedidx(start)
     if not decrescent:
       return self.generate_letterindices_within_range_as_0baseidx_asc(start, end)
@@ -336,12 +380,41 @@ def adhoctest2():
     ongo -= 1
 
 
+def adhoctest3():
+  """
+  Obs: the generator, specially for letterindices, generates sequencially started at 0-based index 0.
+  If an arbitrary "high" index is wanted, it may be gotten from the functions tested above.
+  # t1 same as t1 in the method-test above
+  # but comparing the 800 first b1_indices with their corresponding letterindices
+  """
+  total_to_gen = 8
+  idxgen = TableauLetterIndexGenerator()
+  letterindices = list(idxgen.generate_first_n_letterindices(total_to_gen))
+  b1indices = list(idxgen.generate_first_n_base1indices(total_to_gen))
+  for i in range(4, total_to_gen):
+    letteridx = letterindices[i]
+    b1idx = b1indices[i]
+    returned_letteridx = idxgen.transpose_to_letteridx_from_a_given_1basedidx(b1idx)
+    returned_b1idx = idxgen.transpose_to_1basedidx_from_a_given_letteridx(letteridx)
+    print('b1idx', b1idx, 'returned_b1idx', returned_b1idx, 'returned_letteridx', returned_letteridx, 'letteridx [', letteridx, ']')
+
+def adhoctest4():
+  ll = LetterList()
+  ll = ['a', 'b']
+  ll.insert(0, 'd')
+  ll.append('h')
+  ll.remove('b')
+  del ll[-1]
+  print(len(ll), ll)
+
+
 def process():
   """
   adhoc_for_groupby()
   adhoctest1()
   """
-  adhoctest2()
+  adhoctest3()
+  adhoctest4()
 
 
 if __name__ == "__main__":
