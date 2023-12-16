@@ -25,6 +25,7 @@ class LetterList(UserList):
     except TypeError:
       plist = []
     try:
+      plist = list(plist)
       plist = filter(lambda e: e is not None, plist)
       plist = map(lambda e: str(e).upper(), plist)
       plist = filter(lambda e: e in ASCII_26_UPPERCASE_LETTERS, plist)
@@ -49,7 +50,8 @@ class LetterList(UserList):
     self.position = self.position or 0
     pos = int(self.position)
     if abs(pos) > len(self):
-      error_msg = f'attempt to append/insert/replace element {self.element} at position {self.position} when size = {len(self)}'
+      error_msg = (f'attempt to append/insert/replace element {self.element} '
+                   f'at position {self.position} when size = {len(self)}')
       raise ValueError(error_msg)
 
   def append_element(self, element):
@@ -80,6 +82,15 @@ class LetterList(UserList):
     self.clear()
     e_or_l = e_or_l or []
     self.append(e_or_l)
+
+  def reset_w_letteridx(self, letteridx):
+    kept_letteridx = letteridx
+    try:
+      reversed_list = reversed(list(str(letteridx)))
+      return self.reset(reversed_list)
+    except TypeError:
+      error_msg = f"can't reset letterlist with letteridx = {kept_letteridx}"
+      raise ValueError(error_msg)
 
   def remove(self, e):
     try:

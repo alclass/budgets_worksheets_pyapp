@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """
+fs/numberfs/test_letterlist_inherited.py
+  Unit-tests for module fs/numberfs/letterlist_inherited.py
 
 """
 import string
@@ -19,13 +21,20 @@ class LetterListUnitTest(unittest.TestCase):
     self.assertEqual(0, len(letterlist1))
     self.assertEqual([], letterlist1)
     self.assertRaises(ValueError, letterlist1.append, 4)
+    self.assertRaises(ValueError, letterlist1.append, 'blah bla foo bar')
+    # notice that 'blah' entered into letterlist1 and ValueError was raised after that entering
+    self.assertEqual(list('blah'), letterlist1)
+    # clear it up
+    letterlist1.reset()
     for c in ASCII_26_UPPERCASE_LETTERS:
       letterlist1.append(c)
     self.assertEqual(letterlist1, ASCII_26_UPPERCASE_LETTERS)
     letter_a = 'a'
     letterlist1.insert(0, 'a')
-    should_be = letter_a.upper() + ASCII_26_UPPERCASE_LETTERS
-    self.assertEqual(letterlist1, should_be)
+    may_be_lowercase_for_eq = letter_a + ASCII_26_UPPERCASE_LETTERS
+    self.assertTrue(letterlist1 == may_be_lowercase_for_eq)
+    should_be_uppercase_for_assert = letter_a.upper() + ASCII_26_UPPERCASE_LETTERS
+    self.assertEqual(letterlist1, should_be_uppercase_for_assert)
 
   def test_instantiate2(self):
     list1 = ['a', 'b', 'c']
