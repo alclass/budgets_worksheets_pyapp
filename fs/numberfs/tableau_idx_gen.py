@@ -28,6 +28,7 @@ More examples:
 """
 import string
 import fs.numberfs.letterlist_inherited as llst  # .LetterList
+import fs.numberfs.indexfunctions as idxfs  # .get_1basedindex_from_letterindex
 MAX_LOOP_CYCLES = 200
 ASCII_26_UPPERCASE_LETTERS = string.ascii_uppercase
 
@@ -43,208 +44,164 @@ def verify_or_raise_letterindices_word(word):
 
 class TableauLetterIndex:
   """
-  Contains:
-   => two transforming functions, one from letteridx to 1-based_idx and another as its reserve;
-   => some arithmetic functions (adding, subtracting, multiplying letterindices)
 
-  There are also 0-based_idx transforming, but the 0-based_idx is just the 1-based_idx minus 1.
   """
 
-  def __init__(self, plist=None):
+  def __init__(self, letterindex=None, base0index=None, base1index=None, letterlist=None):
     """
-    The instance variable here (ongo_letter_list) is transient, for what it means
-      that it is a sort of working variable, valid during processing;
-      ie it's used for the transformation under action and is not useful
-      before or after the transforming.
+    This class is to be considered an instantiator of immutable objects.
+    The object instantiated is composed of a letterindex and another three equivalent values.
+    The four attributes are: letterindex, based0index, based1index, letterlist
+      which is an auxiliary variable and represents letterindex as an inverted list.
 
-More on ongo_letter_list:
+    For example:
+      letter A, as the first letter, has a 0-based index value 0 and a 1-based index as 1
+      letter B, as the second letter, has a 0-based index value 1 and a 1-based index as 2
+      (...)
+      letter Z, as the last letter, has a 0-based index value 25 and a 1-based index as 26
+    After Z, the next letterindex is AA having base0index=26 & b1idx=27
+      Then AB, AC, AD, ..., AY, AZ, BB, BA and so on.
+
+
+Info on instance variable ongo_letter_list:
   1) it belongs to class that inherits from UserList;
   2) it represents the letterindex as a reversed list,
     e.g. if letterindex = 'BACE', ongo_letter_list should be = ['E', 'C', 'A', 'B']
   3) along processes, it's not reconstructed/reinstantiated,
      it uses method clear(), though implemented reset(), to clean up for restarting;
     """
-    plist = plist or []
-    plist = list(plist)
-    self.ongo_letter_list = llst.LetterList(plist)  # instantiated from a child class of UserList
+    self.letterindex = None
+    self.letterlist = None
+    self._base0index = None  # derived from b1idx
+    self.base1index = None
+    if letterindex:
+      self.letterindex = str(letterindex).upper()
+      self.init_via_letterindex()
+    elif letterlist:
+      self.letterlist = letterlist
+      self.init_via_letterlist()
+    elif base1index:
+      self.base1index = int(base1index)
+      self.init_via_base1idx()
+    elif base0index:
+      self.base1index = int(base0index) + 1
+      self.init_via_base1idx()
+    else:
+      error_msg = f"""
+      Cannot instantiate TableauLetterIndex without either:
+        letterindex (={letterindex}, based0 (={base1index}), based1 ({base1index}) indices or
+        letterlist (={letterindex}"""
+      raise ValueError(error_msg)
 
   @property
-  def letteridx(self):
-    return self.ongo_letter_list.get_as_str_n_reversed()
+  def base0index(self):
+    if self.base1index:
+      return self.base1index - 1
+    return None
 
-  def transpose_to_letteridx_from_a_given_1basedidx(self, b1idx, recursed=False):
-    """
-    Returns the letteridx associated with the base1_index input.
-    It follows an algorithm that does:
-      1st -> extracts mod 26, ie the remainder of division by 26 (the quantity of letters)
-      2nd -> integer-divides by 26, diminish one digit for next iteration
-             (notice that the dividend is "rolling number" minus 1 [@see algorithm below])
+  def init_via_letterlist(self):
+    self.letterlist = self.letterlist or []
+    plist = list(self.letterlist)
+    self.letterlist = llst.LetterList(plist)  # instantiated from a child class of UserList
+    self.letterindex = self.letterlist.get_as_str_n_reversed()
+    self.base1index = idxfs.get_1basedindex_from_letterindex(self.letterindex)
 
-    Examples:
-      b1_idx 1 => letteridx A
-      b1_idx 2 => letteridx B
-      b1_idx 3 => letteridx C
-      (...)
-      b1_idx 26 => letteridx Z
-      b1_idx 27 => letteridx AA
-      (...)
-      b1_idx 52 => letteridx AZ
-      b1_idx 53 => letteridx BA
-      (...)
-    """
-    if not recursed:
-      self.ongo_letter_list.reset()
-    digit_idx = b1idx % 26
-    letter = ASCII_26_UPPERCASE_LETTERS[digit_idx-1]
-    self.ongo_letter_list.append(letter)
-    # this is necessary to adjust the "vai_um", ie after Z it's AA, after AZ, it's BA and so on
-    # without the adjusting "minus 1", the Z above would be AZ and AZ would be BZ...
-    b1idx -= 1
-    number_divided_by_base = b1idx // 26
-    if number_divided_by_base > 0:
-      return self.transpose_to_letteridx_from_a_given_1basedidx(number_divided_by_base, True)
-    return self.letteridx
+  def init_via_letterindex(self):
+    self.letterindex = self.letterindex or ''
+    self.make_letterlist_from_letterindex()
+    self.init_via_letterlist()
 
-  @property
-  def base1idx(self):
-    return self.transpose_to_1basedidx_from_a_given_letteridx(self.letteridx)
+  def init_via_base1idx(self):
+    self.set_letterindex_transposing_from_1basedindex()
 
-  def transpose_to_1basedidx_from_a_given_letteridx(self, word):
-    """
-    This conversion/transform follows the summation:
-      idx_as_soma = SumOf (idx(c[i])+1) * 26 ** pwr
-    where c[i] represents the characters in word & idx(c[i]) is the index of character from 0 (A) to 25 (Z).
+  def make_letterlist_from_letterindex(self):
+    # notice that letteridx is reversed in relation to letterlist
+    reversed_letteridx_list = list(reversed(list(self.letterindex)))
+    self.letterlist = llst.LetterList(reversed_letteridx_list)
+    ret_letteridx = self.letterlist.get_as_str_n_reversed()
+    if self.letterindex != ret_letteridx:
+      # this is also unit-tested, so this happening is virtually imposible
+      error_msg = f"Programming error: self._letteridx ={self.letterindex} != ret_letteridx ={ret_letteridx}"
+      raise ValueError(error_msg)
 
-    Example (seen in the last method's docstring):
-      b1_idx 53 => letteridx BA
-      B alone is b1_index 2 (1+1), A alone is b1_index 1 (0+1); doing the summation S it gets:
-      S = 2*26**1 + 1*26**0 = 52 + 1 = 53
-    """
-    verify_or_raise_letterindices_word(word)
-    wordlist = list(str(word).upper())
-    reversed_wordlist = reversed(wordlist)
-    idx_as_soma, pwr = 0, 0
-    for pwr, letter in enumerate(reversed_wordlist):
-      idx = ASCII_26_UPPERCASE_LETTERS.index(letter)
-      idx_as_soma += (idx+1) * 26 ** pwr
-    # if it got here, process has finished calculus of 1based_idx
-    self.ongo_letter_list.reset_w_letteridx(word)
-    return idx_as_soma
+  def set_letterindex_transposing_from_1basedindex(self):
+    self.letterindex = idxfs.get_letterindex_from_1basedindex(self.base1index)
+    self.make_letterlist_from_letterindex()
 
-  def transpose_to_letteridx_from_0basedidx(self, b0idx):
-    return self.transpose_to_letteridx_from_a_given_1basedidx(b0idx + 1)
-
-  def transpose_to_0basedidx_from_letteridx(self, word):
-    return self.transpose_to_1basedidx_from_a_given_letteridx(word)
+  def set_1basedidx_transposing_from_letterindex(self):
+    self_b1idx = idxfs.get_1basedindex_from_letterindex(self.letterindex)
 
   def __eq__(self, o):
     try:
-      if self.letteridx == o.letteridx:
+      if self.letterindex == o.letterindex:
         return True
     except (AttributeError, TypeError):
       pass
     return False
 
   def __add__(self, o):
-    b1idx_a = self.base1idx
-    b1idx_b = o.base1idx
+    b1idx_a = self.base1index
+    b1idx_b = o.base1index
     toachieve = b1idx_a + b1idx_b - 1
-    tbi = TableauLetterIndex()
-    tbi.transpose_to_letteridx_from_0basedidx(toachieve)
+    tbi = TableauLetterIndex(base1index=toachieve)
     return tbi
 
   def __sub__(self, o):
-    b1idx_a = self.base1idx
-    b1idx_b = o.base1idx
+    b1idx_a = self.base1index
+    b1idx_b = o.base1index
     toachieve = b1idx_a - b1idx_b - 1
     if toachieve < 0:
       return None
-    tbi = TableauLetterIndex()
-    tbi.transpose_to_letteridx_from_0basedidx(toachieve)
+    tbi = TableauLetterIndex(base1index=toachieve)
     return tbi
 
   def __str__(self):
-    outstr = f"letteridx={self.letteridx}, based1idx={self.base1idx}"
+    outstr = f"letteridx={self.letterindex}, based1idx={self.base1index}, letterlist={self.letterlist}"
     return outstr
 
 
-class TableauLetterIndexGenerator(TableauLetterIndex):
+class TableauLetterIndexGenerator:
 
-  def __init__(self, plist=None):
-    super().__init__(plist)
-
-  @staticmethod
-  def add_one_to_single_letter(letter: str):
-    letter = letter.upper()
-    vai_um = False
-    if letter == 'Z':
-      changed_letter = 'A'
-      vai_um = True
-    else:
-      idx = ASCII_26_UPPERCASE_LETTERS.index(letter)
-      changed_letter = ASCII_26_UPPERCASE_LETTERS[idx + 1]
-    return changed_letter, vai_um
-
-  @staticmethod
-  def subtract_one_to_single_letter(letter: str):
+  def __init__(self):
     """
-    propagate_to_the_right is signaled if letter is returned as 'Z'
+    The instance variable tbi is immutable, so it's reinstanciated after each operation
     """
-    letter = letter.upper()
-    if letter == 'A':
-      changed_letter = 'Z'
-    else:
-      idx = ASCII_26_UPPERCASE_LETTERS.index(letter)
-      changed_letter = ASCII_26_UPPERCASE_LETTERS[idx - 1]
-    return changed_letter
-
-  def add_one_to_letter_index_recursive_left_to_right_letter(self, pos=0):
-    """
-    """
-    if pos == len(self.ongo_letter_list):
-      # because ongoing_letter_digits is private,
-      # insert must be indirect
-      self.ongo_letter_list.insert(0, 'A')
-      return
-    letter = self.ongo_letter_list[pos]
-    changed_letter, vai_um = self.add_one_to_single_letter(letter)
-    self.ongo_letter_list[pos] = changed_letter
-    if vai_um:
-      return self.add_one_to_letter_index_recursive_left_to_right_letter(pos + 1)
+    self.tab_let_idx = None
 
   def letteridx_plus_1(self):
-    return self.add_one_to_letter_index_recursive_left_to_right_letter()
-
-  def subtract_one_to_letter_index_recursive_left_to_right_letter(self, pos=0):
-    letter = self.ongo_letter_list[pos]
-    changed_letter = self.subtract_one_to_single_letter(letter)
-    self.ongo_letter_list[pos] = changed_letter
-    if changed_letter == 'Z':
-      if pos == len(self.ongo_letter_list) - 1:
-        before = self.letteridx
-        self.ongo_letter_list.pop()
-        print(before, 'last step ->', self.letteridx, 'must be empty')
-        return
-      return self.subtract_one_to_letter_index_recursive_left_to_right_letter(pos+1)
+    """
+    self.tbi is immutable, so the result one is created
+    """
+    letterlist = idxfs.add_one_to_letter_index_recursive_left_to_right_letter(self.tab_let_idx.letterlist)
+    self.tab_let_idx = TableauLetterIndex(letterlist=letterlist)
 
   def letteridx_minus_1(self):
-    return self.subtract_one_to_letter_index_recursive_left_to_right_letter()
+    reversed_letterlist = idxfs.subtract_one_from_letterindex_nonrecursive(self.tab_let_idx.letterlist)
+    if reversed_letterlist is None:
+      return
+    letterlist = list(reversed(reversed_letterlist))
+    self.tab_let_idx = TableauLetterIndex(letterlist=letterlist)
 
   def generate_first_n_letterindices(self, first_n=3):
-    self.ongo_letter_list.reset()
+    letterlist = llst.LetterList([])
     for i in range(first_n):
-      self.add_one_to_letter_index_recursive_left_to_right_letter()
-      yield self.letteridx
+      letterlist = idxfs.add_one_to_letter_index_recursive_left_to_right_letter(letterlist)
+      self.tab_let_idx = TableauLetterIndex(letterlist=letterlist)
+      letterlist = self.tab_let_idx.letterlist
+      yield self.tab_let_idx.letterindex
 
   def generate_letterindices_within_range_as_0baseidx_asc(self, start, end):
     while start <= end:
-      yield self.letteridx
+      yield self.tab_let_idx.letterlist.get_as_str_n_reversed()
       start += 1
       self.letteridx_plus_1()
 
   def generate_letterindices_within_range_as_0baseidx_desc(self, start, end):
     while start >= end:
-      yield self.letteridx
+      letterindex = self.tab_let_idx.letterlist.get_as_str_n_reversed()
+      if letterindex is None:
+        return
+      yield letterindex
       start -= 1
       self.letteridx_minus_1()
 
@@ -257,11 +214,10 @@ class TableauLetterIndexGenerator(TableauLetterIndex):
     """
     if start > end:
       return []
-    self.ongo_letter_list.reset()
-    self.transpose_to_letteridx_from_0basedidx(start)
+    start = start if start >= 0 else 0
     if not decrescent:
       # ascending: initialize letteridx with 'start'
-      self.transpose_to_letteridx_from_0basedidx(start)
+      self.tab_let_idx = TableauLetterIndex(base0index=start)
       return self.generate_letterindices_within_range_as_0baseidx_asc(start, end)
     else:
       # swap start with end
@@ -269,7 +225,7 @@ class TableauLetterIndexGenerator(TableauLetterIndex):
       end = start
       start = tmpvar
       # descending: initialize letteridx with 'start' after it swapped with 'end'
-      self.transpose_to_letteridx_from_0basedidx(start)
+      self.tab_let_idx = TableauLetterIndex(base0index=start)
       return self.generate_letterindices_within_range_as_0baseidx_desc(start, end)
 
   @staticmethod
@@ -279,20 +235,20 @@ class TableauLetterIndexGenerator(TableauLetterIndex):
 
   def process(self):
     for i, idx_as_word in enumerate(self.generate_first_n_letterindices()):
-      comp_idx = self.transpose_to_1basedidx_from_a_given_letteridx(idx_as_word)
-      print(i, i+1, idx_as_word, comp_idx)
+      scrmsg = f"{i+1} letterindex {idx_as_word}"
+      print(scrmsg)
 
 
 def adhoctest1():
   """
   sg.process()
-  ret = sg.transpose_to_1basedidx_from_a_given_letteridx('aa')
+  ret = sg.set_1basedidx_transposing_from_letterindex('aa')
   sg.process()
   word = 'aa'
-  print(word, 'transpose_to_1basedidx_from_a_given_letteridx', ret)
+  print(word, 'set_1basedidx_transposing_from_letterindex', ret)
 
   b1idx = 53
-  letteridx = sg.transpose_to_letteridx_from_a_given_1basedidx(b1idx)
+  letteridx = sg.set_letterindex_transposing_from_1basedindex(b1idx)
   print('letteridx for b1idx', b1idx, letteridx)
   """
   sg = TableauLetterIndexGenerator()
@@ -302,8 +258,8 @@ def adhoctest1():
   for i in range(total_to_gen):
     letteridx = letterindices[i]
     b1idx = b1indices[i]
-    returned_letteridx = sg.transpose_to_letteridx_from_a_given_1basedidx(b1idx)
-    returned_b1idx = sg.transpose_to_1basedidx_from_a_given_letteridx(letteridx)
+    returned_letteridx = sg.set_letterindex_transposing_from_1basedindex(b1idx)
+    returned_b1idx = sg.set_1basedidx_transposing_from_letterindex(letteridx)
     print(b1idx, returned_b1idx)
     print(letteridx, returned_letteridx)
 
@@ -313,44 +269,44 @@ def adhoctest2():
   li = list(sg.generate_first_n_letterindices(53))
   print(li)
   for i in range(25, 54):
-    returned_letteridx = sg.transpose_to_letteridx_from_a_given_1basedidx(i)
+    returned_letteridx = sg.set_letterindex_transposing_from_1basedindex(i)
     print(i, returned_letteridx)
 
   b1idx = 10000
-  returned_letteridx = sg.transpose_to_letteridx_from_a_given_1basedidx(b1idx)
+  returned_letteridx = sg.set_letterindex_transposing_from_1basedindex(b1idx)
   print(b1idx, 'returned_letteridx', returned_letteridx)
   letteridx_param = 'PTN'
-  returned_b1idx2 = sg.transpose_to_1basedidx_from_a_given_letteridx(returned_letteridx)
+  returned_b1idx2 = sg.set_1basedidx_transposing_from_letterindex(returned_letteridx)
   print('returned_b1idx2', returned_b1idx2, returned_letteridx)
-  returned_b1idx = sg.transpose_to_1basedidx_from_a_given_letteridx(letteridx_param)
+  returned_b1idx = sg.set_1basedidx_transposing_from_letterindex(letteridx_param)
   print(letteridx_param, returned_b1idx)
-  returned_letteridx2 = sg.transpose_to_letteridx_from_a_given_1basedidx(returned_b1idx)
+  returned_letteridx2 = sg.set_letterindex_transposing_from_1basedindex(returned_b1idx)
   print(returned_b1idx, 'returned_letteridx2', returned_letteridx2)
   sg.ongoing_letter_digits = ['B']
-  sg.subtract_one_to_letter_index_recursive_left_to_right_letter()
+  sg.subtract_one_from_letterindex_nonrecursive()
   print('B minus 1', sg.letteridx, sg.ongoing_letter_digits)
   sg.ongoing_letter_digits = ['a']
-  sg.subtract_one_to_letter_index_recursive_left_to_right_letter()
+  sg.subtract_one_from_letterindex_nonrecursive()
   print('a minus 1', sg.letteridx, sg.ongoing_letter_digits)
   letteridx = 'AA'
   sg.set_ongo_letter_list_from_letteridx(letteridx)
-  sg.subtract_one_to_letter_index_recursive_left_to_right_letter()
+  sg.subtract_one_from_letterindex_nonrecursive()
   print(letteridx, 'minus 1', sg.letteridx, sg.ongoing_letter_digits)
 
   """
   sg = TableauLetterIndexGenerator()
   letteridx = 'AAB'
-  sg.ongo_letter_list.reset_w_letteridx(letteridx)
-  print(letteridx, sg.letteridx, sg.ongo_letter_list, 'minus 1')
+  sg.letterlist.reset_w_letteridx(letteridx)
+  print(letteridx, sg.letteridx, sg.letterlist, 'minus 1')
   sg.letteridx_minus_1()
-  print(letteridx, 'minus 1', sg.letteridx, sg.ongo_letter_list)
+  print(letteridx, 'minus 1', sg.letteridx, sg.letterlist)
   letteridx = 'AAA'
-  sg.ongo_letter_list.reset_w_letteridx(letteridx)
+  sg.letterlist.reset_w_letteridx(letteridx)
   sg.letteridx_minus_1()
-  print(letteridx, 'last one, minus 1', sg.letteridx, sg.ongo_letter_list)
+  print(letteridx, 'last one, minus 1', sg.letteridx, sg.letterlist)
   letteridx = sg.letteridx
   sg.letteridx_plus_1()
-  print(letteridx, 'last one, plus 1', sg.letteridx, sg.ongo_letter_list)
+  print(letteridx, 'last one, plus 1', sg.letteridx, sg.letterlist)
   ongo, end = 3, 53
   print('adhoctest crescent ongo, end', ongo, end)
   for idx in sg.generate_letterindices_within_range_as_0basedidx(start=ongo, end=end):
@@ -377,8 +333,8 @@ def adhoctest3():
   for i in range(4, total_to_gen):
     letteridx = letterindices[i]
     b1idx = b1indices[i]
-    returned_letteridx = idxgen.transpose_to_letteridx_from_a_given_1basedidx(b1idx)
-    returned_b1idx = idxgen.transpose_to_1basedidx_from_a_given_letteridx(letteridx)
+    returned_letteridx = idxgen.set_letterindex_transposing_from_1basedindex(b1idx)
+    returned_b1idx = idxgen.set_1basedidx_transposing_from_letterindex(letteridx)
     print('b1idx', b1idx, 'returned_b1idx', returned_b1idx, 'returned_letteridx',
           returned_letteridx, 'letteridx [', letteridx, ']')
 
@@ -399,8 +355,8 @@ def adhoctest4():
 def adhoctest5():
   tli1 = TableauLetterIndex()
   tli2 = TableauLetterIndex()
-  tli1.transpose_to_letteridx_from_0basedidx(2)
-  tli2.transpose_to_letteridx_from_0basedidx(3)
+  tli1.set_letterindex_transposing_from_0basedidx(2)
+  tli2.set_letterindex_transposing_from_0basedidx(3)
   tli3 = tli1 + tli2
   print('tli1 + tli2 = tli3', tli1, tli2, tli3)
   tli3 = tli2 - tli1
@@ -418,8 +374,8 @@ def adhoctest5():
   # n3 = n1 + n2
   direct_n3 = tli3.base1idx
   print('direct_n3 tli3.base1idx', direct_n3)
-  ll1 = llst.LetterList(tli1.letteridx)
-  ll2 = llst.LetterList(tli2.letteridx)
+  ll1 = llst.LetterList(tli1.letterindex)
+  ll2 = llst.LetterList(tli2.letterindex)
   # list sum is in fact a concatenation, not an arithmetic
   ll3 = ll1 + ll2
   print('ll1 ll2 ll3', ll1, ll2, ll3)
@@ -434,6 +390,32 @@ def adhoctest5():
   print('generate_letterindices_within_range_as_0basedidx', outlist)
 
 
+def adhoctest6():
+  """
+  letteridx = 'ab'
+  tli = TableauLetterIndex(letteridx)
+  print('letteridx', letteridx, 'tli', tli)
+  b1idx = 29
+  tli = TableauLetterIndex(base1index=b1idx)
+  print('letteridx', letteridx, 'tli', tli)
+  letterlist = ['D', 'A']
+  tli = TableauLetterIndex(letterlist=letterlist)
+  print('letteridx', letteridx, 'tli', tli)
+  base0index = 31
+  tli = TableauLetterIndex(base0index=base0index)
+  print('letteridx', letteridx, 'tli', tli)
+  for ww in tlig.generate_first_n_letterindices():
+    print(ww)
+  """
+  tlig = TableauLetterIndexGenerator()
+  for i, letterindex in enumerate(
+        tlig.generate_letterindices_within_range_as_0basedidx(
+          start=-5, end=27, decrescent=True
+        )
+    ):
+    print(27-i+1, letterindex)
+
+
 # self.assertEqual(tli3.letteridx, ll3.get_as_str_n_reversed())
 
 
@@ -441,9 +423,10 @@ def process():
   """
   adhoc_for_groupby()
   adhoctest1()
-  """
   adhoctest3()
   adhoctest5()
+  """
+  adhoctest6()
 
 
 if __name__ == "__main__":

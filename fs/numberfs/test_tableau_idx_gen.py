@@ -16,11 +16,11 @@ class TestCaseTableuFunctions(unittest.TestCase):
   def test_generate_some(self):
     expected_letter = 'a'.upper()
     b1idx_param = 1
-    returned_letteridx = self.idxgen.transpose_to_letteridx_from_a_given_1basedidx(b1idx_param)
+    returned_letteridx = self.idxgen.set_letterindex_transposing_from_1basedindex(b1idx_param)
     # t1 starting by b1_idx 1 which maps to letteridx 'A'
     self.assertEqual(expected_letter, returned_letteridx)
     letteridx_param = expected_letter
-    returned_b1idx = self.idxgen.transpose_to_1basedidx_from_a_given_letteridx(letteridx_param)
+    returned_b1idx = self.idxgen.set_1basedidx_transposing_from_letterindex(letteridx_param)
     expected_b1idx = b1idx_param
     # t2 does the t1 comeback comparison
     self.assertEqual(expected_b1idx, returned_b1idx)
@@ -38,19 +38,19 @@ class TestCaseTableuFunctions(unittest.TestCase):
     for i in range(total_to_gen):
       letteridx = letterindices[i]
       b1idx = b1indices[i]
-      returned_letteridx = self.idxgen.transpose_to_letteridx_from_a_given_1basedidx(b1idx)
-      returned_b1idx = self.idxgen.transpose_to_1basedidx_from_a_given_letteridx(letteridx)
+      returned_letteridx = self.idxgen.set_letterindex_transposing_from_1basedindex(b1idx)
+      returned_b1idx = self.idxgen.set_1basedidx_transposing_from_letterindex(letteridx)
       self.assertEqual(b1idx, returned_b1idx)
       self.assertEqual(letteridx, returned_letteridx)
 
   def test_above_800_first_indices(self):
     # t1 same as the method-tests above, but using a numberindex 'well' greater than 800
     b1idx_param = 10000
-    returned_letteridx = self.idxgen.transpose_to_letteridx_from_a_given_1basedidx(b1idx_param)
+    returned_letteridx = self.idxgen.set_letterindex_transposing_from_1basedindex(b1idx_param)
     expected_letteridx = 'NTP'
     self.assertEqual(expected_letteridx, returned_letteridx)
     letteridx_param = 'PTN'
-    returned_b1idx = self.idxgen.transpose_to_1basedidx_from_a_given_letteridx(letteridx_param)
+    returned_b1idx = self.idxgen.set_1basedidx_transposing_from_letterindex(letteridx_param)
     expected_b1idx = 11350
     self.assertEqual(expected_b1idx, returned_b1idx)
     self.assertGreater(expected_b1idx, b1idx_param)
@@ -60,10 +60,10 @@ class TestCaseTableuFunctions(unittest.TestCase):
     # t1 same as the previous method-test above,
     # using a still greater letterindex but only indirectly testing the b1_idx
     letteridx_param = 'XZTGK'  # numberidx will be gotten and compared back
-    returned_b1idx = self.idxgen.transpose_to_1basedidx_from_a_given_letteridx(letteridx_param)
-    returned_letteridx = self.idxgen.transpose_to_letteridx_from_a_given_1basedidx(returned_b1idx)
+    returned_b1idx = self.idxgen.set_1basedidx_transposing_from_letterindex(letteridx_param)
+    returned_letteridx = self.idxgen.set_letterindex_transposing_from_1basedindex(returned_b1idx)
     self.assertEqual(letteridx_param, returned_letteridx)
-    gottenback_b1idx = self.idxgen.transpose_to_1basedidx_from_a_given_letteridx(returned_letteridx)
+    gottenback_b1idx = self.idxgen.set_1basedidx_transposing_from_letterindex(returned_letteridx)
     self.assertEqual(gottenback_b1idx, returned_b1idx)
 
   def test_range_generation(self):
@@ -87,8 +87,8 @@ class TestCaseTableuFunctions(unittest.TestCase):
 
   def test_arithmetic(self):
     """
-    tli1.transpose_to_letteridx_from_0basedidx(2)
-    tli2.transpose_to_letteridx_from_0basedidx(3)
+    tli1.set_letterindex_transposing_from_0basedidx(2)
+    tli2.set_letterindex_transposing_from_0basedidx(3)
     tli3 = tli1 + tli2
     print('tli1 + tli2 = tli3', tli1, tli2, tli3)
     tli3 = tli2 - tli1
@@ -99,17 +99,17 @@ class TestCaseTableuFunctions(unittest.TestCase):
     """
     letter, number = 'B', 2
     tli1 = ligen.TableauLetterIndex(letter)
-    self.assertEqual(tli1.letteridx, letter)
+    self.assertEqual(tli1.letterindex, letter)
     self.assertEqual(tli1.base1idx, number)
     soma = number
     letter, number = 'C', 3
     tli2 = ligen.TableauLetterIndex(letter)
-    self.assertEqual(tli2.letteridx, letter)
+    self.assertEqual(tli2.letterindex, letter)
     self.assertEqual(tli2.base1idx, number)
     tli3 = tli1 + tli2
     soma += number
     expected_letter = 'E'  # ie, B=2 + C=3 = E=5
-    self.assertEqual(tli3.letteridx, expected_letter)
+    self.assertEqual(tli3.letterindex, expected_letter)
     self.assertEqual(tli3.base1idx, soma)
     letter = 'BFWX'
     tli1 = ligen.TableauLetterIndex(letter)
@@ -119,14 +119,14 @@ class TestCaseTableuFunctions(unittest.TestCase):
     n2 = tli2.base1idx
     tli3 = tli1 + tli2
     # the second param is a concatenation, not an index summing
-    self.assertNotEqual(list(tli3.letteridx), list(tli1.letteridx) + list(tli2.letteridx))
+    self.assertNotEqual(list(tli3.letterindex), list(tli1.letterindex) + list(tli2.letterindex))
     n3 = n1 + n2
     direct_n3 = tli3.base1idx
     self.assertEqual(n3, direct_n3)
-    ll1 = llst.LetterList(tli1.letteridx)  # 'BFWX'
-    ll2 = llst.LetterList(tli2.letteridx)  # 'KKKK'
+    ll1 = llst.LetterList(tli1.letterindex)  # 'BFWX'
+    ll2 = llst.LetterList(tli2.letterindex)  # 'KKKK'
     ll3 = ll1 + ll2
     # notice that tli is a TableauLetterIndex and ll3 is a LetterList
     # both were "constructed" from different variables summing up
-    self.assertTrue(tli3.letteridx, ll3.get_as_str_n_reversed())
+    self.assertTrue(tli3.letterindex, ll3.get_as_str_n_reversed())
     # list sum is in fact a concatenation not an arithmetic

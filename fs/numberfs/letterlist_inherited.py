@@ -8,6 +8,11 @@ MAX_LOOP_CYCLES = 200
 ASCII_26_UPPERCASE_LETTERS = string.ascii_uppercase
 
 
+def trans_letterindex_as_reversed_letterlist(letterindex):
+  llist = list(reversed(list(letterindex)))
+  return LetterList(llist)
+
+
 class LetterList(UserList):
   """
   def __init__(self):
@@ -18,18 +23,18 @@ class LetterList(UserList):
   element = None
   position = None
 
-  def __init__(self, plist=None):
+  def __init__(self, inputlist=None):
     super().__init__([])
     try:
-      _ = iter(plist)
+      _ = iter(inputlist)
     except TypeError:
-      plist = []
+      inputlist = []
     try:
-      plist = list(plist)
-      plist = filter(lambda e: e is not None, plist)
-      plist = map(lambda e: str(e).upper(), plist)
-      plist = filter(lambda e: e in ASCII_26_UPPERCASE_LETTERS, plist)
-      self.extend(plist)
+      inputlist = list(inputlist)
+      inputlist = filter(lambda e: e is not None, inputlist)
+      inputlist = map(lambda e: str(e).upper(), inputlist)
+      inputlist = list(filter(lambda e: e in ASCII_26_UPPERCASE_LETTERS, inputlist))
+      self.extend(inputlist)
       # _ = [self.exappend(e) for e in plist]
     except (TypeError, ValueError):
       pass
