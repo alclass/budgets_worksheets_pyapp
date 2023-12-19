@@ -77,15 +77,18 @@ Info on instance variable ongo_letter_list:
     self._letterindex = None
     # base0index is derived from base1index (aka b1idx)
     self._base0index = None  # derived from
-    if letterindex:
+    iszero = self.init_conditions_for_zero()
+    if iszero:
+      return
+    if letterindex is not None:
       self.init_letterlist_via_letterindex(letterindex)
-    elif letterlist:
+    elif letterlist is not None and letterindex is None:
       self.letterlist = letterlist
       self.init_via_letterlist()
-    if base1index:
+    if base1index is not None and base1index >= 0:
       self.base1index = int(base1index)
       self.init_via_base1idx()
-    elif base0index:
+    elif base0index is not None and base1index is None:
       self.base1index = int(base0index) + 1
       self.init_via_base1idx()
     if self.letterlist is None:
@@ -95,27 +98,56 @@ Info on instance variable ongo_letter_list:
         based0 (={base1index}), based1 ({base1index}) indices"""
       raise ValueError(error_msg)
 
+  def init_conditions_for_zero(self, letterindex=None, base1index=None, letterlist=None, base0index=None):
+    # conditions for "zero"
+    if letterindex == '':
+      self.letterlist = llst.LetterList([])
+      self.base1index = 0
+      return True
+    if letterlist == []:
+      self.letterlist = llst.LetterList([])
+      self.base1index = 0
+      return True
+    if base1index == 0 or base0index == -1:
+      self.letterlist = llst.LetterList([])
+      self.base1index = 0
+      return True
+    return False
+
+
   @property
   def base0index(self):
-    if self.base1index:
-      return self.base1index - 1
+    """
+    Notice that just "if base1index:", here, is not correct,
+      for when an int is 0, it resolves as a boolean False
+    Because of that, a try-block returns a correct b0idx when b1idx is 0
+    """
+    try:
+      i = int(self.base1index)
+      return i - 1
+    except (TypeError, ValueError):
+      pass
     return None
 
   @property
   def letterindex(self):
-    if self.letterlist:
-      return self.letterlist.get_as_str_n_reversed()
-    return None
+    if self.letterlist is None or len(self.letterlist) == 0:
+      return ''
+    return self.letterlist.get_as_str_n_reversed()
 
   def init_via_letterlist(self):
     self.letterlist = self.letterlist or []
     plist = list(self.letterlist)
     self.letterlist = llst.LetterList(plist)  # instantiated from a child class of UserList
     if self.base1index is None:
-      self.base1index = idxfs.get_1basedindex_from_letterindex(self.letterindex)
+      self.base1index = idxfs.get_1basedindex_from_letterlist(self.letterindex)
 
   def init_letterlist_via_letterindex(self, letterindex):
     letterindex = letterindex or ''
+    if letterindex == '':
+      self.letterlist = []
+      self.base1index = 0
+      return
     self.make_letterlist_from_letterindex(letterindex)
     self.init_via_letterlist()
 
@@ -144,7 +176,7 @@ Info on instance variable ongo_letter_list:
 
   def set_1basedidx_transposing_from_letterindex(self):
     if self.base1index is None:
-      self.base1index = idxfs.get_1basedindex_from_letterindex(self.letterindex)
+      self.base1index = idxfs.get_1basedindex_from_letterlist(self.letterindex)
 
   def add_one(self, inplace=True):
     if inplace:
@@ -199,25 +231,27 @@ Info on instance variable ongo_letter_list:
     return tbi
 
   def __str__(self):
-    outstr = f"letteridx={self.letterindex}, based1idx={self.base1index}, letterlist={self.letterlist}"
+    outstr = f"letterindex='{self.letterindex}', based1index={self.base1index}, letterlist={self.letterlist}"
     return outstr
 
 
 def adhoctest():
   """
-  """
   to = TableauLetterIndex(letterindex='a')
   print(to)
   to = TableauLetterIndex(letterlist=['a'])
   print(to)
-  to = TableauLetterIndex(letterlist=['b', 'a'])
-  print(to)
+
   to.add_one(inplace=True)
   print('to.add_one(inplace=True)', to)
   to2 = to.add_one(inplace=False)
-  print('to.add_one(inplace=False)', to, to2)
+  print('to.add_one(inplace=False)', 'to', to, 'to2', to2)
+  to = TableauLetterIndex(letterlist=['b', 'a'])
   to2 = to.subtract_one(inplace=False)
-  print('to.add_one(inplace=False)', to, to2)
+  print('to.subtract_one(inplace=False)', 'to', to, 'to2', to2)
+  """
+  to = TableauLetterIndex(letterlist=[])
+  print(to)
 
 
 def process():

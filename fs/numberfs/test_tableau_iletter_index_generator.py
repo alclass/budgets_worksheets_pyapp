@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """
-fs/numberfs/test_tableau_idx_gen.py
-  Unit Tests for tableaufunctions.py
+fs/numberfs/test_tableau_iletter_index_generator.py
+  Unit Tests for tableau_iletter_index_generator.py
 """
 import unittest
-import fs.numberfs.tableau_letter_index as ligen  # .TableauLetterIndexGenerator
+import fs.numberfs.tableau_letter_index_generator as tligen  # .TableauLetterIndexGenerator
 import fs.numberfs.letterlist_inherited as llst  # .LetterList
 
 
 class TestCaseTableuFunctions(unittest.TestCase):
 
   def setUp(self):
-    self.idxgen = ligen.TableauLetterIndexGenerator()
+    self.idxgen = tligen.TableauLetterIndexGenerator()
 
   def test_generate_some(self):
     expected_letter = 'a'.upper()
@@ -98,12 +98,12 @@ class TestCaseTableuFunctions(unittest.TestCase):
 
     """
     letter, number = 'B', 2
-    tli1 = ligen.TableauLetterIndex(letter)
+    tli1 = tligen.TableauLetterIndex(letter)
     self.assertEqual(tli1.letterindex, letter)
     self.assertEqual(tli1.base1idx, number)
     soma = number
     letter, number = 'C', 3
-    tli2 = ligen.TableauLetterIndex(letter)
+    tli2 = tligen.TableauLetterIndex(letter)
     self.assertEqual(tli2.letterindex, letter)
     self.assertEqual(tli2.base1idx, number)
     tli3 = tli1 + tli2
@@ -112,10 +112,10 @@ class TestCaseTableuFunctions(unittest.TestCase):
     self.assertEqual(tli3.letterindex, expected_letter)
     self.assertEqual(tli3.base1idx, soma)
     letter = 'BFWX'
-    tli1 = ligen.TableauLetterIndex(letter)
+    tli1 = tligen.TableauLetterIndex(letter)
     n1 = tli1.base1idx
     letter = 'KKKK'
-    tli2 = ligen.TableauLetterIndex(letter)
+    tli2 = tligen.TableauLetterIndex(letter)
     n2 = tli2.base1idx
     tli3 = tli1 + tli2
     # the second param is a concatenation, not an index summing

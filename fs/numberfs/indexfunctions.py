@@ -100,7 +100,18 @@ def get_letterlist_from_1basedindex(b1idx, letterlist=None):
   return letterlist
 
 
-def get_1basedindex_from_letterindex(letteridx):
+def get_1basedindex_from_letterindex(letterindex):
+  if letterindex is None:
+    error_msg = f"Cannot find the 1-based index without letterindex existing."
+    raise ValueError(error_msg)
+  # verify_or_raise_letterindices_word()
+  wordlist = list(str(letterindex).upper())
+  reversed_wordlist = list(reversed(wordlist))
+  letterlist = llst.LetterList(reversed_wordlist)
+  return get_1basedindex_from_letterlist(letterlist)
+
+
+def get_1basedindex_from_letterlist(letterlist):
   """
   This conversion/transform follows the summation:
     idx_as_soma = SumOf (idx(c[i])+1) * 26 ** pwr
@@ -111,13 +122,8 @@ def get_1basedindex_from_letterindex(letteridx):
     B alone is b1_index 2 (1+1), A alone is b1_index 1 (0+1); doing the summation S it gets:
     S = 2*26**1 + 1*26**0 = 52 + 1 = 53
   """
-  if letteridx is None:
-    error_msg = f"Cannot find the 1-based index without letterindex existing."
-    raise ValueError(error_msg)
-  # verify_or_raise_letterindices_word()
-  wordlist = list(str(letteridx).upper())
-  reversed_wordlist = list(reversed(wordlist))
-  letterlist = llst.LetterList(reversed_wordlist)
+  if letterlist is None or len(letterlist) == 0:
+    return 0
   idx_as_soma, pwr = 0, 0
   for pwr, letter in enumerate(letterlist):
     idx = ASCII_26_UPPERCASE_LETTERS.index(letter)
@@ -150,9 +156,11 @@ def subtract_one_from_reversed_letterlist_nonrecursive(letterlist: list, pos=0):
   if letterlist is None or len(letterlist) == 0:
     return []
   # upper() all letters to guarantee "all caps"
-  letterlist = map(lambda c: c.upper(), letterlist)
+  # do not use the map() function here, use list comprehension so reference=value is kept
+  _ = [c.upper() for c in letterlist if c is not None]
+  # letterlist = map(lambda c: c.upper(), letterlist)
   # only A to Z allowed
-  letterlist = list(filter(lambda c: c in ASCII_26_UPPERCASE_LETTERS, letterlist))
+  # letterlist = list(filter(lambda c: c in ASCII_26_UPPERCASE_LETTERS, letterlist))
   # condition that intends to diminish 1 from A, which should be [] (empty list)
   if len(letterlist) == 1 and letterlist[0] == 'A':
     return []
@@ -204,7 +212,7 @@ def adhoctest():
 
 def adhoctest2():
   letteridx = 'ab'
-  b1idx = get_1basedindex_from_letterindex(letteridx)
+  b1idx = get_1basedindex_from_letterlist(letteridx)
   scrmsg = f"letteridx={letteridx}, b1idx={b1idx}"
   print(scrmsg)
   ret_letteridx = get_letterlist_from_1basedindex(b1idx)
