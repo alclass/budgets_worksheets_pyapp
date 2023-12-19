@@ -4,7 +4,7 @@ fs/numberfs/test_tableau_idx_gen.py
   Unit Tests for tableaufunctions.py
 """
 import unittest
-import fs.numberfs.tableau_idx_gen as ligen  # .TableauLetterIndexGenerator
+import fs.numberfs.tableau_letter_index as ligen  # .TableauLetterIndexGenerator
 import fs.numberfs.letterlist_inherited as llst  # .LetterList
 
 

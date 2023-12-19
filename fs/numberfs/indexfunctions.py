@@ -15,6 +15,35 @@ MAX_LOOP_CYCLES = 200
 ASCII_26_UPPERCASE_LETTERS = string.ascii_uppercase
 
 
+def add_one_to_single_letter(letter: str):
+  letter = letter.upper()
+  vai_um = False
+  if letter == 'Z':
+    changed_letter = 'A'
+    vai_um = True
+  else:
+    idx = ASCII_26_UPPERCASE_LETTERS.index(letter)
+    changed_letter = ASCII_26_UPPERCASE_LETTERS[idx + 1]
+  return changed_letter, vai_um
+
+
+def add_one_to_letterlist_recursive_left_to_right(letterlist, pos=0):
+  """
+  letterlist will be changed "in place" (mutably), ie no need to return it
+  """
+  if pos == len(letterlist):
+    # a new digit is "opened"
+    letterlist.insert(0, 'A')
+    return letterlist
+  letter = letterlist[pos]
+  changed_letter, vai_um = add_one_to_single_letter(letter)
+  letterlist[pos] = changed_letter
+  if vai_um:
+    return add_one_to_letterlist_recursive_left_to_right(letterlist, pos + 1)
+  # letterlist is changed by "side effect"
+  return  # letterlist
+
+
 def get_0basedindex_from_1basedindex(b1idx):
   return b1idx - 1
 
@@ -111,60 +140,6 @@ def subtract_one_to_single_letter(letter: str):
   return changed_letter
 
 
-def add_one_to_single_letter(letter: str):
-  letter = letter.upper()
-  vai_um = False
-  if letter == 'Z':
-    changed_letter = 'A'
-    vai_um = True
-  else:
-    idx = ASCII_26_UPPERCASE_LETTERS.index(letter)
-    changed_letter = ASCII_26_UPPERCASE_LETTERS[idx + 1]
-  return changed_letter, vai_um
-
-
-def add_one_to_letter_index_recursive_left_to_right_letter(letterlist, pos=0):
-  """
-  letterlist will be changed "in place" (mutably), ie no need to return it
-  """
-  if pos == len(letterlist):
-    # a new digit is "opened"
-    letterlist.insert(0, 'A')
-    return letterlist
-  letter = letterlist[pos]
-  changed_letter, vai_um = add_one_to_single_letter(letter)
-  letterlist[pos] = changed_letter
-  if vai_um:
-    return add_one_to_letter_index_recursive_left_to_right_letter(letterlist, pos+1)
-  return letterlist
-
-
-def adhoctest():
-  letteridx = 'ab'
-  b1idx = get_1basedindex_from_letterindex(letteridx)
-  scrmsg = f"letteridx={letteridx}, b1idx={b1idx}"
-  print(scrmsg)
-  ret_letteridx = get_letterlist_from_1basedindex(b1idx)
-  scrmsg = f"ret_letteridx={ret_letteridx}, b1idx={b1idx}"
-  print(scrmsg)
-  ret_letteridx = get_letterindex_from_1basedindex(b1idx)
-  scrmsg = f"ret_letteridx={ret_letteridx}, b1idx={b1idx}"
-  print(scrmsg)
-
-
-def subtract_one_to_single_letter(letter: str):
-  """
-  propagate_to_the_right is signaled if letter is returned as 'Z'
-  """
-  letter = letter.upper()
-  if letter == 'A':
-    changed_letter = 'Z'
-  else:
-    idx = ASCII_26_UPPERCASE_LETTERS.index(letter)
-    changed_letter = ASCII_26_UPPERCASE_LETTERS[idx - 1]
-  return changed_letter
-
-
 def subtract_one_from_reversed_letterlist_nonrecursive(letterlist: list, pos=0):
   """
   letterlist is not reversed here, ie it represents letterindex directy
@@ -225,6 +200,19 @@ def adhoctest():
   ll = llst.LetterList(inputlist=letterlist)
   res = subtract_one_from_reversed_letterlist_nonrecursive(ll)
   print('letterindex', letterindex, 'translist', ll, 'subtract_one', res)
+
+
+def adhoctest2():
+  letteridx = 'ab'
+  b1idx = get_1basedindex_from_letterindex(letteridx)
+  scrmsg = f"letteridx={letteridx}, b1idx={b1idx}"
+  print(scrmsg)
+  ret_letteridx = get_letterlist_from_1basedindex(b1idx)
+  scrmsg = f"ret_letteridx={ret_letteridx}, b1idx={b1idx}"
+  print(scrmsg)
+  ret_letteridx = get_letterindex_from_1basedindex(b1idx)
+  scrmsg = f"ret_letteridx={ret_letteridx}, b1idx={b1idx}"
+  print(scrmsg)
 
 
 def process():

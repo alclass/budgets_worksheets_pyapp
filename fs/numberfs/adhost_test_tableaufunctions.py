@@ -5,6 +5,7 @@
 '''
 import fs.numberfs.tableaufunctions as tblfs
 
+
 def adhoc_test0():
   cell_letters = 'a'
   nonrec_number = tblfs.convert_columnletters_to_number_nonrecursively(cell_letters)

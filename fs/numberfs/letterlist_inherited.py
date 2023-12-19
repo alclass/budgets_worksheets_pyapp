@@ -40,6 +40,7 @@ class LetterList(UserList):
       pass
 
   def __setitem__(self, position, element):
+    # upper() comes in later on at check_element_or_raise()
     self.element = element
     self.check_element_or_raise()
     self.position = position
