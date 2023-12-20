@@ -9,6 +9,7 @@ import fs.numberfs.letterlist_inherited as llst  # .LetterList
 import fs.numberfs.tableau_letter_index as tli  # .TableauLetterIndex
 MAX_LOOP_CYCLES = 200
 ASCII_26_UPPERCASE_LETTERS = string.ascii_uppercase
+DEFAULT_FIRST_N_INDICES = 5
 
 
 class TableauLetterIndexGenerator:
@@ -81,10 +82,13 @@ class TableauLetterIndexGenerator:
   def get_genletterindices_within_range_as_0basedidx(self, start=0, end=100, decrescent=False):
     return list(self.gen_letterindices_within_range_as_0basedidx(start, end, decrescent))
 
-  @staticmethod
-  def generate_first_n_base1indices(first_n):
+  def gen_first_n_base1indices(self, first_n=DEFAULT_FIRST_N_INDICES):
     for i in range(first_n):
       yield i+1
+    return
+
+  def get_genfirst_n_base1indices(self, first_n=DEFAULT_FIRST_N_INDICES):
+    return list(self.gen_first_n_base1indices(first_n))
 
   def process(self):
     for i, idx_as_word in enumerate(self.gen_first_n_letterindices()):

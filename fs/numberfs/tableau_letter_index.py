@@ -282,8 +282,8 @@ class TableauLetterIndex:
   def __add__(self, o):
     b1idx_a = self.base1index
     b1idx_b = o.base1index
-    toachieve = b1idx_a + b1idx_b - 1
-    tbi = TableauLetterIndex(base1index=toachieve)
+    b1idx_summed = b1idx_a + b1idx_b
+    tbi = TableauLetterIndex(base1index=b1idx_summed)
     return tbi
 
   def __sub__(self, o):

@@ -88,3 +88,49 @@ class TestCaseTableauLetterIndex(unittest.TestCase):
     tlio.subtract_one(inplace=True)
     self.assertEqual(expected_letterindex, tlio.letterindex)
     self.assertEqual(expected_b1idx, tlio.base1index)
+
+  def test_arithmetic(self):
+    """
+    tli1.set_letterindex_transposing_from_0basedidx(2)
+    tli2.set_letterindex_transposing_from_0basedidx(3)
+    tli3 = tli1 + tli2
+    print('tli1 + tli2 = tli3', tli1, tli2, tli3)
+    tli3 = tli2 - tli1
+    print('tli2 - tli1 = tli3', tli2, tli1, tli3)
+    tli3 = tli1 - tli2
+    print('tli1 - tli2 = tli3', tli1, tli2, tli3)
+    """
+    letterindex, base1index = 'B', 2
+    tli1 = tli.TableauLetterIndex(letterindex=letterindex)
+    self.assertEqual(tli1.letterindex, letterindex)
+    self.assertEqual(tli1.base1index, base1index)
+    soma = base1index + 0
+    letterindex, base1index = 'C', 3
+    tli2 = tli.TableauLetterIndex(letterindex=letterindex)
+    self.assertEqual(tli2.letterindex, letterindex)
+    self.assertEqual(tli2.base1index, base1index)
+    tli3 = tli1 + tli2
+    soma += base1index
+    expected_letter = 'E'  # ie, b1idx B=2 + C=3 => E=5
+    self.assertEqual(tli3.letterindex, expected_letter)
+    self.assertEqual(tli3.base1index, soma)
+    # ==================
+    letterindex = 'BFWX'
+    tli1 = tli.TableauLetterIndex(letterindex=letterindex)
+    n1 = tli1.base1index
+    letterindex = 'KKKK'
+    tli2 = tli.TableauLetterIndex(letterindex=letterindex)
+    n2 = tli2.base1index
+    tli3 = tli1 + tli2
+    # the second param is a concatenation, not an index summing
+    self.assertNotEqual(list(tli3.letterindex), list(tli1.letterindex) + list(tli2.letterindex))
+    n3 = n1 + n2
+    direct_n3 = tli3.base1index
+    self.assertEqual(n3, direct_n3)
+    ll1 = llst.LetterList(tli1.letterindex)  # 'BFWX'
+    ll2 = llst.LetterList(tli2.letterindex)  # 'KKKK'
+    ll3 = ll1 + ll2
+    # notice that tli is a TableauLetterIndex and ll3 is a LetterList
+    # both were "constructed" from different variables summing up
+    self.assertTrue(tli3.letterindex, ll3.get_as_str_n_reversed())
+    # list sum is in fact a concatenation not an arithmetic
