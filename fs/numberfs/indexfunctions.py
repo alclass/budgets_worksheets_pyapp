@@ -108,10 +108,10 @@ def get_1basedindex_from_letterindex(letterindex):
   wordlist = list(str(letterindex).upper())
   reversed_wordlist = list(reversed(wordlist))
   letterlist = llst.LetterList(reversed_wordlist)
-  return get_1basedindex_from_letterlist(letterlist)
+  return get_1basedindex_from_letterlist_left_to_right(letterlist)
 
 
-def get_1basedindex_from_letterlist(letterlist):
+def get_1basedindex_from_letterlist_right_to_left(letterlist):
   """
   This conversion/transform follows the summation:
     idx_as_soma = SumOf (idx(c[i])+1) * 26 ** pwr
@@ -121,6 +121,11 @@ def get_1basedindex_from_letterlist(letterlist):
     b1_idx 53 => letteridx BA
     B alone is b1_index 2 (1+1), A alone is b1_index 1 (0+1); doing the summation S it gets:
     S = 2*26**1 + 1*26**0 = 52 + 1 = 53
+
+
+  Notice that is other of the letters is important:
+    In the left_to_right calculation, 'AB' is 28 (1based)
+    In the right_to_left calculation, 'AB' is the reverse of 'BA' which is 53 (1based)
   """
   if letterlist is None or len(letterlist) == 0:
     return 0
@@ -131,6 +136,21 @@ def get_1basedindex_from_letterlist(letterlist):
   # if it got here, process has finished calculus of 1based_idx
   b1idx = idx_as_soma
   return b1idx
+
+
+def get_1basedindex_from_letterlist_left_to_right(letterlist):
+  """
+  @see above docstring for get_1basedindex_from_letterlist_right_to_left()
+
+  Notice that is other of the letters, then the two functions, is important:
+    In the left_to_right calculation, 'AB' is 28 (1based)
+    In the right_to_left calculation, 'AB' is the reverse of 'BA' which is 53 (1based)
+  """
+  if letterlist is None or len(letterlist) == 0:
+    return 0
+  idx_as_soma, pwr = 0, 0
+  reversed_letterlist = list(reversed(letterlist))
+  return get_1basedindex_from_letterlist_right_to_left(reversed_letterlist)
 
 
 def subtract_one_to_single_letter(letter: str):
@@ -145,28 +165,32 @@ def subtract_one_to_single_letter(letter: str):
     changed_letter = ASCII_26_UPPERCASE_LETTERS[idx - 1]
   return changed_letter
 
-
-def subtract_one_from_reversed_letterlist_nonrecursive(letterlist: list, pos=0):
+def subtract_one_from_letterlist_reversed(letterlist):
   """
-  letterlist is not reversed here, ie it represents letterindex directy
-  Example:
-    letterlist = ['A', 'B'] is letterindex 'AB' not 'BA'
+  Consider this function private, ie, only to be called from
+    subtract_one_from_letterlist_nonrecursive_bysideeffect()
   """
-  # condition that returns [] rightaway
-  if letterlist is None or len(letterlist) == 0:
-    return []
-  # upper() all letters to guarantee "all caps"
-  # do not use the map() function here, use list comprehension so reference=value is kept
-  _ = [c.upper() for c in letterlist if c is not None]
-  # letterlist = map(lambda c: c.upper(), letterlist)
-  # only A to Z allowed
-  # letterlist = list(filter(lambda c: c in ASCII_26_UPPERCASE_LETTERS, letterlist))
-  # condition that intends to diminish 1 from A, which should be [] (empty list)
-  if len(letterlist) == 1 and letterlist[0] == 'A':
-    return []
   pos = 0
-  vai_um = False
   while pos < len(letterlist):
+    letter = letterlist[pos]
+    changed_letter = subtract_one_to_single_letter(letter)
+    letterlist[pos] = changed_letter
+    if changed_letter == 'Z':
+      if pos < len(letterlist) - 1:
+        pos += 1  # simétrico do "vai um"
+        continue
+      else:
+        del letterlist[pos]
+    break
+  return letterlist  # the list here was mutated, it's the same object as the input parameter
+
+def subtract_one_from_letterlist_nonreversed(letterlist):
+  """
+  Consider this function private, ie, only to be called from
+    subtract_one_from_letterlist_nonrecursive_bysideeffect()
+  """
+  pos = len(letterlist) - 1
+  while pos > -1:
     letter = letterlist[pos]
     changed_letter = subtract_one_to_single_letter(letter)
     letterlist[pos] = changed_letter
@@ -176,43 +200,71 @@ def subtract_one_from_reversed_letterlist_nonrecursive(letterlist: list, pos=0):
       else:
         pos += 1
     break
-  return letterlist
+  return letterlist  # the list here was mutated, it's the same object as the input parameter
 
 
-def subtract_one_from_letterindex_nonrecursive(letterindex):
+def subtract_one_from_letterlist_nonrecursive_bysideeffect(letterlist: list, input_reversed=False):
   """
-  Example:
-    B minus 1 is A
-    Z minus 1 is Y
-    A minus 1, as a one-digit, is None (a sort of "end of line")
-    AA minus 1 is Z
-    etc
+  letterlist may or may not be reversed here
+    a) when it's not reversed, it represents letterindex "as it is"
+      Example:
+        letterlist = ['A', 'B'] is letterindex 'AB' not 'BA'
+    b) when it's reversed, it represents letterindex "reversed"
+      Example:
+        letterlist = ['A', 'B'] is letterindex 'BA' not 'AB'
+
+  boolean parameter "input_reversed" controls whether it's one case or the other.
+  The difference is the way the while-loop goes (see below), ie
+    the non-reversed =>  while pos > -1:
+    the reversed =>  while pos < len(letterlist):
+
+  Obs:
+    Another "side effect" is that if any lowercase letter exists, it will be uppercased.
   """
-  # letterlist is not reversed here
-  letterlist = list(letterindex)
-  letterlist = subtract_one_from_reversed_letterlist_nonrecursive(letterlist)
-  if len(letterlist) == 0:
-    return None
-  letterindex = ''.join(reversed(letterlist))
-  return letterindex
+  # condition that returns [] rightaway
+  if letterlist is None or len(letterlist) == 0:
+    return []
+  # upper() all letters to guarantee "all caps"
+  # do not use the map() function here or list comprehension for they will create a new list
+  # the aim here is to change the list mutably, ie by "side effect"
+  for i, c in enumerate(letterlist):
+    if c != c.upper():
+      letterlist[i] = c.upper()
+  if len(letterlist) == 1 and letterlist[0] == 'A':
+    return llst.LetterList([])
+  if not input_reversed:
+    return subtract_one_from_letterlist_nonreversed(letterlist)
+  return subtract_one_from_letterlist_reversed(letterlist)
 
 
 def adhoctest():
+  """
   letterindex = list('abc')
   letterlist = llst.trans_letterindex_as_reversed_letterlist(letterindex)
   ll = llst.LetterList(inputlist=letterlist)
-  res = subtract_one_from_reversed_letterlist_nonrecursive(ll)
+  res = subtract_one_from_letterlist_nonrecursive_bysideeffect(ll)
   print('letterindex', letterindex, 'translist', ll, 'subtract_one', res)
   letterindex = list('aa')
   letterlist = llst.trans_letterindex_as_reversed_letterlist(letterindex)
   ll = llst.LetterList(inputlist=letterlist)
-  res = subtract_one_from_reversed_letterlist_nonrecursive(ll)
+  res = subtract_one_from_letterlist_nonrecursive_bysideeffect(ll)
   print('letterindex', letterindex, 'translist', ll, 'subtract_one', res)
+
+  """
+  ll = ['a', 'b']
+  print('ll', ll, 'next subtract one')
+  l2 = subtract_one_from_letterlist_nonrecursive_bysideeffect(ll)
+  print('ll', ll, 'subtract one', 'l2', l2)
+  print('subtracting reversed')
+  ll = ['a', 'b']
+  print('ll', ll, 'next subtract one')
+  l2 = subtract_one_from_letterlist_nonrecursive_bysideeffect(ll, input_reversed=True)
+  print('ll', ll, 'subtract one', 'l2', l2)
 
 
 def adhoctest2():
   letteridx = 'ab'
-  b1idx = get_1basedindex_from_letterlist(letteridx)
+  b1idx = get_1basedindex_from_letterlist_left_to_right(letteridx)
   scrmsg = f"letteridx={letteridx}, b1idx={b1idx}"
   print(scrmsg)
   ret_letteridx = get_letterlist_from_1basedindex(b1idx)

@@ -2,10 +2,10 @@
 """
 fs/numberfs/tableau_letter_index_generator.py
 
+import fs.numberfs.indexfunctions as idxfs  # .get_1basedindex_from_letterindex
 """
 import string
 import fs.numberfs.letterlist_inherited as llst  # .LetterList
-import fs.numberfs.indexfunctions as idxfs  # .get_1basedindex_from_letterindex
 import fs.numberfs.tableau_letter_index as tli  # .TableauLetterIndex
 MAX_LOOP_CYCLES = 200
 ASCII_26_UPPERCASE_LETTERS = string.ascii_uppercase
@@ -19,21 +19,35 @@ class TableauLetterIndexGenerator:
     """
     self.tab_let_idx = None
 
-  def generate_first_n_letterindices(self, first_n=3):
+  def gen_first_n_letterindices_desc(self, first_n=3):
+    self.tab_let_idx = tli.TableauLetterIndex(base1index=first_n)
+    for i in range(first_n):
+      yield self.tab_let_idx.letterindex
+      self.tab_let_idx.subtract_one(inplace=True)
+
+  def gen_first_n_letterindices_asc(self, first_n=3):
     self.tab_let_idx = tli.TableauLetterIndex(letterindex='A')
     for i in range(first_n):
       yield self.tab_let_idx.letterindex
       self.tab_let_idx.add_one(inplace=True)
 
-  def generate_letterindices_within_range_as_0baseidx_asc(self, start, end):
+  def gen_first_n_letterindices(self, first_n=3, decrescent=False):
+    if not decrescent:
+      return self.gen_first_n_letterindices_asc(first_n)
+    return self.gen_first_n_letterindices_desc(first_n)
+
+  def get_genfirst_n_letterindices(self, first_n=3):
+    return list(self.gen_first_n_letterindices(first_n))
+
+  def gen_letterindices_within_range_as_0baseidx_asc(self, start, end):
     while start <= end:
       yield self.tab_let_idx.letterlist.get_as_str_n_reversed()
       start += 1
-      self.tab_let_idx.subtract_one(inplace=True)
+      self.tab_let_idx.add_one(inplace=True)
       if self.tab_let_idx.is_zeroed():
         return
 
-  def generate_letterindices_within_range_as_0baseidx_desc(self, start, end):
+  def gen_letterindices_within_range_as_0baseidx_desc(self, start, end):
     while start >= end:
       if self.tab_let_idx.letterindex is None or len(self.tab_let_idx.letterindex) == 0:
         return
@@ -41,7 +55,7 @@ class TableauLetterIndexGenerator:
       start -= 1
       self.tab_let_idx.subtract_one(inplace=True)
 
-  def generate_letterindices_within_range_as_0basedidx(self, start=0, end=100, decrescent=False):
+  def gen_letterindices_within_range_as_0basedidx(self, start=0, end=100, decrescent=False):
     """
     Generates, as iterator, elements ranging from start to end as 0basedidex.
     This generator can produce both ascendent and descendent iterations.
@@ -54,7 +68,7 @@ class TableauLetterIndexGenerator:
     if not decrescent:
       # ascending: initialize letteridx with 'start'
       self.tab_let_idx = tli.TableauLetterIndex(base0index=start)
-      return self.generate_letterindices_within_range_as_0baseidx_asc(start, end)
+      return self.gen_letterindices_within_range_as_0baseidx_asc(start, end)
     else:
       # swap start with end
       tmpvar = end
@@ -62,7 +76,10 @@ class TableauLetterIndexGenerator:
       start = tmpvar
       # descending: initialize letteridx with 'start' after it swapped with 'end'
       self.tab_let_idx = tli.TableauLetterIndex(base0index=start)
-      return self.generate_letterindices_within_range_as_0baseidx_desc(start, end)
+      return self.gen_letterindices_within_range_as_0baseidx_desc(start, end)
+
+  def get_genletterindices_within_range_as_0basedidx(self, start=0, end=100, decrescent=False):
+    return list(self.gen_letterindices_within_range_as_0basedidx(start, end, decrescent))
 
   @staticmethod
   def generate_first_n_base1indices(first_n):
@@ -70,109 +87,9 @@ class TableauLetterIndexGenerator:
       yield i+1
 
   def process(self):
-    for i, idx_as_word in enumerate(self.generate_first_n_letterindices()):
+    for i, idx_as_word in enumerate(self.gen_first_n_letterindices()):
       scrmsg = f"{i+1} letterindex {idx_as_word}"
       print(scrmsg)
-
-
-def adhoctest1():
-  """
-  sg.process()
-  ret = sg.set_1basedidx_transposing_from_letterindex('aa')
-  sg.process()
-  word = 'aa'
-  print(word, 'set_1basedidx_transposing_from_letterindex', ret)
-
-  b1idx = 53
-  letteridx = sg.set_letterindex_transposing_from_1basedindex(b1idx)
-  print('letteridx for b1idx', b1idx, letteridx)
-  """
-  sg = TableauLetterIndexGenerator()
-  total_to_gen = 800
-  letterindices = list(sg.generate_first_n_letterindices(total_to_gen))
-  b1indices = list(sg.generate_first_n_base1indices(total_to_gen))
-  for i in range(total_to_gen):
-    letteridx = letterindices[i]
-    b1idx = b1indices[i]
-    returned_letteridx = sg.set_letterindex_transposing_from_1basedindex(b1idx)
-    returned_b1idx = sg.set_1basedidx_transposing_from_letterindex(letteridx)
-    print(b1idx, returned_b1idx)
-    print(letteridx, returned_letteridx)
-
-
-def adhoctest2():
-  """
-  li = list(sg.generate_first_n_letterindices(53))
-  print(li)
-  for i in range(25, 54):
-    returned_letteridx = sg.set_letterindex_transposing_from_1basedindex(i)
-    print(i, returned_letteridx)
-
-  b1idx = 10000
-  returned_letteridx = sg.set_letterindex_transposing_from_1basedindex(b1idx)
-  print(b1idx, 'returned_letteridx', returned_letteridx)
-  letteridx_param = 'PTN'
-  returned_b1idx2 = sg.set_1basedidx_transposing_from_letterindex(returned_letteridx)
-  print('returned_b1idx2', returned_b1idx2, returned_letteridx)
-  returned_b1idx = sg.set_1basedidx_transposing_from_letterindex(letteridx_param)
-  print(letteridx_param, returned_b1idx)
-  returned_letteridx2 = sg.set_letterindex_transposing_from_1basedindex(returned_b1idx)
-  print(returned_b1idx, 'returned_letteridx2', returned_letteridx2)
-  sg.ongoing_letter_digits = ['B']
-  sg.subtract_one_from_letterindex_nonrecursive()
-  print('B minus 1', sg.letteridx, sg.ongoing_letter_digits)
-  sg.ongoing_letter_digits = ['a']
-  sg.subtract_one_from_letterindex_nonrecursive()
-  print('a minus 1', sg.letteridx, sg.ongoing_letter_digits)
-  letteridx = 'AA'
-  sg.set_ongo_letter_list_from_letteridx(letteridx)
-  sg.subtract_one_from_letterindex_nonrecursive()
-  print(letteridx, 'minus 1', sg.letteridx, sg.ongoing_letter_digits)
-
-  """
-  sg = TableauLetterIndexGenerator()
-  letteridx = 'AAB'
-  sg.letterlist.reset_w_letteridx(letteridx)
-  print(letteridx, sg.letteridx, sg.letterlist, 'minus 1')
-  sg.letteridx_minus_1()
-  print(letteridx, 'minus 1', sg.letteridx, sg.letterlist)
-  letteridx = 'AAA'
-  sg.letterlist.reset_w_letteridx(letteridx)
-  sg.letteridx_minus_1()
-  print(letteridx, 'last one, minus 1', sg.letteridx, sg.letterlist)
-  letteridx = sg.letteridx
-  sg.letteridx_plus_1()
-  print(letteridx, 'last one, plus 1', sg.letteridx, sg.letterlist)
-  ongo, end = 3, 53
-  print('adhoctest crescent ongo, end', ongo, end)
-  for idx in sg.generate_letterindices_within_range_as_0basedidx(start=ongo, end=end):
-    print('idx', idx, ongo+1)
-    ongo += 1
-  ongo, end = 28, 2
-  print('adhoctest decrescent ongo, end', ongo, end)
-  for idx in sg.generate_letterindices_within_range_as_0basedidx(start=ongo, end=end, decrescent=True):
-    print('idx', idx, ongo+1)
-    ongo -= 1
-
-
-def adhoctest3():
-  """
-  Obs: the generator, specially for letterindices, generates sequencially started at 0-based index 0.
-  If an arbitrary "high" index is wanted, it may be gotten from the functions tested above.
-  # t1 same as t1 in the method-test above
-  # but comparing the 800 first b1_indices with their corresponding letterindices
-  """
-  total_to_gen = 8
-  idxgen = TableauLetterIndexGenerator()
-  letterindices = list(idxgen.generate_first_n_letterindices(total_to_gen))
-  b1indices = list(idxgen.generate_first_n_base1indices(total_to_gen))
-  for i in range(4, total_to_gen):
-    letteridx = letterindices[i]
-    b1idx = b1indices[i]
-    returned_letteridx = idxgen.set_letterindex_transposing_from_1basedindex(b1idx)
-    returned_b1idx = idxgen.set_1basedidx_transposing_from_letterindex(letteridx)
-    print('b1idx', b1idx, 'returned_b1idx', returned_b1idx, 'returned_letteridx',
-          returned_letteridx, 'letteridx [', letteridx, ']')
 
 
 def adhoctest4():
@@ -200,19 +117,40 @@ def adhoctest6():
   tli = TableauLetterIndex(letterlist=letterlist)
   print('letteridx', letteridx, 'tli', tli)
   base0index = 31
-  """
-  letterindex = 'ab'
+   letterindex = 'ab'
   tlig = TableauLetterIndexGenerator()
   print('letteridx', letterindex, 'tlig', tlig)
-  for ww in tlig.generate_first_n_letterindices():
+  for ww in tlig.gen_first_n_letterindices():
     print(ww)
+  """
+  print('decrescent')
   tlig = TableauLetterIndexGenerator()
   for i, letterindex in enumerate(
-        tlig.generate_letterindices_within_range_as_0basedidx(
+        tlig.gen_letterindices_within_range_as_0basedidx(
           start=-5, end=27, decrescent=True
         )
     ):
     print(27-i+1, letterindex)
+  print('crescent')
+  tlig = TableauLetterIndexGenerator()
+  for i, letterindex in enumerate(
+        tlig.gen_letterindices_within_range_as_0basedidx(
+          start=-5, end=27, decrescent=False
+        )
+    ):
+    print(i+1, letterindex)
+  print('with range above 100 & crescent')
+  tlig = TableauLetterIndexGenerator()
+  for i, letterindex in enumerate(
+        tlig.gen_letterindices_within_range_as_0basedidx(
+          start=100, end=110, decrescent=False
+        )
+    ):
+    tlio = tli.TableauLetterIndex(letterindex=letterindex)
+    print(100+i+1, letterindex, tlio)
+    return_letterindices = tlig.get_genfirst_n_letterindices(3)
+    print('return_letterindices = tlig.get_genfirst_n_letterindices(3)', return_letterindices)
+
 
 
 # self.assertEqual(tli3.letteridx, ll3.get_as_str_n_reversed())
