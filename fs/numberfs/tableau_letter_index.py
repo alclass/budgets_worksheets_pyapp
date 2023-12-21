@@ -101,7 +101,7 @@ class TableauLetterIndex:
     self.base1index = None
     self.letterlist = None
     # base_0index is derived from base_1index (aka b1_idx), it could be the other way around, but seemed more logical so
-    self.raise_value_error_if_all_are_none(letterindex, base1index, letterlist, base0index)
+    self.raise_ve_if_all_none_or_more_than_1_not_none(letterindex, base1index, letterlist, base0index)
     isground = self.init_conditions_for_ground(letterindex, base1index, letterlist, base0index)
     if isground:
       return
@@ -112,18 +112,41 @@ class TableauLetterIndex:
     if len(self.letterindex) == 0:
       return True
 
-  @staticmethod
-  def raise_value_error_if_all_are_none(
-      letterindex=None, base1index=None, letterlist=None, base0index=None
+  def raise_ve_if_all_none_or_more_than_1_not_none(
+      self, letterindex=None, base1index=None, letterlist=None, base0index=None
+  ):
+    """
+    This method does two testings, they are:
+    t1 if all parameters are None cojointly;
+    t2 in case one is set, test that all other three are None;
+    """
+    self.raise_ve_if_all_none(letterindex, base1index, letterlist, base0index)
+    self.raise_ve_if_more_than_1_not_none(letterindex, base1index, letterlist, base0index)
+
+  def raise_ve_if_all_none(
+      self, letterindex=None, base1index=None, letterlist=None, base0index=None
   ):
     if letterindex is None:
       if letterlist is None:
         if base0index is None:
           if base1index is None:
-            error_msg = f"""Cannot instantiate TableauLetterIndex with all four init attributes as None:
-              letterindex (={letterindex}), letterlist (={letterindex}) 
-              based0 (={base0index}), based1 ({base1index}) indices"""
-            raise ValueError(error_msg)
+            reason = 'all parameters are none'
+            self.raise_inits_value_error(letterindex, base1index, letterlist, base0index, reason)
+
+  def raise_ve_if_more_than_1_not_none(self, letterindex, base1index, letterlist, base0index):
+    elems = letterindex, base1index, letterlist, base0index
+    boolean_list = list(filter(lambda e: e is True, map(lambda e: e is None, elems)))
+    if len(boolean_list) != 3:
+      reason = 'only one parameter, not any more out of the four possible, can be given'
+      self.raise_inits_value_error(letterindex, base1index, letterlist, base0index, reason)
+
+  @staticmethod
+  def raise_inits_value_error(letterindex, base1index, letterlist, base0index, reason):
+    error_msg = f"""Could not instantiate TableauLetterIndex from its input parameters:
+      letterindex (={letterindex}), letterlist (={letterlist}) 
+      based0 (={base0index}), based1 ({base1index}) indices
+      reason = {reason}"""
+    raise ValueError(error_msg)
 
   def treat_the_two_attributes(
       self, letterindex=None, base1index=None, letterlist=None, base0index=None
@@ -196,10 +219,11 @@ class TableauLetterIndex:
       letterindex = ''
     return letterindex
 
-  def init_via_letterlist(self):
-    self.letterlist = self.letterlist or []
-    plist = list(self.letterlist)
-    self.letterlist = llst.LetterList(plist)  # instantiated from a child class of UserList
+  def init_via_letterlist(self, letterlist):
+    if not isinstance(letterlist, llst.LetterList):
+      self.letterlist = letterlist or []
+      plist = list(self.letterlist)
+      self.letterlist = llst.LetterList(plist)  # instantiated from a child class of UserList
     if self.base1index is None:
       self.base1index = idxfs.get_1basedindex_from_letterlist_left_to_right(self.letterindex)
 
@@ -210,7 +234,7 @@ class TableauLetterIndex:
       self.base1index = 0
       return
     self.make_letterlist_from_letterindex(letterindex)
-    self.init_via_letterlist()
+    self.init_via_letterlist(self.letterlist)
 
   def init_via_base1idx(self, base1index):
     self.base1index = int(base1index)
@@ -220,7 +244,14 @@ class TableauLetterIndex:
     self.set_letterindex_transposing_from_1basedindex()
 
   def make_letterlist_from_letterindex(self, letterindex):
+    """
+    As indicated elsewhere, letterlist is a "representation" of letterindex.
+    In this class, though letterindex is its 'ends', it is derived from letterlist
+      which is a kind of 'helper' list for conversion between itself and number,
+      "add one" & "subtracted one".
+
     # notice that letteridx is reversed in relation to letterlist
+    """
     reversed_letteridx_list = ''
     try:
       reversed_letteridx_list = list(reversed(list(str(letterindex).upper())))
@@ -235,11 +266,19 @@ class TableauLetterIndex:
       raise ValueError(error_msg)
 
   def set_letterindex_transposing_from_1basedindex(self):
+    """
+    sets letterindex from base1_index;
+    consider this method private, only callable 'downstream' from __init__();
+    """
     if self.letterlist is None:
       letterindex = idxfs.get_letterindex_from_1basedindex(self.base1index)
       self.make_letterlist_from_letterindex(letterindex)
 
   def set_1basedidx_transposing_from_letterindex(self):
+    """
+    sets base1_index from letterindex;
+    consider this method private, only callable 'downstream' from __init__()
+    """
     if self.base1index is None:
       self.base1index = idxfs.get_1basedindex_from_letterlist_left_to_right(self.letterindex)
 
@@ -304,10 +343,10 @@ def adhoctest():
   """
   letterindex = 'a'
   to = TableauLetterIndex(letterindex=letterindex)
-  print(letterindex, '=>', to)
+  print(letterindex, '=>', to
   letterlist = ['a']
   to = TableauLetterIndex(letterlist=letterlist)
-  print(letterlist, '=>', to)
+  print(letterlist, '=>', varto
   to.add_one(inplace=True)
   print('to.add_one(inplace=True)', to)
   to2 = to.add_one(inplace=False)

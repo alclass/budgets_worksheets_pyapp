@@ -16,7 +16,7 @@ class LetterListUnitTest(unittest.TestCase):
   def setUp(self):
     self.letterlist = llst.LetterList()
 
-  def test_instantiate(self):
+  def test_instantiate_1(self):
     letterlist1 = llst.LetterList()
     self.assertEqual(0, len(letterlist1))
     self.assertEqual([], letterlist1)
@@ -36,13 +36,11 @@ class LetterListUnitTest(unittest.TestCase):
     should_be_uppercase_for_assert = letter_a.upper() + ASCII_26_UPPERCASE_LETTERS
     self.assertEqual(letterlist1, should_be_uppercase_for_assert)
 
-  def test_instantiate2(self):
+  def test_instantiate_2(self):
     list1 = ['a', 'b', 'c']
     letterlist1 = llst.LetterList(list1)
     word1 = 'cba'
     self.assertEqual(letterlist1.get_as_str_n_reversed(), word1.upper())
-
-  def test_instantiate3(self):
     word1 = 'abcd'
     list1 = list(word1)
     letterlist1 = llst.LetterList(word1)
@@ -54,9 +52,6 @@ class LetterListUnitTest(unittest.TestCase):
     self.assertEqual(letterlist1, list1)
     letterlist1.reset(word1+word1)
     self.assertEqual(letterlist1, list1+list1)
-
-    # letterlist1 = letterlist1.append('boo')
-    # self.assertEqual(letterlist1.get_as_str_n_reversed(), word1.upper())
 
 
 def adhoctest():

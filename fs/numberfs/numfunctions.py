@@ -3,18 +3,18 @@
 fs/numberfs/numfunctions.py
   contains various numbers functions.
 
+
+INDEX_LETTERS = 'Z' + string.ascii_uppercase[:-1]
 """
 # import math # for math.log(n, base)
 import itertools
 import random
 import string # for string.ascii_uppercase
-INDEX_LETTERS = 'Z' + string.ascii_uppercase[:-1]
 INDEX_LETTERS = '*' + string.ascii_uppercase
 ALPH_SIZE = len(INDEX_LETTERS)
 
 
-def idx_to_letter_notation(n: int):
-  orig = n
+def idx_to_letter_notation_nonrecursive(n: int):
   letters_list = []
   if n == 0:
     letter = INDEX_LETTERS[0+1]
@@ -42,20 +42,20 @@ def idx_to_letter_notation(n: int):
   return letters
 
 
-
-
-def consume_left_side_int_number_w_optional_having_comma_or_point(word):
+def trans_word_to_int_dropping_decplaces_if_any(word):
   if word is None:
     return None
-  if type(word) == int: # or type(word) == float:
+  if isinstance(word, int):
     return word
   numberstr = ''
-  word = word.lstrip(' \t')
+  word = word.strip(' \t\r\n')
+  entered = False
   for c in word:
     if c in string.digits:
       numberstr += c
-    #elif c in [',','.']:
-      #continue
+      entered = True
+    elif not entered:
+      continue
     else:
       break
   if numberstr == '':
@@ -64,42 +64,47 @@ def consume_left_side_int_number_w_optional_having_comma_or_point(word):
   return intnumber
 
 
-
 def adhoc_test1():
+  """
+  Inputs and outputs below
+  i = '234,4 blah'; o = 234
+  i = '234.5 blah'; o = 234
+  i = 'a234.5 blah'; o = 234
+  i = ' \t 23foo4.5 blah'; o = 23
+  """
   word = '234,4 blah'
-  leftnumber = consume_left_side_int_number_w_optional_having_comma_or_point(word)
+  leftnumber = trans_word_to_int_dropping_decplaces_if_any(word)
   print(word , '=>', leftnumber)
   word = '234.5 blah'
-  leftnumber = consume_left_side_int_number_w_optional_having_comma_or_point(word)
+  leftnumber = trans_word_to_int_dropping_decplaces_if_any(word)
   print(word , '=>', leftnumber)
   word = 'a234.5 blah'
-  leftnumber = consume_left_side_int_number_w_optional_having_comma_or_point(word)
+  leftnumber = trans_word_to_int_dropping_decplaces_if_any(word)
   print(word , '=>', leftnumber)
-  word = ' \t 234.5 blah'
-  leftnumber = consume_left_side_int_number_w_optional_having_comma_or_point(word)
+  word = ' \t 23foo4.5 blah'
+  leftnumber = trans_word_to_int_dropping_decplaces_if_any(word)
   print(word , '=>', leftnumber)
-
-
-
-def adhoc_test3():
-  for n in [30, 31, 26*2, 26*2+1]:
-    letters = idx_to_letter_notation(n)
-    scrmsg = f"{n} {n + 1}-{letters}"
-    print(scrmsg)
-  print('ALPH_SIZE with *', ALPH_SIZE, INDEX_LETTERS)
 
 
 def adhoc_test2():
   """
-    letters = idx_to_letter_notation(n)
+    letters = idx_to_letter_notation_nonrecursive(n)
     print(n, n+1, letters,)
     for j in itertools.groupby(range(4)):
   """
   for n in range(26*3):
-    letters = idx_to_letter_notation(n)
+    letters = idx_to_letter_notation_nonrecursive(n)
     scrmsg = f"{n} {n+1}-{letters}"
     print(scrmsg)
   print('ALPH_SIZE with *', ALPH_SIZE)
+
+
+def adhoc_test3():
+  for n in [3, 4, 6*2, 26]:
+    letters = idx_to_letter_notation_nonrecursive(n)
+    scrmsg = f"base0index={n} base0index={n+1} letterindex={letters}"
+    print(scrmsg)
+  print('ALPH_SIZE with *', ALPH_SIZE, INDEX_LETTERS)
 
 
 def callable1():
@@ -109,9 +114,14 @@ def callable1():
 
 def adhoc_for_groupby():
   """
-  Reminding: it's not groupby(), it's printing by chunks
-  (Laravel & possibly Django have a chunk functions for outputting)
-  The solution for prints is possible a customized 'divide_chunks()' function
+  Reminding: it's not in fact groupby(), but printing by 'chunks'
+  (Laravel & possibly Django have 'chunk' functions for outputting)
+  The solution for prints is possibly viable via a
+    customized 'divide_chunks()' function
+  A chunk loop is something like:
+  for chunk_function in iterator_function:
+    for element in chunk_function:
+      process(element)
   """
   r10 = range(10)
   for k, g in itertools.groupby(r10):  # , callable1
@@ -123,9 +133,8 @@ def process():
   adhoc_for_groupby()
   """
   adhoc_test3()
-  for tt in gen_letter_indices():
-    print(tt)
-  pass
+  adhoc_test1()
+
 
 if __name__ == "__main__":
   process()
