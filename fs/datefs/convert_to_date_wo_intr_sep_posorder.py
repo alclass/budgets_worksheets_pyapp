@@ -59,9 +59,8 @@ def convert_str_or_attrsobj_to_date_or_none(str_or_obj):
     # TypeError is necessary because an object's inner attribute may be None
     pass
   try:
-    str_or_obj = str(str_or_obj)
-    ppp = str_or_obj.split(' ')
-    pp = ppp[0].split('-')
+    str_or_obj = str(str_or_obj)[:10]
+    pp = str_or_obj.split('-')
     year = int(pp[0])
     month = int(pp[1])
     day = int(pp[2])
@@ -85,6 +84,17 @@ def is_date_weekend(pdate):
   except TypeError:
     pass
   return False
+
+
+def find_most_recent_name_n_its_prefix_date_in_strlist(strlist):
+  if strlist is None or len(strlist) == 0:
+    return None, None
+  tuplelist = [(e, make_date_or_none(e[:10])) for e in strlist if len(e)>9]
+  tuplelist = sorted([te for te in tuplelist if te[1] is not None])
+  if len(tuplelist) == 0:
+    return None, None
+  most_recent_name, pdate = tuplelist[0]
+  return most_recent_name, pdate
 
 
 def make_date_or_none_wo_separators(pdate):
