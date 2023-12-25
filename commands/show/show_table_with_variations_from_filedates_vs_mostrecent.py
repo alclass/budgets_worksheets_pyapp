@@ -32,21 +32,24 @@ The output will be the money correcting/updating indices
 """
 import datetime
 import settings as cfg
+import sqlite3
+import fs.db.db_settings as dbs
 import fs.economicfs.bcb.bcb_cotacao_fetcher_from_db_or_api as bcbfetch  # bcbfetch.BCBCotacaoFetcher
 import commands.fetch.cpi.read_cpis_from_db as ftcpi  # ftcpi.get_cpi_baselineindex_for_refmonth_m2_in_db
-import fs.datefs.years_date_functions as dtfs
+import fs.datefs.read_write_datelist_files as rwdt
 from prettytable import PrettyTable
 DEFAULT_DATESFILENAME = 'datesfile.dat'
+DEFAULT_CURRENCY_PAIR = ('BRL', 'USD')
 
 
-def get_pydates_from_datafile():
+def get_dates_from_strdates_file():
   datefilepath = cfg.get_datafile_abspath_in_app(DEFAULT_DATESFILENAME)
   fd = open(datefilepath)
   text = fd.read()
   dates = text.split('\n')
   print(dates)
   dates = map(lambda s: s.lstrip(' \t').rstrip(' \t\r\n'), dates)
-  pdates = dtfs.transform_strdates_to_pydates(dates)
+  pdates = rwdt.convert_strdatelist_to_datelist_wo_sep_n_posorder(dates)
   return pdates
 
 
@@ -66,35 +69,59 @@ class Comparator:
     fetcher = bcbfetch.BCBCotacaoFetcher(self.today)
     self.mostrecentdate = fetcher.namedtuple_cotacao.param_date
 
-  def get_variation_exchange_rate_from(self, pdate):
+  def get_sellquotesvariation_to_today_w_date_n_currencypair(self, pdate, currency_pair=None):
+    """
+        variation = (exrate_after - exrate_before) / exrate_before
+    """
+    t1_sellprice = self.get_exrate_sellquote_w_date_n_currencypair(pdate, currency_pair)
+    if t1_sellprice is None:
+      return None
+    today = datetime.date.today()
+    t2_sellprice = self.get_exrate_sellquote_w_date_n_currencypair(today, currency_pair)
+    ratio = (t2_sellprice - t1_sellprice) / t1_sellprice
+    return ratio
+
+  @staticmethod
+  def get_exrate_sellquote_w_date_n_currencypair(pdate, currency_pair=None):
     """
     This function exists in package-module fin
     (if so, refactor this)
 
     """
-    today = self.today
-    variation = None
-    exrate_before = None
-    exrate_after = None
-    sql = 'SELECT exchangerate FROM exchangerates WHERE date=? and date=?;'
-    tuplevalues = (pdate, today)
-    conn = cfg.get_connection()
-    cursor = conn.cursor()
-    rows = cursor.execute(sql, tuplevalues)
-    if rows:
-      try:
-        exrate_before = rows[0][0]
-        exrate_after = rows[0][1]
-        variation = (exrate_after - exrate_before) / exrate_before
-      except IndexError:
-        pass
-    conn.close()
-    return variation, exrate_before, exrate_after
+    if currency_pair is None:
+      curr_numerator = DEFAULT_CURRENCY_PAIR[0]
+      curr_denominator = DEFAULT_CURRENCY_PAIR[1]
+    else:
+      curr_numerator = currency_pair[0]
+      curr_denominator = currency_pair[1]
+    sql = f"""
+      SELECT sellprice FROM {dbs.EXRATE_TABLENAME}
+      WHERE
+        refdate=? and
+        curr_num=? and
+        curr_num=?;"""
+    tuplevalues = (pdate, curr_numerator, curr_denominator)
+    conn = cfg.get_sqlite_connection()
+    try:
+      cursor = conn.cursor()
+      retval = cursor.execute(sql, tuplevalues)
+      if retval:
+        row = retval.fetchone()
+        sellprice = row[0]
+        sellprice = sellprice / dbs.EXRATE_INTEGER_TO_FLOAT_DIVISOR
+        return sellprice
+    except (IndexError, sqlite3.SQLITE_ERROR):
+      pass
+    finally:
+      conn.close()
+    return None
 
   @property
   def most_recent_cpi_m2(self):
     if self._most_recent_cpi is None:
-      self._most_recent_cpi, self.m2refmonthdate = ftcpi.get_cpi_baselineindex_for_refmonth_m2_in_db(self.mostrecentdate)
+      self._most_recent_cpi, self.m2refmonthdate = ftcpi.get_cpi_baselineindex_for_refmonth_m2_in_db(
+        self.mostrecentdate
+      )
     return self._most_recent_cpi, self.m2refmonthdate
 
   def get_cpi_variation_from(self, pdate):
@@ -108,7 +135,7 @@ class Comparator:
   def calc_composite_money_indices(self, pdates):
     correction_indices = []
     for pdate in pdates:
-      exchange_variation = self.get_variation_exchange_rate_from(pdate)
+      exchange_variation = self.get_exrate_sellquote_w_date_n_currencypair(pdate)
       cpi_variation, ini_cpi_baselineindex, fim_cpi_baselineindex, refdate = self.get_cpi_variation_from(pdate)
       correction_indice = exchange_variation * cpi_variation
       correction_indices.append(correction_indice)
@@ -117,9 +144,9 @@ class Comparator:
   def get_exchangerate_variation_from(self, pdate):
     """
       namedtuple_res_bcb_api1 = apis.namedtuple_bcb_api1(
-        cotacao_compra=exchanger.buyquote,
-        cotacao_venda=exchanger.sellquote,
-        cotacao_datahora=exchanger.quotesdatetime,
+        cotacao_compra=exchanger.buyprice,
+        cotacao_venda=exchanger.sellprice,
+        cotacao_datahora=exchanger.quote_as_datetime,
         param_date=exchanger.quotesdate, error_msg=None, gen_msg='Fetched from db', exchanger=exchanger
       )
     res_bcb_api1 = fin.dbfetch_bcb_cotacao_compra_dolar_apifallback(pdate)
@@ -137,7 +164,7 @@ class Comparator:
     return None, None, None
 
   def process_datesfile(self):
-    pdates = get_pydates_from_datafile()
+    pdates = get_dates_from_strdates_file()
     output_list = []
     ptab = PrettyTable()
     ptab.field_names = [

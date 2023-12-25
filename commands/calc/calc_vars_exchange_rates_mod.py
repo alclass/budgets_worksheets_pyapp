@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import sys
-import models.exrate.exchange_rate_modelmod as mmod
+import models.exrate.currency_exchange_rate_model as mmod
 import fs.db.conn_sa as confs
 import fs.economicfs.bcb.bcb_cotacao_fetcher_from_db_or_api as preapi
 import fs.datefs.years_date_functions as dtfs
@@ -23,18 +23,18 @@ class MinMax:
     , minbuy, minsell, maxbuy, maxsell, minbuydate, minselldate, maxbuydate, maxselldate
     :return:
     """
-    if exchanger.buyquote < self.minbuy:
-      self.minbuy = exchanger.buyquote
-      self.minbuydate = exchanger.quotesdate
-    if exchanger.sellquote < self.minsell:
-      self.minsell = exchanger.buyquote
-      self.minselldate = exchanger.quotesdate
-    if exchanger.buyquote > self.maxbuy:
-      self.maxbuy = exchanger.buyquote
-      self.maxbuydate = exchanger.quotesdate
-    if exchanger.sellquote > self.maxsell:
-      self.maxsell = exchanger.sellquote
-      self.maxselldate = exchanger.quotesdate
+    if exchanger.buyprice < self.minbuy:
+      self.minbuy = exchanger.buyprice
+      self.minbuydate = exchanger.refdate
+    if exchanger.sellprice < self.minsell:
+      self.minsell = exchanger.buyprice
+      self.minselldate = exchanger.refdate
+    if exchanger.buyprice > self.maxbuy:
+      self.maxbuy = exchanger.buyprice
+      self.maxbuydate = exchanger.refdate
+    if exchanger.sellprice > self.maxsell:
+      self.maxsell = exchanger.sellprice
+      self.maxselldate = exchanger.refdate
     return
 
   @property
@@ -75,8 +75,8 @@ def list_min_max(inidate, findate):
   session = confs.get_sa_session()
   minmax = MinMax()
   for pdate in dtfs.generate_daterange(inidate, findate):
-    exchanger = session.query(mmod.ExchangeRateDate).filter(mmod.ExchangeRateDate.quotesdate == pdate).first()
-    if exchanger is None or exchanger.buyquote is None:
+    exchanger = session.query(mmod.ExchangeRateDate).filter(mmod.ExchangeRateDate.refdate == pdate).first()
+    if exchanger is None or exchanger.buyprice is None:
       continue
     minmax.find_min_max_n_dates(exchanger)
   print(minmax)
@@ -98,14 +98,14 @@ def calculate_var_inidate_to_findate(inidate, findate):
   buyincrease = None
   sellincrease = None
   try:
-    ini_buyquote = ini_res_bcb_api1.exchanger.buyquote
-    fin_buyquote = fin_res_bcb_api1.exchanger.buyquote
+    ini_buyquote = ini_res_bcb_api1.exchanger.buyprice
+    fin_buyquote = fin_res_bcb_api1.exchanger.buyprice
     buyincrease = calculate_fraction_variation(ini_buyquote, fin_buyquote)
   except AttributeError:
     pass
   try:
-    ini_sellquote = ini_res_bcb_api1.exchanger.sellquote
-    fin_sellquote = fin_res_bcb_api1.exchanger.sellquote
+    ini_sellquote = ini_res_bcb_api1.exchanger.sellprice
+    fin_sellquote = fin_res_bcb_api1.exchanger.sellprice
     sellincrease = abs(ini_sellquote - fin_sellquote) / ini_sellquote
   except AttributeError:
     pass

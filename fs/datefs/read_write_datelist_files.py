@@ -51,15 +51,19 @@ def fetch_dates_from_strdates_in_text_wo_sep_but_of_oneform_from_filepath(filepa
   strdates without a sep can only be an 8-digit stringnumber
   """
   strdatelist = fetch_wordlist_from_textfile_w_filepath(filepath)
-  return convert_strdatelist_to_datelist_wo_sep_n_posorder((strdatelist))
-
+  return convert_strdatelist_to_datelist_wo_sep_n_posorder(strdatelist)
 
 
 def convert_strdatelist_to_datelist_wo_sep_n_posorder(strdatelist):
-  if strdatelist is None or len(strdatelist):
-    return []
-  datelist = intr.introspect_n_convert_sdlist_to_dates_w_or_wo_sep_n_posorder(strdatelist)
-  return list(filter(lambda e: e is not None, datelist))
+  try:
+    strdatelist = list(strdatelist)
+    if len(strdatelist) == 0:
+      return []
+    datelist = intr.introspect_n_convert_sdlist_to_dates_w_or_wo_sep_n_posorder(strdatelist)
+    return list(filter(lambda e: e is not None, datelist))
+  except TypeError:
+    pass
+  return []
 
 
 def convert_strdatelist_to_datelist_w_sep_n_posorder(strdatelist, sep='-', posorder='ymd'):

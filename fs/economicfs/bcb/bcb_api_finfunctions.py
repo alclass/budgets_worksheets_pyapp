@@ -54,14 +54,14 @@ https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/CotacaoDolarDia
 import collections as coll
 import datetime
 import json
+import fs.datefs.introspect_dates as intr
+import fs.datefs.convert_to_datetime_wo_intr_sep_posorder as cvdt
 import os
 import requests
 import time
 from prettytable import PrettyTable
 import settings as sett
 import fs.datefs.convert_to_date_wo_intr_sep_posorder as cnv
-import fs.datefs.convert_to_datetime_wo_intr_sep_posorder as dtcv
-import fs.datefs.introspect_dates as dtconv  # .trans_strdate_from_one_format_to_another_w_sep_n_posorder
 
 url_base = 'https://olinda.bcb.gov.br/olinda/servico/PTAX/' \
            'versao/v1/odata/CotacaoDolarDia(dataCotacao=@dataCotacao)'
@@ -71,7 +71,7 @@ API_CALL_COTACAO_MAX_PREVIOUS_DAY_TRIES = 8
 
 namedtuple_bcb_api1 = coll.namedtuple(
   'BCBAPI1DataStr',
-  'cotacao_compra cotacao_venda cotacao_datahora param_date error_msg gen_msg exchanger'
+  'curr_num curr_den cotacao_compra cotacao_venda cotacao_datahora param_date error_msg gen_msg exchanger'
 )
 # 1) cotacao_compra is cotacaoCompra, 2) cotacao_venda is cotacaoVenda &  3) cotacao_datahora is dataHoraCotacao
 
@@ -131,6 +131,7 @@ def call_api_bcb_cotacao_dolar_on_date(pdate, connection_error_raised=0):
     pdatetime = datetime.datetime.now()
     error_msg = 'Given date (%s) is None' % str(pdate)
     res_bcb_api = namedtuple_bcb_api1(
+      curr_num=sett.CURR_BRL, curr_den=sett.CURR_USD,
       cotacao_compra=None, cotacao_venda=None, cotacao_datahora=pdatetime,
       param_date=pdate,
       error_msg=error_msg, gen_msg=None,
@@ -138,7 +139,7 @@ def call_api_bcb_cotacao_dolar_on_date(pdate, connection_error_raised=0):
     )
     return res_bcb_api
   # the API accepts a data in the format 'MM/DD/YYYY', so it needs to convert pdate to it
-  mmddyyyy = dtconv.trans_strdate_from_one_format_to_another_w_sep_n_posorder(
+  mmddyyyy = intr.trans_strdate_from_one_format_to_another_w_sep_n_posorder(
     refdate, fromsep=None, tosep='/', sourceposorder=None, targetposorder='mdy')
   if mmddyyyy is None:
     error_msg = f"""An error occurred when trying to convert date {refdate} to a mdy sep / format,
@@ -162,6 +163,7 @@ def call_api_bcb_cotacao_dolar_on_date(pdate, connection_error_raised=0):
     pdatetime = datetime.datetime.now()
     print(error_msg, pdatetime)
     res_bcb_api = namedtuple_bcb_api1(
+      curr_num=sett.CURR_BRL, curr_den=sett.CURR_USD,
       cotacao_compra=None, cotacao_venda=None, cotacao_datahora=pdatetime,
       param_date=refdate,
       error_msg=error_msg, gen_msg=None,
@@ -174,11 +176,10 @@ def call_api_bcb_cotacao_dolar_on_date(pdate, connection_error_raised=0):
   except IndexError:
     # in general, this case means that the date does not have quotes as happens for holidays and weekend days
     # but the important fact is that the response came with a 200 OK status code
-    datatime_cotacao = cnv.convert_date_to_datetime_or_none(refdate)
     gen_msg = 'BCB API day with no quotes'
-    print(gen_msg, refdate, datatime_cotacao)
+    print('msg', gen_msg, 'date', refdate, 'result dict', resdict)
     res_bcb_api = namedtuple_bcb_api1(
-      cotacao_compra=None, cotacao_venda=None, cotacao_datahora=datatime_cotacao,
+      cotacao_compra=None, cotacao_venda=None, cotacao_datahora=None,
       param_date=refdate,
       error_msg=None, gen_msg=gen_msg,
       exchanger=None
@@ -186,9 +187,10 @@ def call_api_bcb_cotacao_dolar_on_date(pdate, connection_error_raised=0):
     return res_bcb_api
   if len(valuedict) == 0:
     # maybe this case never happens, and it's the above case when holidays or weekend days happen
-    datatime_cotacao = cnv.convert_date_to_datetime_or_none(refdate)
+    now = datetime.datetime.now()
     res_bcb_api = namedtuple_bcb_api1(
-      cotacao_compra=None, cotacao_venda=None, cotacao_datahora=datatime_cotacao,
+      curr_num=sett.CURR_BRL, curr_den=sett.CURR_USD,
+      cotacao_compra=None, cotacao_venda=None, cotacao_datahora=now,
       param_date=refdate,
       error_msg=None, gen_msg='BCB API len(valuedict) = 0',
       exchanger=None
@@ -198,9 +200,9 @@ def call_api_bcb_cotacao_dolar_on_date(pdate, connection_error_raised=0):
   cotacao_compra = valuedict['cotacaoCompra']
   cotacao_venda = valuedict['cotacaoVenda']
   data_hora_cotacao = valuedict['dataHoraCotacao']
-  datatime_cotacao = dtcv.convert_str_or_attrsobj_to_datetime_or_none(data_hora_cotacao)
   res_bcb_api = namedtuple_bcb_api1(
-    cotacao_compra=cotacao_compra, cotacao_venda=cotacao_venda, cotacao_datahora=datatime_cotacao,
+    curr_num=sett.CURR_BRL, curr_den=sett.CURR_USD,
+    cotacao_compra=cotacao_compra, cotacao_venda=cotacao_venda, cotacao_datahora=data_hora_cotacao,
     param_date=refdate,
     error_msg=None, gen_msg='BCB API',
     exchanger=None
@@ -217,13 +219,18 @@ def pretry_print_api_list(res_bcb_api1_list):
   :return:
   """
   ptab = PrettyTable()
-  ptab.field_names = ['Seq', 'cotacao_compra', 'cotacao_venda', 'cotacao_datahora',
-                      'param_date', 'error_msg', 'gen_msg']
+  ptab.field_names = [
+    'Seq', 'curr_num', 'curr_den',
+    'cotacao_compra', 'cotacao_venda', 'cotacao_datahora',
+    'param_date', 'error_msg', 'gen_msg'
+  ]
   last_str_date = ''
   for i, res_api1_nt in enumerate(res_bcb_api1_list):
     seq = i + 1
     ptab.add_row([
       seq,
+      res_api1_nt.curr_num,
+      res_api1_nt.curr_den,
       res_api1_nt.cotacao_compra,
       res_api1_nt.cotacao_venda,
       res_api1_nt.cotacao_datahora,
@@ -245,11 +252,11 @@ def pretry_print_api_list(res_bcb_api1_list):
 def adhoc_test():
   dates = []
   strdate = '2020-07-30'
-  pdate = cnv.returns_date_or_today(strdate)
+  pdate = cnv.make_date_or_none(strdate)
   dates.append(pdate)
   # pdate = dtfs.returns_date_or_today()
   strdate = '2020-07-31'
-  pdate = cnv.returns_date_or_today(strdate)
+  pdate = cnv.make_date_or_none(strdate)
   dates.append(pdate)
   res_bcb_api1_list = []
   for pdate in dates:
@@ -258,10 +265,22 @@ def adhoc_test():
   pretry_print_api_list(res_bcb_api1_list)
 
 
+def adhoctest2():
+  pdate = '2023-12-18'
+  pdate = cnv.make_date_or_none(pdate)
+  print('Calling bcb api for date', pdate)
+  res_bcb_api = call_api_bcb_cotacao_dolar_on_date(pdate)
+  print(res_bcb_api)
+  pretry_print_api_list([res_bcb_api])
+
+
 def process():
   # adhoc_test_ptab()
   adhoc_test()
 
 
 if __name__ == "__main__":
+  """
   process()
+  """
+  adhoctest2()

@@ -75,42 +75,13 @@ def convert_strdate_to_date_or_none_w_sep_n_posorder(strdate, sep='-', orderpos=
       month = int(pp[0])
       day = int(pp[1])
     return datetime.date(year=year, month=month, day=day)
-  except (IndexError, TypeError, ValueError):
+  except (AttributeError, IndexError, TypeError, ValueError):
     pass
   return None
 
 
 def convert_strdate_to_date_or_none_wo_sep_n_fieldorder(strdate):
   return introspect_n_convert_strdate_to_date_or_none_w_or_wo_sep_n_posorder(strdate)
-
-
-def convert_strdate_to_date_or_none_w_sep_n_posorder(strdate, sep='-', orderpos='ymd'):
-  try:
-    ppp = strdate.split(' ')
-    pp = ppp[0].split(sep)
-    year = None
-    month = None
-    day = None
-    if orderpos == 'ymd':
-      year = int(pp[0])
-      month = int(pp[1])
-      day = int(pp[2])
-    elif orderpos == 'ydm':
-      year = int(pp[0])
-      month = int(pp[2])
-      day = int(pp[1])
-    elif orderpos == 'dmy':
-      year = int(pp[2])
-      month = int(pp[1])
-      day = int(pp[0])
-    elif orderpos == 'mdy':
-      year = int(pp[2])
-      month = int(pp[0])
-      day = int(pp[1])
-    return datetime.date(year=year, month=month, day=day)
-  except (AttributeError, IndexError, TypeError, ValueError):
-    pass
-  return None
 
 
 def trans_from_date_to_strdate_w_sep_posorder_n_zfill(pdate, sep='-', posorder='ymd', zfill=0):

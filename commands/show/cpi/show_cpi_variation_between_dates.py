@@ -64,7 +64,7 @@ def mount_variation_table():
   """
   pydates = fetch_dates_in_cli_if_any()
   if len(pydates) == 0:
-    pydates = composite.get_pydates_from_datafile()
+    pydates = composite.get_dates_from_strdates_file()
   today = datetime.date.today()
   most_recent_date = today - relativedelta(days=-2)
   for pydate in pydates:

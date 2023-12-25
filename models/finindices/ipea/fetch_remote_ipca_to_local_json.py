@@ -41,7 +41,7 @@ last two:
 import os
 import requests
 import pandas as pd
-import models.finindices.ipea.ipea_data_folders_n_files as ppdt  # .get_output_filepath
+import models.finindices.ipea.folders_n_files_ipea_data as ppdt  # .get_output_filepath
 IPEA_IPCA_URL = "http://ipeadata.gov.br/api/odata4/ValoresSerie(SERCODIGO='PRECOS12_IPCA12')"
 
 
@@ -72,7 +72,7 @@ def rest_api_call(api_url):
 
 
 def fetch_adhoc():
-  output_filepath = ppdt.get_ipca12_filepath()
+  output_filepath = ppdt.get_todays_ipca12_filepath()
   if os.path.isfile(output_filepath):
     scrmsg = f"Halting. File [{output_filepath}] exists."
     print(scrmsg)

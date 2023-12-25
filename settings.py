@@ -24,7 +24,7 @@ except (ImportError, NameError, TypeError):
   pass
 
 
-def get_connection(sqlitefilename=None):
+def get_sqlite_connection(sqlitefilename=None):
   if sqlitefilename is None:
     sqlitefilename = SQLITE_FILENAME_DEFAULT
   filepath = get_datafile_abspath_in_app(sqlitefilename)

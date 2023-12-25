@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-insert_exchangerates_into_db.py
+commands/db/bcb/insert_exchangerates_into_db.py
 
 from dateutil. relativedelta import relativedelta
 import fs.datefs.convert_to_date_wo_intr_sep_posorder as cnv

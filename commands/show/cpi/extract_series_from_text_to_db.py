@@ -45,7 +45,7 @@ def extract_data_from_files(filenames):
 
 
 def insert_into_db(tuplerecords):
-  conn = cfg.get_connection()
+  conn = cfg.get_sqlite_connection()
   cursor = conn.cursor()
   for tuplerecord in tuplerecords:
     # seriesid, strdate, baselineindex = tuplerecord

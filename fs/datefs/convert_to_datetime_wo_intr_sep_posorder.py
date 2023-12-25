@@ -13,6 +13,14 @@ nt_dtymd_constr = collections.namedtuple('NTymd', field_names=['year', 'month', 
 nt_dtym_refmo_constr = collections.namedtuple('NTrefmo', field_names=['year', 'month'])
 
 
+def make_datetime_n_get_time_via_split_from_strdt(pdatetime):
+  dt = make_datetime_w_formatfields_or_none(pdatetime)
+  if dt is None:
+    return None
+  _, dtime = split_date_n_time_from_datetime(dt)
+  return dtime
+
+
 def split_date_n_time_from_datetime(pdatetime):
   if pdatetime is None:
     return None, None
@@ -57,7 +65,8 @@ def make_datetime_w_formatfields_or_none(wholestr):
   """
   formatstr = '%Y-%m-%d %H:%M:%S.%f'
   """
-
+  if wholestr is None:
+    return None
   format_list = ['%Y-%m-%d %H', '%Y-%m-%d %H:%M', '%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M:%S.%f']
   previous_dto = None
   dto = None

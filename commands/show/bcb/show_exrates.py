@@ -5,9 +5,10 @@ SELECT * FROM daily_exchange_rates WHERE quotesdate = "2022-04-01";
 """
 import datetime
 from dateutil.relativedelta import relativedelta
-import models.exrate.exchange_rate_modelmod as exrt  # exrt.ExchangeRateDate()
+import models.exrate.currency_exchange_rate_model as exrt  # exrt.ExchangeRateDate()
 import fs.datefs.dategenerators as gendt
-import fs.datefs.years_date_functions as dtfs
+import fs.datefs.years_date_functions as yedt
+import fs.datefs.convert_to_date_wo_intr_sep_posorder as cnv
 import pandas as pd
 # when just needing weekday from date, it can be called directly: adate.weekday() instead of calendar.weekday(adate)
 # import calendar
@@ -27,18 +28,17 @@ def show_exrates_on_date(pdate):
      answer is weekday = 6 Sunday ie day 2022-05-01 falls on Sunday
   """
   # exrate = exrt.ExchangeRateDate()
-  indate = gendt.make_date_from_str_or_none(pdate)
+  indate = cnv.make_date_from_str_or_none(pdate)
   # weekdays range from 0 to 6 where 0 is Monday 6 is Sunday
-  weekday3letter = dtfs.get_weekday3letter_from_date(indate)
+  weekday3letter = yedt.get_weekday3letter_from_date(indate)
   session = exrt.consa.get_sa_session()
   exchanger = session.query(exrt.ExchangeRateDate). \
-      filter(exrt.ExchangeRateDate.quotesdate == indate). \
+      filter(exrt.ExchangeRateDate.refdate == indate). \
       first()
-  strdate = dtfs.transform_date_to_other_order_fields_n_sep_or_none(indate)
   if exchanger:
-    print('weekday', weekday3letter, strdate, exchanger)
+    print('weekday', weekday3letter, indate, exchanger)
   else:
-    print('weekday', weekday3letter, ' | ', strdate, 'was not found in db.')
+    print('weekday', weekday3letter, ' | ', indate, 'was not found in db.')
   return exchanger
 
 
@@ -54,10 +54,10 @@ def show_exrates_up_to(lastdate):
     if exchanger:
       try:
         # sellquote_as_int is null (None) on holidays
-        ratevalue = exchanger.sellquote_as_int / 10000
+        ratevalue = exchanger.sellprice_as_int / 10000
       except TypeError:
         continue
-      pdict = {'date': exchanger.quotesdate, 'rate': ratevalue}
+      pdict = {'date': exchanger.refdate, 'rate': ratevalue}
       exrate_dictlist.append(pdict)
   df = pd.DataFrame(exrate_dictlist)
   print(df.to_string())

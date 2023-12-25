@@ -13,6 +13,7 @@ import pandas as pd
 from dateutil.relativedelta import relativedelta
 import settings as sett
 import fs.datefs.refmonths_mod as rfm
+import fs.db.db_settings as dbs
 cur_seriesid = 'CUUR0000SA0'
 sur_seriesid = 'SUUR0000SA0'
 DEFAULT_SERIESID = 'CUUR0000SA0'
@@ -21,13 +22,13 @@ NTCpiMonth = collections.namedtuple('NTCpiMonth', field_names=['cpi', 'refmonthd
 
 
 def get_min_or_max_available_refmonthdate_in_cpi_db(lowest=True, p_seriesid=None):
-  conn = sett.get_connection()
+  conn = sett.get_sqlite_connection()
   cursor = conn.cursor()
   seriesid = p_seriesid or DEFAULT_SERIESID
   tuplevalues = (seriesid, )
   asc_or_desc = 'ASC' if lowest else 'DESC'
-  sql = F"""
-    SELECT refmonthdate FROM cpi_indices
+  sql = f"""
+    SELECT refmonthdate FROM {dbs.IDXIND_TABLENAME}
       WHERE
         seriesid = ?
       ORDER BY
@@ -98,12 +99,12 @@ def get_cpi_baselineindex_for_refmonth_in_db(refmonthdate, p_seriesid=None):
   refmonthdate = rfm.make_refmonthdate_or_none(refmonthdate)
   if not isinstance(refmonthdate, datetime.date):
     return None
-  conn = sett.get_connection()
+  conn = sett.get_sqlite_connection()
   cursor = conn.cursor()
   seriesid = p_seriesid or DEFAULT_SERIESID
   tuplevalues = (seriesid, refmonthdate)
-  sql = """
-    SELECT baselineindex FROM cpi_indices
+  sql = f"""
+    SELECT baselineindex FROM {dbs.IDXIND_TABLENAME}
       WHERE
         seriesid = ? and refmonthdate = ?;
   """
@@ -123,11 +124,11 @@ def get_last_available_cpi_n_refmonth_fromdb_by_series(p_seriesid=None):
   It searches for index by the most recent refmonthdate
   returns both the index and the most recent refmonthdate
   """
-  conn = sett.get_connection()
+  conn = sett.get_sqlite_connection()
   cursor = conn.cursor()
   seriesid = p_seriesid or DEFAULT_SERIESID
-  sql = """
-    SELECT baselineindex, refmonthdate FROM cpi_indices
+  sql = f"""
+    SELECT baselineindex, refmonthdate FROM {dbs.IDXIND_TABLENAME}
       WHERE
         seriesid = ? 
       ORDER BY
@@ -185,11 +186,11 @@ def get_all_cpis_n_refmonths_as_tuplelist_fromdb_by_series(p_seriesid=None):
   """
   Selects all available indices.
   """
-  conn = sett.get_connection()
+  conn = sett.get_sqlite_connection()
   cursor = conn.cursor()
   seriesid = p_seriesid or DEFAULT_SERIESID
-  sql = """
-    SELECT baselineindex, refmonthdate FROM cpi_indices
+  sql = f"""
+    SELECT baselineindex, refmonthdate FROM {dbs.IDXIND_TABLENAME}
       WHERE
         seriesid = ? 
       ORDER BY
@@ -222,11 +223,11 @@ def get_cpis_n_refmonths_as_tuplelist_fromdb_by_year_n_series(year, p_seriesid=N
   Selects all available indices.
   """
   str_year = str(year)
-  conn = sett.get_connection()
+  conn = sett.get_sqlite_connection()
   cursor = conn.cursor()
   seriesid = p_seriesid or DEFAULT_SERIESID
-  sql = """
-    SELECT baselineindex, refmonthdate FROM cpi_indices
+  sql = f"""
+    SELECT baselineindex, refmonthdate FROM {dbs.IDXIND_TABLENAME}
       WHERE
         seriesid = ? and
         substr(refmonthdate, 1, 4) = ?
@@ -258,7 +259,7 @@ def adhoctest2():
   print(df.info())
   """
   year = 2021
-  ret = get_cpis_n_refmonths_as_tuplelist_fromdb_by_year_n_series(2021)
+  ret = get_cpis_n_refmonths_as_tuplelist_fromdb_by_year_n_series(year=year)
   print(year, 'get_cpis_n_refmonths_as_tuplelist_fromdb_by_year_n_series')
   print(ret)
   older_refmonth = get_older_available_refmonthdate_in_cpi_db()

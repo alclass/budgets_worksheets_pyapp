@@ -22,6 +22,7 @@ import random
 import fs.datefs.convert_to_date_wo_intr_sep_posorder as cnv
 # import fs.datefs.introspect_dates as intr
 import fs.datefs.dategenerators as gendt
+import fs.db.db_settings as dbs
 import fs.economicfs.bcb.bcb_api_finfunctions as apis
 import fs.economicfs.bcb.bcb_fetchfunctions as fetchfs  # fetchfs.add_exchanger_to_res_bcb_api_namedtuple()
 import settings as sett
@@ -120,9 +121,11 @@ class BCBCotacaoFetcher:
     TO-DO: the 5 days, at this version, is hardcoded, it may become a config parameter in the future.
   """
 
-  def __init__(self, pdate):
+  def __init__(self, pdate, currency_pair=None):
     self.date = pdate
     self.treat_date()
+    self.curr_num, self.curr_den = None, None
+    self.treat_currency_pair(currency_pair)
     self.weekend_day_hits = 0
     self.holliday_hits = 0
     self.dates_stack_size = DATES_STACK_SIZE
@@ -131,6 +134,11 @@ class BCBCotacaoFetcher:
     self._target_datetime = None
     self.namedtuple_cotacao = None
     self.process()
+
+  def treat_currency_pair(self, currency_pair):
+    self.curr_num, self.curr_den = dbs.DEFAUT_CURRENCY_PAIR
+    if currency_pair is not None:
+      self.curr_num, self.curr_den = currency_pair
 
   @property
   def target_datetime(self):
@@ -163,7 +171,9 @@ class BCBCotacaoFetcher:
       self.weekend_day_hits += 1
       return None
     # 2nd: look up local database
-    namedtuple_cotacao = fetchfs.fetch_cotacao_in_db_for_date_or_none(self.target_date)
+    namedtuple_cotacao = fetchfs.dbfetch_nt_bcb_exrate_or_none_w_date_n_currencypair(
+      self.target_date
+    )
     if namedtuple_cotacao is not None:
       # Holliday hypothesis
       if is_cotacao_in_holliday(namedtuple_cotacao):
@@ -229,8 +239,9 @@ def process():
   pdate = '2023-10-29'
   """
   today = datetime.date.today()
-  before20days = today - relativedelta(days=31)
-  for pdate in gendt.gen_dailydates_or_empty_bw_ini_fim_opt_order(before20days, today):
+  upperdate = today - relativedelta(days=12)
+  lowerdate = upperdate - relativedelta(days=1)
+  for pdate in gendt.gen_dailydates_or_empty_bw_ini_fim_opt_order(lowerdate, upperdate):
     prefetcher = BCBCotacaoFetcher(pdate)
     print(prefetcher)
 

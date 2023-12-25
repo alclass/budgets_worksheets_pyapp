@@ -36,12 +36,13 @@ import sys
 import commands.show.show_table_with_variations_from_filedates_vs_mostrecent as composite
 import fs.economicfs.bcb.bcb_cotacao_fetcher_from_db_or_api as fin
 import fs.datefs.dategenerators as gendt
-import fs.datefs.years_date_functions as dtfs
+import fs.datefs.refmonths_mod as rmd
+import fs.datefs.convert_to_date_wo_intr_sep_posorder as cnv
 import argparse
 
 
 def show_exchangerates_between_dates():
-  pydates = composite.get_pydates_from_datafile()
+  pydates = composite.get_dates_from_strdates_file()
   for pdate in pydates:
     bcber = fin.BCBCotacaoFetcher(pdate)
     ntcotacao = bcber.namedtuple_cotacao
@@ -59,7 +60,7 @@ def show_exchangerates_for_rangedate(date_ini, date_fim, decrescent=False):
 
 
 def show_exchangerates_for_refmonth(p_refmonthdate, decrescent=False):
-  refmonthdate = gendt.make_refmonth_or_current(p_refmonthdate)
+  refmonthdate = rmd.make_refmonth_or_current(p_refmonthdate)
   date_ini = datetime.date(year=refmonthdate.year, month=refmonthdate.month, day=1)
   _, monthslastday = calendar.monthrange(year=refmonthdate.year, month=refmonthdate.month)
   date_fim = datetime.date(year=refmonthdate.year, month=refmonthdate.month, day=monthslastday)
@@ -192,11 +193,11 @@ def get_args():
       return paramdict
     elif arg.startswith('-ini='):
       strdate = arg[len('-ini='):]
-      date_ini = dtfs.make_date_or_none(strdate)
+      date_ini = cnv.make_date_or_none(strdate)
       paramdict['date_ini'] = date_ini
     elif arg.startswith('-fim='):
       strdate = arg[len('-fim='):]
-      date_fim = dtfs.make_date_or_none(strdate)
+      date_fim = cnv.make_date_or_none(strdate)
       paramdict['date_fim'] = date_fim
   return paramdict
 
