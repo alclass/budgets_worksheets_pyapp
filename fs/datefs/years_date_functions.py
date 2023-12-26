@@ -17,18 +17,6 @@ WEEKDAYS3LETTER = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 ALL_MONTHS_ENG_CAP_FIRST_LIST = list(map(lambda e: calendar.month_name[e], range(1, 13)))
 
 
-def make_allmonths_englishlower3letter_list():
-  return list(map(lambda e: e[:3].lower(), ALL_MONTHS_ENG_CAP_FIRST_LIST))
-
-
-def is_date_valid(pdate):
-  pdate = cnv.make_date_or_none(pdate)
-  if pdate is not None:
-    return True
-  return False
-
-
-
 def get_decade_year_tenmultiplebased_from_or_current(pdate=None):
   """
   Examples:
@@ -83,28 +71,6 @@ def get_first_date_in_decade_year_tenmultiplebased_from_or_none(pdate=None):
   return datetime.date(year=year, month=1, day=1)
 
 
-
-def is_date_weekend(pdate):
-  """
-  DEPRECATED | OBSOLETE
-    for built-in Python modules do it
-  e.g. calendar and datetime itself
-  e.g. ?pdate.weekend()?
-
-  """
-  pdate = cnv.make_date_or_none(pdate)
-  if pdate is None:
-    return None
-  try:
-    weekdaynumber = pdate.weekday()
-    if weekdaynumber in [5, 6]:
-      return True
-    return False
-  except AttributeError:
-    pass
-  return None
-
-
 def get_weekday3letter_from_date(pdate):
   """
   # previously:
@@ -139,6 +105,36 @@ def get_monthslastday_date_via_calendar(pdate):
   return datetime.date(year=indate.year, month=indate.month, day=n_days_in_month)
 
 
+def is_date_valid(pdate):
+  pdate = cnv.make_date_or_none(pdate)
+  if pdate is not None:
+    return True
+  return False
+
+
+def is_date_weekend(pdate):
+  """
+  DEPRECATED | OBSOLETE
+    for built-in Python modules do it
+  e.g. calendar and datetime itself
+  e.g. ?pdate.weekend()?
+
+  """
+  pdate = cnv.make_date_or_none(pdate)
+  if pdate is None:
+    return None
+  try:
+    weekdaynumber = pdate.weekday()
+    if weekdaynumber in [5, 6]:
+      return True
+    return False
+  except AttributeError:
+    pass
+  return None
+
+
+def make_allmonths_englishlower3letter_list():
+  return list(map(lambda e: e[:3].lower(), ALL_MONTHS_ENG_CAP_FIRST_LIST))
 
 
 def trans_datelist_uniq_n_desc(datelist):

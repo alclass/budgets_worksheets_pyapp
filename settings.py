@@ -11,17 +11,19 @@ Notice that script 'local_settings.py' is not included in the git repo of this a
 """
 import os
 import sqlite3
+import local_settings as ls
+CEPABERTO_API_TOKEN = ls.CEPABERTO_API_TOKEN
+NONDEFAULT_DATA_FOLDERPATH = os.path.abspath(ls.DATA_FOLDERPATH) if ls.DATA_FOLDERPATH else None
 CURR_USD = 'USD'
 CURR_BRL = 'BRL'
 DATESDATA_FILENAME_DEFAULT = 'datesfile.dat'
-NONDEFAULT_DATA_FOLDERPATH = None  # may be changed in local_settings.py; if None, default will be used
 DATA_FOLDERNAME = 'dados'  # may be overridden by its counterpart in local_settings.py
 SQLITE_FILENAME_DEFAULT = 'exchange_n_indices.sqlite'
-try:
-  import local_settings as ls
-  NONDEFAULT_DATA_FOLDERPATH = os.path.abspath(ls.DATA_FOLDERPATH)
-except (ImportError, NameError, TypeError):
-  pass
+# NONDEFAULT_DATA_FOLDERPATH = None  # may be changed in local_settings.py; if None, default will be used
+# CEPABERTO_API_TOKEN = None
+# try:
+# except (ImportError, NameError, TypeError):
+#   pass
 
 
 def get_sqlite_connection(sqlitefilename=None):
@@ -86,6 +88,7 @@ def adhoctest():
   print('data_abspath [', data_abspath, ']')
   print('exchange_rate_sqlite_filepath [', get_exchange_rate_sqlite_filepath(), ']')
   print('dates_datafile_abspath_in_app [', get_dates_datafile_abspath_in_app(), ']')
+  print('CEPABERTO_API_TOKEN [', CEPABERTO_API_TOKEN, ']')
 
 
 def process():
