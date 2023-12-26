@@ -1,5 +1,14 @@
 #!/usr/bin/python3
 """
+fs/db/conn_sa.py
+  This config module organizes the Sqlalchemy session object for
+    the sql-DB (at this moment under sqlite) for exchange rates and index indicators.
+
+On the same theme, at the time of this writing, CEP "geodata" is placed
+  in a different sqlite file configured by another Python module.
+
+Some notes concerning mysql work with sqlalchemy:
+------------------------------------------------
 In order to make mysql work with sqlalchemy, two things were to be done:
   1) Ubuntu's package python3-dev and libmysqlclient-dev were installed;
   2) after that, mysqlclient was installed via pip.

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-models/geoplaces/cep_etc_settings.py
+models/geoplaces/geoplaces_settings.py
 
 """
 import os

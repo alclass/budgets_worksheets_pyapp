@@ -7,7 +7,7 @@ import glob
 import os
 import pandas as pd
 import requests
-import models.geoplaces.cep_etc_settings as cset
+import models.geoplaces.geoplaces_settings as cset
 # import models.geoplaces.cep_etc_settings as   # cset.get_cepaberto_basefolderpath
 cep_27_bra_est = "AC AL AM AP BA CE DF ES GO MA MG MS MT PA PB PE PI PR RJ RN RO RR RS SC SE SP TO"
 CEP_TEST = '20550045'

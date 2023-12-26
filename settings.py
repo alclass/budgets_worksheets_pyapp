@@ -13,6 +13,9 @@ import os
 import sqlite3
 import local_settings as ls
 CEPABERTO_API_TOKEN = ls.CEPABERTO_API_TOKEN
+# the conditional assignment below is to avoid TypeError from abspath() in case
+# ls.DATA_FOLDERPATH is None; however, if it does not exist there (in local_settings.py)
+# AttributeError comes up anyway (so, because local_settings is not in repo, please add it during install)
 NONDEFAULT_DATA_FOLDERPATH = os.path.abspath(ls.DATA_FOLDERPATH) if ls.DATA_FOLDERPATH else None
 CURR_USD = 'USD'
 CURR_BRL = 'BRL'
