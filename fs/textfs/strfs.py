@@ -50,7 +50,7 @@ def round_last_digit_from_integer_get_as_int(anumber):
   return outnumber
 
 
-def graft_thousands_pointsep_from_a_commasep_strnumber(strnumber, max_dec_places=2):
+def graft_thousands_pointsep_from_a_commasep_strnumber(strnumber, decimal_places=2):
   try:
     strnumber = str(strnumber)
     if strnumber.find('.') > -1:
@@ -74,34 +74,61 @@ def graft_thousands_pointsep_from_a_commasep_strnumber(strnumber, max_dec_places
   strnumber = ''.join(strintnumber_list)
   if len(pp) > 1:
     str_dec_places = pp[1]
-    if len(str_dec_places) > max_dec_places:
+    if len(str_dec_places) > decimal_places:
       intdecplaces = round_last_digit_from_integer_get_as_int(str_dec_places)
       str_dec_places = str(int(intdecplaces/10))
     strnumber = strnumber + ',' + str_dec_places
   return strnumber
 
 
-def trans_str_or_number_to_tuple_commasepstrnumber_n_float(str_or_numbe, decimal_places=2, graft_pointsep=False):
-  try:
-    decimal_places = 0 if decimal_places < 0 else decimal_places
-    if decimal_places == 0:
-      return str(int(str_or_numbe))  # notice that its decimal part, if it exists, will be lost
-    #
-    strnumber = str(str_or_numbe).replace('.', '').replace(',', '.')
-    output_floatnumber = float(strnumber)
-    intnumber = int(round(output_floatnumber * (10 ** decimal_places), 0))
-    re_floatnumber = intnumber / (10 ** decimal_places)
-    strnumber = str(re_floatnumber).replace('.', ',')
-    pp = strnumber.split(',')
-    if len(pp) > 1:
-      newdecplaces = round_last_digit_from_integer_get_as_str(pp[1])
-      strnumber = pp[0] + ',' + newdecplaces
+def trans_pointsep_str_or_number_to_tuple_commasep_str_n_float(str_or_number, decimal_places=2, graft_pointsep=False):
+  decimal_places = 0 if decimal_places < 0 else decimal_places
+  if str_or_number is None:
+    return None
+  if isinstance(str_or_number, int):
+    intnumber = str_or_number
+    str_number = str(intnumber)
+    strdecplaces = '' if decimal_places == 0 else ','+'0'*decimal_places
+    str_number = str_number + strdecplaces
+    return str_number, intnumber
+  if isinstance(str_or_number, float):
+    floatnumber = str_or_number
+    str_number = str(round(floatnumber, decimal_places))
+    str_number = str_number.replace(',', '').replace('.', ',')
+    return str_number, floatnumber
+  # at this point, continue converting str_or_number to str
+  str_number = str(str_or_number)
+  if str_number.find(',') > -1:
+    errmsg = f"""param strnumber "{str_number}" for trans_str_or_number_to_tuple_commasepstrnumber_n_float()
+    cannot contain "," (ie the comma character) as input: script cannot continue.
+    """
+    raise ValueError(errmsg)
+  floatnumber = float(str_or_number)
+  rounded_floatnumber = round(floatnumber, decimal_places)
+  # notice that str(round()) may leave a '.' dec pla sep
+  str_number = str(rounded_floatnumber)
+  str_number = str_number.replace('.', ',')
+  if str_number.find(',') > -1:
+    pp = str_number.split(',')
+    intpart = pp[0]
+    commaside = pp[-1]
+    n_decplaces_at_str = len(commaside)
+    if n_decplaces_at_str != decimal_places:
+      if decimal_places == 0:
+        str_number = intpart
+      elif n_decplaces_at_str > decimal_places:
+        commaside = commaside[:decimal_places]
+        str_number = intpart + ',' + commaside
+      else:  # n_decplaces_at_str < decimal_places:
+        complement = decimal_places - n_decplaces_at_str
+        commaside += '0'*complement
+        str_number = intpart + ',' + commaside
+    else:  # ie n_decplaces_at_str == decimal_places:
+      # str_number is itself
+      pass
     if graft_pointsep:
-      strnumber = graft_thousands_pointsep_from_a_commasep_strnumber(strnumber)
-    return strnumber, output_floatnumber
-  except ValueError:
-    pass
-  return None, None
+      str_number = graft_thousands_pointsep_from_a_commasep_strnumber(str_number, decimal_places)
+  return str_number, floatnumber
 
 
 def pick_first_word(phrase):
@@ -140,8 +167,8 @@ def adhoc_test():
   print(stri, 'pop() =>', c, ',', newstr)
 
   """
-  cotacaocompra = "2.456,456"
-  strnumber, float_n = trans_str_or_number_to_tuple_commasepstrnumber_n_float(cotacaocompra, decimal_places=2)
+  cotacaocompra = "2456.456"
+  strnumber, float_n = trans_pointsep_str_or_number_to_tuple_commasep_str_n_float(cotacaocompra, decimal_places=2)
   scrmsg = f"cotacaocompra = {cotacaocompra} | strnumber = {strnumber} | float_n = {float_n}"
   print(scrmsg)
   ceptest = '20.550-045'
@@ -164,8 +191,26 @@ def adhoc_test():
     print(scrmsg)
 
 
+def adhoc_test2():
+  """
+  cotacaocompra = "2456"
+  strnumber, float_n = trans_pointsep_str_or_number_to_tuple_commasep_str_n_float(
+    cotacaocompra, decimal_places=2, graft_pointsep=True
+  )
+  scrmsg = f"cotacaocompra = {cotacaocompra} | strnumber = {strnumber} | float_n = {float_n}"
+  print(scrmsg)
+
+  """
+  cotacaocompra = "65332456.1234"
+  strnumber, float_n = trans_pointsep_str_or_number_to_tuple_commasep_str_n_float(
+    cotacaocompra, decimal_places=5, graft_pointsep=True
+  )
+  scrmsg = f"cotacaocompra = {cotacaocompra} | strnumber = {strnumber} | float_n = {float_n}"
+  print(scrmsg)
+
+
 def process():
-  adhoc_test()
+  adhoc_test2()
 
 
 if __name__ == "__main__":

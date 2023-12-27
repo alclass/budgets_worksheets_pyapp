@@ -14,14 +14,14 @@ class TestStrFunctions(unittest.TestCase):
     strnumber = "2.456,165"
     expected_strnumber = "2456,16"
     expected_float_n = 2456.165
-    returned_strnumber, ret_float_n = sfs.trans_str_or_number_to_tuple_commasepstrnumber_n_float(strnumber, decimal_places=2)
+    returned_strnumber, ret_float_n = sfs.trans_pointsep_str_or_number_to_tuple_commasep_str_n_float(strnumber, decimal_places=2)
     self.assertEqual(expected_strnumber, returned_strnumber)
     self.assertAlmostEquals(expected_float_n, ret_float_n)
     # t2 same as t1 but rounding decimal places 'down' instead of 'up'
     strnumber = "2.456,155"
     expected_strnumber = "2456,15"
     expected_float_n = 2456.155
-    returned_strnumber, ret_float_n = sfs.trans_str_or_number_to_tuple_commasepstrnumber_n_float(strnumber, decimal_places=2)
+    returned_strnumber, ret_float_n = sfs.trans_pointsep_str_or_number_to_tuple_commasep_str_n_float(strnumber, decimal_places=2)
     self.assertEqual(expected_strnumber, returned_strnumber)
     self.assertAlmostEquals(expected_float_n, ret_float_n)
 
