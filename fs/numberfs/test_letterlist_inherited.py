@@ -52,19 +52,3 @@ class LetterListUnitTest(unittest.TestCase):
     self.assertEqual(letterlist1, list1)
     letterlist1.reset(word1+word1)
     self.assertEqual(letterlist1, list1+list1)
-
-
-def adhoctest():
-  pass
-
-
-def process():
-  """
-  adhoc_for_groupby()
-  adhoctest1()
-  """
-  adhoctest()
-
-
-if __name__ == "__main__":
-  process()
