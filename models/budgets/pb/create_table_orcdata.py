@@ -49,7 +49,9 @@ def recup_field_sql_types():
 
 
 def form_sqlcreatetable_str():
+  """
   names_types_list = []
+  """
   sql_createtable = f"CREATE TABLE IF NOT EXISTS {tablename} (\n"
   for fieldname in orcmdl.orc_fieldtype_dict:
     vtype = orcmdl.orc_fieldtype_dict[fieldname]
