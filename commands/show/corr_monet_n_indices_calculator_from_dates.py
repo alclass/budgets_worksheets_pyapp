@@ -2,7 +2,7 @@
 """
   => script on maintenance!
 
-commands/show/show_table_with_variations_from_filedates_vs_mostrecent.py
+commands/show/corr_monet_n_indices_calculator_from_dates.py
   Script to fetch both exchange rates and CPI indices.
 
 The purpose is to gen_first_n_letterindices an output with day to day
@@ -10,7 +10,7 @@ The purpose is to gen_first_n_letterindices an output with day to day
   today or the last day that has results
 
 Usage:
-  $show_table_with_variations_from_filedates_vs_mostrecent.py <text-file-with-dates>
+  $corr_monet_n_indices_calculator_from_dates.py <text-file-with-dates>
 
 Input parameter:
    <text-file-with-dates> is the filename of a data file with set of dates
@@ -21,7 +21,7 @@ Output:
   will be output to stdout
 
 Example:
-  $show_table_with_variations_from_filedates_vs_mostrecent.py datafile.dat
+  $corr_monet_n_indices_calculator_from_dates.py datafile.dat
 In datafile.dat:
 2020-10-15
 2021-07-01
@@ -53,7 +53,7 @@ def get_dates_from_strdates_file():
   return pdates
 
 
-class Comparator:
+class CorrMonetWithinDatesCalculator:
   def __init__(self):
     self.today = datetime.date.today()
     self.mostrecentdate = None
@@ -110,7 +110,7 @@ class Comparator:
         sellprice = row[0]
         sellprice = sellprice / dbs.EXRATE_INTEGER_TO_FLOAT_DIVISOR
         return sellprice
-    except (IndexError, sqlite3.SQLITE_ERROR):
+    except (IndexError, sqlite3.OperationalError):  # sqlite3.SQLITE_ERROR
       pass
     finally:
       conn.close()
@@ -129,15 +129,24 @@ class Comparator:
     if ini_cpi_baselineindex is None:
       return None, None, None, None
     fim_cpi_baselineindex, refdate = self.most_recent_cpi_m2
-    cpi_variation = (fim_cpi_baselineindex - ini_cpi_baselineindex) / ini_cpi_baselineindex
+    try:
+      cpi_variation = (fim_cpi_baselineindex - ini_cpi_baselineindex) / ini_cpi_baselineindex
+    except TypeError:
+      cpi_variation = 0
     return cpi_variation, ini_cpi_baselineindex, fim_cpi_baselineindex, refdate
+
+  def calc_composite_corr_mone_from_date(self, pdate):
+    exchange_variation = self.get_exrate_sellquote_w_date_n_currencypair(pdate)
+    exchange_variation = 0.0 if exchange_variation is None else exchange_variation
+    cpi_variation, ini_cpi_baselineindex, fim_cpi_baselineindex, refdate = self.get_cpi_variation_from(pdate)
+    cpi_variation = 0.0 if cpi_variation is None else cpi_variation
+    mult_factor = (1 + exchange_variation) * (1 + cpi_variation)
+    return mult_factor
 
   def calc_composite_money_indices(self, pdates):
     correction_indices = []
     for pdate in pdates:
-      exchange_variation = self.get_exrate_sellquote_w_date_n_currencypair(pdate)
-      cpi_variation, ini_cpi_baselineindex, fim_cpi_baselineindex, refdate = self.get_cpi_variation_from(pdate)
-      correction_indice = exchange_variation * cpi_variation
+      correction_indice = self.calc_composite_corr_mone_from_date(pdate)
       correction_indices.append(correction_indice)
     return correction_indices
 
@@ -175,6 +184,8 @@ class Comparator:
       seq = i + 1
       cpi_variation, cpi_ini, cpi_fim, _ = self.get_cpi_variation_from(pdate)
       exchangerate_variation, exchange_ini, exchange_fim = self.get_exchangerate_variation_from(pdate)
+      cpi_variation = 0 if cpi_variation is None else cpi_variation
+      exchangerate_variation = 0 if exchangerate_variation is None else exchangerate_variation
       multiplier = (1 + cpi_variation) * (1 + exchangerate_variation)
       output_tuple = (
         seq, pdate, cpi_ini, cpi_fim, cpi_variation,
@@ -191,7 +202,7 @@ def process():
   pydate = datetime.date(2020, 10, 15)
 
   """
-  comparator = Comparator()
+  comparator = CorrMonetWithinDatesCalculator()
   comparator.process_datesfile()
 
 

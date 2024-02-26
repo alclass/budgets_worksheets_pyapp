@@ -1,93 +1,18 @@
 #!/usr/bin/env python3
 """
+models/budgets/pb/price_data_as_dict.py
+
 """
 import copy
-import os.path
-
+from models.budgets.pb.prices_processor import PriceItem
+from models.budgets.pb.prices_processor import Prices
+from models.budgets.pb.prices_processor import show_qtd_of_prices_per_nm
 import models.budgets.pb.tests.check_n_of_nms_in_filenames as chknm  # chknm.get_unique_nms_from_filenames
-
-def show_qtd_of_prices_per_nm(prices):
-  n_tot_prices = 0
-  for i, nmcode in enumerate(prices.nn_n_pricedatalist_dict):
-    n_prices = len(prices.nn_n_pricedatalist_dict[nmcode])
-    n_tot_prices += n_prices
-    seq = i + 1
-    scrmsg = f"{seq} nm {nmcode} has {n_prices} prices"
-    print(scrmsg)
-  avg_prices_per_item = n_tot_prices / prices.size
-  print('n_tot_prices', n_tot_prices, 'avg prices per items', avg_prices_per_item)
-
-
-class Prices:
-
-  def __init__(self):
-    self.nn_n_pricedatalist_dict = {}
-
-  def add_price_via_nm(self, nmcode, priceitem):
-    if nmcode in self.nn_n_pricedatalist_dict:
-      self.nn_n_pricedatalist_dict[nmcode].append(priceitem)
-    else:
-      self.nn_n_pricedatalist_dict[nmcode] = [priceitem]
-
-  @property
-  def size(self):
-    return len(self.nn_n_pricedatalist_dict)
-
-  def get_unique_nms(self):
-    return sorted(self.nn_n_pricedatalist_dict.keys())
-
-  def get_unique_nms_n_filenames(self):
-    nms = sorted(self.nn_n_pricedatalist_dict.keys())
-    output_tuplelist = []
-    for nm in nms:
-      pi = self.nn_n_pricedatalist_dict[nm]
-      tupl = (nm, pi[0].fname)
-      output_tuplelist.append(tupl)
-    output_tuplelist = sorted(output_tuplelist, key=lambda e: e[1])
-    return output_tuplelist
-
-
-class PriceItem:
-
-  known_measure_units = ['unit', 'metro', 'kg']
-  meas_unit_default = 'unit'
-
-  def __init__(self):
-    self.seq = None  # a sequencial number
-    self.nmcode = None  # the material item code
-    self.nm_alt = None  # an alternative material item code
-    self.date = None  # price date
-    self.netprice = None  # price without taxes, usually a saq-request price
-    self._meas_unit = self.meas_unit_default  # unit price unit-type: unit, metro, kg
-    self.openprice = None  # openprice is a full price informed in general in a webpage
-    self.currency = 'BRL'  # money currency in its 3-letter code (example: 'BRL' Brazilian Reais)
-    self.supplier = None  # the vendor or supplier
-    self.url = None  # url of price if openprice
-    self.fname = None  # xlsx data filename
-    self.sapreq = None  # if price comes from a pedido-sap, this number comes in here
-
-  @property
-  def meas_unit(self):
-    return self._meas_unit
-
-  @meas_unit.setter
-  def meas_unit(self, meas_unit):
-    self._meas_unit = meas_unit
-    self.treat_measure_unit()
-
-  def treat_measure_unit(self):
-    """
-    known_measure_units = ['unit', 'metro', 'kg']
-    """
-    known = self.known_measure_units
-    if self.meas_unit not in known:
-      errmsg = f"unit {self.meas_unit} outside of known_measure_units = {known}"
-      raise ValueError(errmsg)
 
 
 def gather_data():
   prices = Prices()
-  pricedata_list = []
+  # pricedata_list = []
   # NM 1
   pi = PriceItem()
   pi.nmcode, pi.nm_alt = 10668440, None
@@ -1312,9 +1237,14 @@ def gather_data():
   pi.nmcode, nm_alt = 12875147, None
   pi.fname = '72 adaptador dupla fêmea UHF com base quadrada [KA-10] 12875147.xlsx'
   pi_tmp = copy.copy(pi)
-  pi.date = '2024-02-25'
-  pi.openprice, pi.supplier = 1.80, 'Magalu / Multi E-commerce'
-  pi.url = ''
+  pi.date = '2024-02-26'
+  pi.openprice, pi.supplier = 26.9, 'Rádio Componentes'
+  pi.url = 'https://www.radiocomponentes.com.br/adaptador-uhf-f-base-quadrada-4-furos-rosca-p588'
+  prices.add_price_via_nm(pi.nmcode, pi)
+  pi = copy.copy(pi_tmp)
+  pi.date = '2024-02-26'
+  pi.openprice, pi.supplier = 26.9, 'Rádio Componentes'
+  pi.url = 'https://www.radiocomponentes.com.br/adaptador-uhf-f-base-quadrada-4-furos-rosca-p588'
   prices.add_price_via_nm(pi.nmcode, pi)
   return prices
 

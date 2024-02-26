@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-show_table_with_variations_from_filedates_vs_mostrecent.py
+corr_monet_n_indices_calculator_from_dates.py
 
 This script reads a dateadhoctests data (text) file inside the app's data folder,
   fetches CPI index mapping to month-date and outputs a 2-column data text.
@@ -12,7 +12,7 @@ The purpose is to gen_first_n_letterindices an output with day to day
 """
 import datetime
 from dateutil.relativedelta import relativedelta
-import commands.show.show_table_with_variations_from_filedates_vs_mostrecent as composite
+import commands.show.corr_monet_n_indices_calculator_from_dates as composite
 import fs.datefs.years_date_functions as dtfs
 import sys
 
