@@ -21,37 +21,17 @@ CREATE TABLE IF NOT EXISTS cpi_indices (
   PRIMARY KEY (seriesid, refdate)
 )
 
-"""
 import datetime
+import models.budgets.pb.orc_datum_model as orcmdl
 import os.path
 import sqlite3
-import models.budgets.pb.orc_datum_model as orcmdl
 import settings as sett
-PPUBASE_TABLENAME = 'ppubase_orc'
-PRICEBANK_TABLENAME = 'pricebank_orc'
-ORCDADOS_FOLDERNAME = 'orçs_dados'
-ORCDADOS_SQLFILENAME = 'orçs_db.sqlite'
-
-
-def get_orcdados_folderpath():
-  datafolderpath = sett.get_datafolder_abspath()
-  orcsdados_folderpath = os.path.join(datafolderpath, ORCDADOS_FOLDERNAME)
-  return orcsdados_folderpath
-
-
-def get_orcdados_sqlitefilepath():
-  orcsdados_folderpath = get_orcdados_folderpath()
-  orcsdados_sqlitefilepath = os.path.join(orcsdados_folderpath, ORCDADOS_SQLFILENAME)
-  return orcsdados_sqlitefilepath
-
-
-def get_connection(p_filepath=None):
-  filepath = p_filepath or get_orcdados_sqlitefilepath()
-  return sqlite3.connect(filepath)
+"""
+import models.budgets.pb.db_n_file_settings as dbs  # for dbs.get_orcdados_folderpath
 
 
 def ppubase_sqlcreatetable_str(tablename=None):
-  tablename = PPUBASE_TABLENAME if tablename is None else tablename
+  tablename = dbs.PPUBASE_TABLENAME if tablename is None else tablename
   sql = f"""CREATE TABLE IF NOT EXISTS `{tablename}` (
     `seq` INT PRIMARY KEY,
     `ncmcode` INT,
@@ -74,7 +54,7 @@ def ppubase_sqlcreatetable_str(tablename=None):
 
 
 def pricebank_sqlcreatetable_str(tablename=None):
-  tablename = PRICEBANK_TABLENAME if tablename is None else tablename
+  tablename = dbs.PRICEBANK_TABLENAME if tablename is None else tablename
   sql = f"""CREATE TABLE IF NOT EXISTS `{tablename}` (
     `seq` INT PRIMARY KEY,
     `nmcode` INT,
@@ -93,13 +73,16 @@ def pricebank_sqlcreatetable_str(tablename=None):
 
 
 def create_tables_if_not_exists():
-  conn = get_connection()
+  """
+  Order is: (first) PPUBASE_TABLENAME, (second) PRICEBANK_TABLENAME
+  """
+  conn = dbs.get_connection()
   cursor = conn.cursor()
   sqls, tablenames = [], []
-  tablenames.append(PPUBASE_TABLENAME)
+  tablenames.append(dbs.PPUBASE_TABLENAME)
   sql = ppubase_sqlcreatetable_str()
   sqls.append(sql)
-  tablenames.append(PRICEBANK_TABLENAME)
+  tablenames.append(dbs.PRICEBANK_TABLENAME)
   sql = pricebank_sqlcreatetable_str()
   sqls.append(sql)
   for i, tablename in enumerate(tablenames):

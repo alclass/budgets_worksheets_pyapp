@@ -1,44 +1,31 @@
 #!/usr/bin/env python3
 """
 models/budgets/pb/read_ppubase_from_xlsx.py
+
+import os
+import pandas as pd
 """
-import os.path
 import sqlite3
 import time
-import pandas as pd
 import models.budgets.pb.create_tables_ppubase_n_pricebank as ct  # ct.get_orcdados_folderpath
-ppubase_filename = 'PPU base.xlsx'
-PPUBASE_TABLENAME = ct.PPUBASE_TABLENAME
-PRICEBANK_TABLENAME = ct.PRICEBANK_TABLENAME
-
-
-def get_xlsx_ppubase_filepath():
-  folderpath = ct.get_orcdados_folderpath()
-  xlsx_filepath = os.path.join(folderpath, ppubase_filename)
-  return xlsx_filepath
-
-
-def get_df_from_xlsx_ppubase():
-  ppubase_filepath = get_xlsx_ppubase_filepath()
-  df = pd.read_excel(ppubase_filepath)
-  return df
+import models.budgets.pb.db_n_file_settings as dbs  # for dbs.get_orcdados_folderpath
+ppubase_filename = dbs.PPUBASE_FILENAME
+PPUBASE_TABLENAME = dbs.PPUBASE_TABLENAME
+PRICEBANK_TABLENAME = dbs.PRICEBANK_TABLENAME
 
 
 class Insertor:
 
   ppubase_tablename = PPUBASE_TABLENAME
-  pricebank_tablename = PRICEBANK_TABLENAME
-  columnnames = [
-    'seq', 'ncmcode', 'ipi', 'familycode', 'nmcode', 'partnumber',
-    'manufacturer_sname', 'textobreve', 'description', 'qty', 'meas_unit'
-  ]  # 11 fieldnames
+  # pricebank_tablename = PRICEBANK_TABLENAME
+  columnnames = dbs.PPUBASE_COLUMNNAMES
 
   def __init__(self):
     self.conn = None
     self.cursor = None
     self.n_inserted = 0
     self.seq = 0
-    self.df = get_df_from_xlsx_ppubase()
+    self.df = dbs.get_df_from_xlsx_ppubase()
     self.reset_column_names()
 
   @property
@@ -49,7 +36,7 @@ class Insertor:
 
   def open_db_connection(self):
     ct.create_tables_if_not_exists()
-    filepath = ct.get_orcdados_sqlitefilepath()
+    filepath = dbs.get_orcdados_sqlitefilepath()
     print(f'Opening db connection @ [{filepath}]')
     self.conn = sqlite3.connect(filepath)
     self.conn.row_factory = sqlite3.Row
@@ -69,11 +56,12 @@ class Insertor:
 
   def make_row_dict(self, series):
     rowdict = {}
+    _ = series  # series is used inside eval(), close below
     for col in self.columnnames:
       rowdict[col] = eval(f'series["{col}"]')
     return rowdict
 
-  def mount_fieldnames_part_of_sqlinsert(self, series):
+  def mount_fieldnames_part_of_sqlinsert(self):
     fieldnames_sql = '('
     for col in self.columnnames:
       fieldnames_sql += f'`{col}`, '
@@ -90,8 +78,8 @@ class Insertor:
     questionmarks_part = f"({questionmarks_part})"
     return questionmarks_part
 
-  def mount_sqlinsert(self, series):
-    fieldnames_sql = self.mount_fieldnames_part_of_sqlinsert(series)
+  def mount_sqlinsert(self):
+    fieldnames_sql = self.mount_fieldnames_part_of_sqlinsert()
     questionmarks_part = self.mount_questionmark_part_of_sqlinsert()
     sql = f"""INSERT OR IGNORE into `{self.ppubase_tablename}`
         {fieldnames_sql} VALUES {questionmarks_part};"""
@@ -99,6 +87,7 @@ class Insertor:
 
   def get_tuple_from_series(self, series):
     alist = []
+    _ = series  # series is used inside eval(), close below
     for col in self.columnnames:
       value = eval(f'series["{col}"]')
       alist.append(value)
@@ -108,7 +97,7 @@ class Insertor:
 
   def db_row_insert(self, series):
     tuplevalues = self.get_tuple_from_series(series)
-    sql = self.mount_sqlinsert(series)
+    sql = self.mount_sqlinsert()
     self.seq += 1
     print(sql)
     retval = self.cursor.execute(sql, tuplevalues)
