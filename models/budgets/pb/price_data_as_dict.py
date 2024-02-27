@@ -45,9 +45,15 @@ def gather_data():
   pi = PriceItem()
   pi.nmcode, pi.nm_alt = 12788990, None
   pi.fname = '03 Conjunto de aterramento cellflex7_8 [512455] 12788990.xlsx'
-  pi.date = '2019-10-25'
-  pi.sapreq = 4509690254
-  pi.netprice, pi.currency = 92.82, 'BRL'
+  pi_tmp = copy.copy(pi)
+  pi.date = '2024-02-24'
+  pi.openprice, pi.supplier = 168.80, 'Ponto Eletrônico'
+  pi.url = 'https://www.pontoeletronicolojavirtual.com.br/produtos/conjunto-de-aterramento-para-cabo-de-rg-213-rfs-kmp/'
+  prices.add_price_via_nm(pi.nmcode, pi)
+  pi = copy.copy(pi_tmp)
+  pi.date = '2024-02-24'
+  pi.openprice, pi.supplier = 70.2, 'Cross do Brasil'
+  pi.url = 'https://crossdasil.commercesuite.com.br/kit-aterramentos/kit-aterramento-78-'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2023-05-01'
@@ -58,8 +64,8 @@ def gather_data():
   pi = PriceItem()
   pi.nmcode, pi.nm_alt = 11874626, None
   pi.fname = '04 conjunto de aterramento coaxial RGC213 [512450] 11874626.xlsx'
-  pi.pdate = '2024-02-24'
   pi_tmp = copy.copy(pi)
+  pi.date = '2024-02-24'
   pi.openprice, pi.supplier = 42.0, 'Cross do Brasil'
   pi.url = 'https://www.crossdobrasil.com.br/kit-aterramentos/kit-aterramento-rgc213-'
   prices.add_price_via_nm(pi.nmcode, pi)
@@ -70,7 +76,7 @@ def gather_data():
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2024-02-24'
-  pi.openprice, pi.supplier = 184.80/3, 'MercadoLivre / Cross do Brasil'
+  pi.openprice, pi.supplier = 61.6, 'MercadoLivre / Cross do Brasil'
   pi.url = 'https://produto.mercadolivre.com.br/MLB-2045345929-kit-aterramento-rgc213-3-unidades-_JM#position=14&search_layout=stack&type=item&tracking_id=bc5fa194-752e-4058-b227-7dd495a4ff08'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
@@ -143,19 +149,14 @@ def gather_data():
   pi.nmcode, nm_alt = 11642305, None
   pi.fname = '08 adaptador cabo coaxial [KLC-18] 11642305.xlsx'
   pi_tmp = copy.copy(pi)
-  pi.date = '2020-12-23'
-  pi.sapreq = 4510650937
-  pi.netprice, currency = 22.96, 'BRL'
-  prices.add_price_via_nm(pi.nmcode, pi)
-  pi = copy.copy(pi_tmp)
-  pi.date = '2018-09-13'
-  pi.sapreq = 4508567165
-  pi.netprice, currency = 14.49, 'BRL'
-  prices.add_price_via_nm(pi.nmcode, pi)
-  pi = copy.copy(pi_tmp)
   pi.date = '2024-02-24'
   pi.openprice, supplier = 27.0, 'Rádio Componentes'
   pi.url = 'https://www.radiocomponentes.com.br/adaptador-de-conversao-n-femea-x-tnc-macho-klc-18-p1084'
+  prices.add_price_via_nm(pi.nmcode, pi)
+  pi = copy.copy(pi_tmp)
+  pi.date = '2024-02-24'
+  pi.openprice, supplier = 36.67, 'Magalu / MultComercial'
+  pi.url = 'https://www.magazineluiza.com.br/adaptador-macho-tnc-reto-e-femea-n-klc-18-gav-134-klc-multcomercial/p/cbckj24gje/ga/otga/'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2023-05-01'
@@ -167,19 +168,14 @@ def gather_data():
   pi.nmcode, nm_alt = 11642768, None
   pi.fname = '09 adaptador cabo coaxial [KLC-19] 11642768.xlsx'
   pi_tmp = copy.copy(pi)
-  pi.date = '2019-12-17'
-  pi.sapreq = 4509830331
-  pi.netprice, pi.currency = 13.25, 'BRL'
+  pi.date = '2024-02-27'
+  pi.penprice, pi.supplier = 36.8, 'Ponto Eletrônico'
+  pi.url = 'https://www.pontoeletronicolojavirtual.com.br/produtos/adaptador-n-macho-x-femea-tnc-klc-klc-19/'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
-  pi.date = '2019-12-18'
-  pi.sapreq = 4509832199
-  pi.netprice, pi.currency = 12.58, 'BRL'
-  prices.add_price_via_nm(pi.nmcode, pi)
-  pi = copy.copy(pi_tmp)
-  pi.date = '2019-12-27'
-  pi.sapreq = 4509860319
-  pi.netprice, pi.currency = 12.58, 'BRL'
+  pi.date = '2024-02-27'
+  pi.penprice, pi.supplier = 32.6, 'Mercado Livre / STM Telecom'
+  pi.url = 'https://produto.mercadolivre.com.br/MLB-2778718223-adaptador-converso-reto-n-50-ohms-macho-x-tnc-fmea-klc-19-_JM'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2023-05-01'
@@ -191,19 +187,14 @@ def gather_data():
   pi.nmcode, pi.nm_alt = 10394994, None
   pi.fname = '10 adaptador cabo coaxial [KA-1] 10394994.xlsx'
   pi_tmp = copy.copy(pi)
-  pi.date = '2021-10-28'
-  pi.sapreq = 4509720394
-  pi.netprice, pi.currency = 7.26, 'BRL'
+  pi.date = '2024-02-27'
+  pi.penprice, pi.supplier = 20.0, 'MultComercial'
+  pi.url = 'https://www.multcomercial.com.br/adaptador-uhf-femea-x-femea-reto-ka-1-gav-97-klc.html'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
-  pi.date = '2019-11-01'
-  pi.sapreq = 4509719517
-  pi.netprice, pi.currency = 12.25, 'BRL'
-  prices.add_price_via_nm(pi.nmcode, pi)
-  pi = copy.copy(pi_tmp)
-  pi.date = '2019-11-08'
-  pi.sapreq = 4509736483
-  pi.netprice, pi.currency = 7.26, 'BRL'
+  pi.date = '2024-02-27'
+  pi.penprice, pi.supplier = 16.9, 'Rádio Componentes'
+  pi.url = 'https://www.radiocomponentes.com.br/adaptador-uhf-femea-x-femea-emenda-para-cabo-rg-58-rg-213-p467'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2023-05-01'
@@ -215,19 +206,14 @@ def gather_data():
   pi.nmcode, pi.nm_alt = 11718061, None
   pi.fname = '11 adaptador cabo coaxial [KLC-2] 11718061.xlsx'
   pi_tmp = copy.copy(pi)
-  pi.pdate = '2021-10-28'
-  pi.sapreq = 4509832199
-  pi.netprice, pi.currency = 12.58, 'BRL'
-  prices.add_price_via_nm(pi.nmcode, pi)
-  pi = copy.copy(pi_tmp)
-  pi.date = '2019-12-19'
-  pi.sapreq = 4509838140
-  pi.netprice, pi.currency = 11.8, 'BRL'
-  prices.add_price_via_nm(pi.nmcode, pi)
-  pi = copy.copy(pi_tmp)
-  pi.date = '2024-02-24'
+  pi.date = '2024-02-27'
   pi.penprice, pi.supplier = 22.0, 'Rádio Componentes'
   pi.url = 'https://www.radiocomponentes.com.br/adaptador-bnc-femea-x-n-macho-p585'
+  prices.add_price_via_nm(pi.nmcode, pi)
+  pi = copy.copy(pi_tmp)
+  pi.date = '2024-02-27'
+  pi.penprice, pi.supplier = 19.01, 'Shop Antena'
+  pi.url = 'https://www.shopantenas.com.br/conectores/adaptadores/conversao-entre-series/adaptador-de-conversao-reto-n-50-ohms-macho-x-bnc-50-ohms-femea-klc-2'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2023-05-01'
@@ -239,14 +225,14 @@ def gather_data():
   pi.nmcode, pi.nm_alt = 11460039, None
   pi.fname = '12 adaptador cabo coaxial [CA-1] 11460039.xlsx'
   pi_tmp = copy.copy(pi)
-  pi.date = '2020-09-24'
-  pi.sapreq = 4510435579
-  pi.netprice, pi.currency = 27.22, 'BRL'
+  pi.date = '2024-02-27'
+  pi.openprice, pi.supplier = 21.0, 'Rádio Componentes'
+  pi.url = 'https://www.radiocomponentes.com.br/adaptador-n-emenda-reto-2-femea-p532'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
-  pi.date = '2020-10-31'
-  pi.sapreq = 4510531981
-  pi.netprice, pi.currency = 12.52, 'BRL'
+  pi.date = '2024-02-27'
+  pi.openprice, pi.supplier = 27.21, 'Magalu / MultComercial'
+  pi.url = 'https://www.magazineluiza.com.br/adaptador-n-50-ohms-femea-x-femea-reto-ca-1-gav-53-klc-multcomercial/p/kg6b2e02e4/in/otin/'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2023-05-01'
@@ -257,20 +243,11 @@ def gather_data():
   pi = PriceItem()
   pi.nmcode, pi.nm_alt = 11467734, None
   pi.fname = '13 adaptador cabo coaxial [KLC-6] 11467734.xlsx'
+  # adaptador de conversão reto UHF Macho x N 50 Ohms Fêmea klc-6
   pi_tmp = copy.copy(pi)
-  pi.date = '2019-12-17'
-  pi.sapreq = 4509830331
-  pi.netprice, pi.currency = 12.43, 'BRL'
-  prices.add_price_via_nm(pi.nmcode, pi)
-  pi = copy.copy(pi_tmp)
-  pi.date = '2019-12-27'
-  pi.sapreq = 4509860261
-  pi.netprice, pi.currency = 11.8, 'BRL'
-  prices.add_price_via_nm(pi.nmcode, pi)
-  pi = copy.copy(pi_tmp)
-  pi.date = '2020-10-31'
-  pi.sapreq = 4510531938
-  pi.netprice, pi.currency = 13.79, 'BRL'
+  pi.date = '2024-02-27'
+  pi.openprice, pi.supplier = 19.57, 'Magalu / Shop Antena'
+  pi.url = 'https://www.magazineluiza.com.br/adaptador-de-conversao-reto-uhf-macho-x-n-50-ohms-femea-klc-6-klc-conectores/p/fckjf7664c/ga/otga/'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2023-05-01'
@@ -282,12 +259,9 @@ def gather_data():
   pi.nmcode, nm_alt = 11460040, None
   pi.fname = '14 adaptador cabo coaxial [CA-7] 11460040.xlsx'
   pi_tmp = copy.copy(pi)
-  pi.date = '2021-10-28'
-  pi.openprice, supplier = 33.90, 'Multicomercial'
-  prices.add_price_via_nm(pi.nmcode, pi)
-  pi = copy.copy(pi_tmp)
-  pi.date = '2021-10-28'
-  pi.openprice, supplier = 44.35, 'Americanas'
+  pi.date = '2024-02-27'
+  pi.openprice, pi.supplier = 28.0, 'Rádio Componentes'
+  pi.url = 'https://www.shopantenas.com.br/conectores/adaptadores/conversao-entre-series/adaptador-de-conversao-reto-n-50-ohms-macho-x-uhf-femea-klc-5'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2023-05-01'
@@ -299,19 +273,9 @@ def gather_data():
   pi.nmcode, nm_alt = 11468023, None
   pi.fname = '16 adaptador cabo coaxial [CA-3] 11468023.xlsx'
   pi_tmp = copy.copy(pi)
-  pi.date = '2019-12-17'
-  pi.sapreq = 4509830331
-  pi.netprice, pi.currency = 14.07, 'BRL'
-  prices.add_price_via_nm(pi.nmcode, pi)
-  pi = copy.copy(pi_tmp)
-  pi.date = '2019-12-27'
-  pi.sapreq = 4509860261
-  pi.netprice, pi.currency = 13.16, 'BRL'
-  prices.add_price_via_nm(pi.nmcode, pi)
-  pi = copy.copy(pi_tmp)
-  pi.date = '2019-10-31'
-  pi.sapreq = 4510531950
-  pi.netprice, pi.currency = 16.24, 'BRL'
+  pi.date = '2024-02-27'
+  pi.openprice, pi.supplier = 29.0, 'Rádio Componentes'
+  pi.url = 'https://www.shopantenas.com.br/conectores/adaptadores/conversao-entre-series/adaptador-de-conversao-reto-n-50-ohms-macho-x-uhf-femea-klc-5'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2023-05-01'
@@ -323,14 +287,14 @@ def gather_data():
   pi.nmcode, pi.nm_alt = 11642770, 11795587
   pi.fname = '16 adaptador cabo coaxial [KLC-5] 11642770.xlsx'
   pi_tmp = copy.copy(pi)
-  pi.date = '2019-12-17'
-  pi.sapreq = 4509860319
-  pi.netprice, pi.currency = 14.30, 'BRL'
+  pi.date = '2024-02-27'
+  pi.openprice, pi.supplier = 34.9, 'Shop Antena'
+  pi.url = 'https://www.shopantenas.com.br/conectores/adaptadores/conversao-entre-series/adaptador-de-conversao-reto-n-50-ohms-macho-x-uhf-femea-klc-5'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
-  pi.date = '2019-12-18'
-  pi.sapreq = 4509832199
-  pi.netprice, pi.currency = 14.30, 'BRL'
+  pi.date = '2024-02-27'
+  pi.openprice, pi.supplier = 27.7, 'Shopee Sckytecc Telecom'
+  pi.url = 'https://shopee.com.br/Adaptador-Convers%C3%A3o-Reto-N-50ohms-Macho-X-Uhf-F%C3%AAmea-Klc-5-i.373766666.2923729706'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2023-05-01'
@@ -342,18 +306,14 @@ def gather_data():
   pi.nmcode, pi.nm_alt = 12787443, None
   pi.fname = '17 adaptador cabo coaxial [KA-8] 12787443.xlsx'
   pi_tmp = copy.copy(pi)
+  pi.date = '2024-02-27'
+  pi.openprice, pi.supplier = 17.8, 'Fazolo Componentes'
+  pi.url = 'https://fazolo.com.br/componentes-eletronicos/adaptador-uhf-machouhf-femea-reto-ka-8'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
-  pi.date = '2021-10-28'
-  pi.openprice, pi.supplier = 44.2, 'Americanas'
-  prices.add_price_via_nm(pi.nmcode, pi)
-  pi = copy.copy(pi_tmp)
-  pi.date = '2021-10-28'
-  pi.openprice, pi.supplier = 33.77, 'Rádio Componentes'
-  prices.add_price_via_nm(pi.nmcode, pi)
-  pi = copy.copy(pi_tmp)
-  pi.date = '2021-10-28'
-  pi.openprice, pi.supplier = 23.73, 'ShopAntenas'
+  pi.date = '2024-02-27'
+  pi.openprice, pi.supplier = 19.95, 'Shopee / Rádio Componentes'
+  pi.url = 'https://shopee.com.br/Adaptador-Uhf-Macho-x-Uhf-F%C3%AAmea-KA-8-i.341183200.9963662804'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2023-05-01'
@@ -366,12 +326,12 @@ def gather_data():
   pi.fname = '18 cabo cellflex 1_2 Andrew ou simi [RFS] 11484889.xlsx'
   pi.meas_unit = 'metro'
   pi_tmp = copy.copy(pi)
-  pi.pdate = '2024-02-25'
+  pi.date = '2024-02-25'
   pi.openprice, pi.supplier = 39.9, 'Shop Web'
   pi.url = 'https://shopweb.com.br/produto/cabo-cellflex-1-2-hansen-100-metros/'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
-  pi.pdate = '2024-02-25'
+  pi.date = '2024-02-25'
   pi.openprice, pi.supplier = 58.67, 'Magalu / Bit Electronics'
   pi.url = 'https://www.magazineluiza.com.br/cabo-cellflex-1-2-kmp-metro-rfs/p/adeg446jk5/in/cbad/'
   prices.add_price_via_nm(pi.nmcode, pi)
@@ -386,12 +346,12 @@ def gather_data():
   pi.fname = '19 cabo cellflex 7_8 Andrew ou simi [LCF78-50JA-A0] 12152353.xlsx'
   pi.meas_unit = 'metro'
   pi_tmp = copy.copy(pi)
-  pi.pdate = '2024-02-25'
+  pi.date = '2024-02-25'
   pi.openprice, pi.supplier = 49.5, 'Drucos'
   pi.url = 'https://www.lojadrucos.com.br/cabo-de-descida-cellflex-7-8-quot-40-metros-copia-drt-626-h'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
-  pi.pdate = '2024-02-25'
+  pi.date = '2024-02-25'
   pi.openprice, pi.supplier = 44.35, 'Bit Electronics'
   pi.url = 'https://www.bitelectronics.com.br/telecomunicacao/cabos/cabo-cellflex-78-kmp-metro'
   prices.add_price_via_nm(pi.nmcode, pi)
@@ -406,17 +366,17 @@ def gather_data():
   pi.fname = '20 cabo coaxial RGC213 [RGC213-50J] 11783027.xlsx'
   pi.meas_unit = 'metro'
   pi_tmp = copy.copy(pi)
-  pi.pdate = '2024-02-25'
+  pi.date = '2024-02-25'
   pi.openprice, pi.supplier = 14.5, 'Aquário'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi.url = 'https://loja.aquario.com.br/cabo-coaxial-por-metro-linear-tipo-rgc-213/p'
   pi = copy.copy(pi_tmp)
-  pi.pdate = '2024-02-25'
+  pi.date = '2024-02-25'
   pi.openprice, pi.supplier = 14.9, 'Cross do Brasil'
   pi.url = 'https://www.crossdobrasil.com.br/cabos/cabo-coaxial-rgc213'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
-  pi.pdate = '2024-02-25'
+  pi.date = '2024-02-25'
   pi.openprice, pi.supplier = 12.9, 'Keraxstore'
   pi.url = 'https://www.keraxstore.com.br/cabo-coaxial-rgc213-50-ohms'
   prices.add_price_via_nm(pi.nmcode, pi)
@@ -430,12 +390,12 @@ def gather_data():
   pi.nmcode, pi.nm_alt = 12791677, None
   pi.fname = '21 conector fêmea cabo coaxial RG59 [USF 00907D] 12791677.xlsx'
   pi_tmp = copy.copy(pi)
-  pi.pdate = '2024-02-25'
+  pi.date = '2024-02-25'
   pi.openprice, pi.supplier = 9.49, 'Village Home Center BR'
   pi.url = 'https://www.villagehomecenter.com.br/conector-femea-de-rosca-rg59-para-cabo-coaxial-com-4-pecas-tblack/p'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
-  pi.pdate = '2024-02-25'
+  pi.date = '2024-02-25'
   pi.openprice, pi.supplier = 5.0, 'Comercial EletronSP'
   pi.url = 'https://www.comercialeletronsp.com.br/conector-f-keystone-para-cabo-coaxial-rg-59-rg-6-antena-femea-femea'
   prices.add_price_via_nm(pi.nmcode, pi)
@@ -449,12 +409,12 @@ def gather_data():
   pi.nmcode, nm_alt = 12790140, None
   pi.fname = '22 conector BNC macho RG59 [USM 000900-D] 12790140.xlsx'
   pi_tmp = copy.copy(pi)
-  pi.pdate = '2024-02-25'
+  pi.date = '2024-02-25'
   pi.openprice, pi.supplier = 5.7, 'Solução Cabos'
   pi.url = 'https://www.solucaocabos.com.br/conector-bnc-macho-rg59-compressao-pino-fixo/p'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
-  pi.pdate = '2024-02-25'
+  pi.date = '2024-02-25'
   pi.openprice, pi.supplier = 5.09, 'Loja Elétrica'
   pi.url = 'http://www.lojaeletrica.com.br/conector-bnc-macho-rg5962-com-rosca-cbn1110-quest,product,2170100680049,dept,0.aspx'
   prices.add_price_via_nm(pi.nmcode, pi)
@@ -468,12 +428,12 @@ def gather_data():
   pi.nmcode, nm_alt = 12787917, None
   pi.fname = '23 conector BNC macho RG58 [608005] 12787917.xlsx'
   pi_tmp = copy.copy(pi)
-  pi.pdate = '2024-02-25'
+  pi.date = '2024-02-25'
   pi.openprice, pi.supplier = 2.4, 'Ecotron'
   pi.url = 'https://www.ecotroncomponentes.com.br/componentes-eletronicos/conector-bnc-macho-50r-crimpar-rg58-twb108a-tower'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
-  pi.pdate = '2024-02-25'
+  pi.date = '2024-02-25'
   pi.openprice, pi.supplier = 2.8, 'MultComercial'
   pi.url = 'https://www.multcomercial.com.br/conector-bnc-macho-rg58-u-jl31085a-jiali.html'
   prices.add_price_via_nm(pi.nmcode, pi)
@@ -487,14 +447,14 @@ def gather_data():
   pi.nmcode, pi.nm_alt = 12787854, None
   pi.fname = '24 conector IEC fêmea reto [602000] 12787854.xlsx'
   pi_tmp = copy.copy(pi)
-  pi.pdate = '2024-02-25'
+  pi.date = '2024-02-25'
   pi.openprice, pi.supplier = 11.0, 'Cross do Brasil'
   pi.url = 'https://www.crossdobrasil.com.br/conectores/conector-iec-femea-reto-0-6x3-7-solda'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
-  pi.pdate = '2024-02-25'
-  pi.openprice, pi.supplier = 15.52, 'Magalu / Mult E-commerce'
-  pi.url = 'https://www.magazineluiza.com.br/conector-iec-169-13-tipo-1-6-5-6-femea-angular-cabo-painel-prensa-cabo-0-3-1-8-60318-gav-85-klc-multcomercial/p/'
+  pi.date = '2024-02-27'
+  pi.openprice, pi.supplier = 15.05, 'Magalu / Mult E-commerce'
+  pi.url = 'https://www.magazineluiza.com.br/conector-iec-169-13-tipo-1-6-5-6-femea-angular-cabo-painel-prensa-cabo-0-3-1-8-60318-gav-85-klc-multcomercial/p/ec2dkd2f2j/te/ppcl/'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2023-05-01'
@@ -506,12 +466,12 @@ def gather_data():
   pi.nmcode, pi.nm_alt = 12790072, None
   pi.fname = '25 conector mini-UHF macho p cc RG58 [USM 00304] 12790072.xlsx'
   pi_tmp = copy.copy(pi)
-  pi.pdate = '2024-02-25'
+  pi.date = '2024-02-25'
   pi.openprice, pi.supplier = 12.35, 'Rádio Componentes'
   pi.url = 'https://www.radiocomponentes.com.br/mc145436ap-mc145lc436p-freq-receiver-p858'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
-  pi.pdate = '2024-02-25'
+  pi.date = '2024-02-25'
   pi.openprice, pi.supplier = 17.9, 'Shop Antenas'
   pi.url = 'https://www.shopantenas.com.br/conector-mini-uhf-macho-solda-rg58-mini-motorola-ap0562'
   prices.add_price_via_nm(pi.nmcode, pi)
@@ -525,12 +485,12 @@ def gather_data():
   pi.nmcode, pi.nm_alt = 11762152, None
   pi.fname = '26 conector N fêmea angular p cc RG58 [CF-74] 11762152.xlsx'
   pi_tmp = copy.copy(pi)
-  pi.pdate = '2024-02-25'
+  pi.date = '2024-02-25'
   pi.openprice, pi.supplier = 33.34, 'Central Cabos'
   pi.url = 'https://www.centralcabos.com.br/conector-n-femea-rgc-58/p'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
-  pi.pdate = '2024-02-25'
+  pi.date = '2024-02-25'
   pi.openprice, pi.supplier = 25.0, 'Rádio Componentes'
   pi.url = 'https://www.radiocomponentes.com.br/conector-n-femea-prensa-cabo-rgc-rg58-cf-19-p840'
   prices.add_price_via_nm(pi.nmcode, pi)
@@ -544,7 +504,7 @@ def gather_data():
   pi.nmcode, pi.nm_alt = 12790046, None
   pi.fname = '27 conector N fêmea p cabo RG6 [USF 00013-C] 12790046.xlsx'
   pi_tmp = copy.copy(pi)
-  pi.pdate = '2024-02-25'
+  pi.date = '2024-02-25'
   pi.openprice, pi.supplier = 33.34, 'Village Home Center BR'
   pi.url = 'https://www.villagehomecenter.com.br/conector-femea-de-compressao-rg6-para-cabo-coaxial-com-4-pecas-tblack/p'
   prices.add_price_via_nm(pi.nmcode, pi)
@@ -558,14 +518,14 @@ def gather_data():
   pi.nmcode, pi.nm_alt = 12790421, None
   pi.fname = '28 conector N fêmea RGC213 [USF 00012-E] 12790421.xlsx'
   pi_tmp = copy.copy(pi)
-  pi.pdate = '2024-02-25'
+  pi.date = '2024-02-25'
   pi.openprice, pi.supplier = 15.9, 'Cross do Brasil'
   pi.url = 'https://www.crossdobrasil.com.br/conectores/conector-n-femea-reto-rgc213'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
-  pi.date = '2021-06-17'
-  pi.sapreq = 4511049320
-  pi.netprice, pi.currency = 26.18, 'BRL'
+  pi.date = '2024-02-27'
+  pi.openprice, pi.supplier = 39.8, 'Mercado Livre / Tolentino1'
+  pi.url = 'https://produto.mercadolivre.com.br/MLB-1460401056-conector-n-femea-prensa-cabo-para-cabo-rgc213-usf-12e-_JM'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2023-05-01'
@@ -577,9 +537,16 @@ def gather_data():
   pi.nmcode, nm_alt = 11717388, None
   pi.fname = '29 conector N F p Cabo Cellflex 1_2 [KLF-44] 11717388.xlsx'
   pi_tmp = copy.copy(pi)
-  pi.pdate = '2021-11-10'
-  pi.openprice, pi.supplier = 85.0, 'Ponto Eletrônico'
-  pi.url = 'http://pontoeletronicolojavirtual.com.br/'
+  pi.date = '2024-02-27'
+  pi.openprice, pi.supplier = 42.59, 'Bit Electronics'
+  pi.url = 'https://www.bitelectronics.com.br/telecomunicacao/conectores/conector-n-femea-p-cabo-cellflex-12-k'
+  prices.add_price_via_nm(pi.nmcode, pi)
+  pi = copy.copy(pi_tmp)
+  pi.date = '2024-02-27'
+  pi.openprice, pi.supplier = 59.40, 'Mercado Livre / STM Telecom'
+  pi.url = 'https://produto.mercadolivre.com.br/MLB-2853486875-5-conectores-cellflex-n-50-ohms-fmea-12-rigido-klf-44-_JM'
+  prices.add_price_via_nm(pi.nmcode, pi)
+  pi = copy.copy(pi_tmp)
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2023-05-01'
@@ -591,9 +558,14 @@ def gather_data():
   pi.nmcode, pi.nm_alt = 12792861, None
   pi.fname = '30 conector N F p cabo cellflex 7_8 [KLF-51] 12792861.xlsx'
   pi_tmp = copy.copy(pi)
-  pi.date = '2024-02-24'
+  pi.date = '2024-02-27'
   pi.openprice, pi.supplier = 76.21, 'Magalu / Bit Electronics'
-  pi.url = 'https://www.magazineluiza.com.br/conector-n-femea-p-cabo-cellflex-7-8-k-klc/p/dkhc4gca9k/te/ppcl/?&seller_id=bitelectronics&utm_source=google&utm_medium=pla&utm_campaign=&partner_id=73158&gad_source=1&gclid=EAIaIQobChMIpavb8p_FhAMVY0JIAB0IPQaOEAQYASABEgIA5_D_BwE&gclsrc=aw.ds'
+  pi.url = 'https://www.magazineluiza.com.br/conector-n-femea-p-cabo-cellflex-7-8-k-klc/p/dkhc4gca9k/te/ppcl/'
+  prices.add_price_via_nm(pi.nmcode, pi)
+  pi = copy.copy(pi_tmp)
+  pi.date = '2024-02-27'
+  pi.openprice, pi.supplier = 68.33, 'Bit Electronics'
+  pi.url = 'https://www.bitelectronics.com.br/telecomunicacao/conectores/conector-n-femea-p-cabo-cellflex-78-k'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2023-05-01'
@@ -605,19 +577,14 @@ def gather_data():
   pi.nmcode, nm_alt = 12791698, None
   pi.fname = '31 conector N fêmea reto p cc RG58 [USF 00013] 12791698.xlsx'
   pi_tmp = copy.copy(pi)
-  pi.date = '2021-03-27'
-  pi.sapreq = 4510854807
-  pi.netprice, pi.currency = 54.45, 'BRL'
+  pi.date = '2024-02-27'
+  pi.openprice, pi.supplier = 19.0, 'Rádio Componentes'
+  pi.url = 'https://www.radiocomponentes.com.br/conector-n-femea-reto-prensa-rg58-cf-3e-p1082'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
-  pi.date = '2021-05-14'
-  pi.sapreq = 4510957106
-  pi.netprice, pi.currency = 54.45, 'BRL'
-  prices.add_price_via_nm(pi.nmcode, pi)
-  pi = copy.copy(pi_tmp)
-  pi.date = '2021-06-17'
-  pi.sapreq = 4511049320
-  pi.netprice, currency = 23.41, 'BRL'
+  pi.date = '2024-02-27'
+  pi.openprice, pi.supplier = 17.9, 'Oficina dos Bits'
+  pi.url = 'https://www.oficinadosbits.com.br/produto/conector-n-femea-rgc-58-para-pigtail/'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2023-05-01'
@@ -629,9 +596,14 @@ def gather_data():
   pi.nmcode, pi.nm_alt = 12790074, None
   pi.fname = '32 conector N macho p RG58 [USM 00011-A] 12790074.xlsx'
   pi_tmp = copy.copy(pi)
-  pi.date = '2018-05-07'
-  pi.sapreq = 4508324084
-  pi.netprice, pi.currency = 18.15, 'BRL'
+  pi.date = '2024-02-27'
+  pi.openprice, pi.supplier = 15.0, 'Loja Integrada / Só Conectores'
+  pi.url = 'https://soconectores.lojaintegrada.com.br/conector-n-macho-de-crimp-rgc-58'
+  prices.add_price_via_nm(pi.nmcode, pi)
+  pi = copy.copy(pi_tmp)
+  pi.date = '2024-02-27'
+  pi.openprice, pi.supplier = 20.0, 'MultComercial'
+  pi.url = 'https://www.multcomercial.com.br/conector-n-50-ohms-macho-reto-cabo-crimpagem-rg-rgc-58-pino-solto-cm-4cr-gav-18-klc.html'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2023-05-01'
@@ -643,8 +615,9 @@ def gather_data():
   pi.nmcode, pi.nm_alt = 12787869, None
   pi.fname = '33 conector N macho p RG6 [CM-63] 12787869.xlsx'
   pi_tmp = copy.copy(pi)
-  pi.date = '2024-02-24'
-  pi.openprice, pi.supplier = 29.9, 'Magalu / Shop Antenas'
+  pi.date = '2024-02-27'
+  pi.openprice, pi.supplier = 16.9, 'Shopee / VP Telecom'
+  pi.url = 'https://shopee.com.br/Conector-Tnc-Macho-Reto-Para-Cabo-Rgc6-Tm-28-Klc-i.328080137.4587757884'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2023-05-01'
@@ -656,9 +629,14 @@ def gather_data():
   pi.nmcode, pi.nm_alt = 12790123, None
   pi.fname = '34 conector N Macho RGC213 [USM 00010-E] 12790123.xlsx'
   pi_tmp = copy.copy(pi)
-  pi.date = '2024-02-24'
-  pi.openprice, pi.supplier = 26.90, 'Aquário'
-  pi.url = 'https://loja.aquario.com.br/conector-plug-n-macho-para-cabo-rgc213/p?idsku=878&gad_source=1&gclid=EAIaIQobChMIvID6jqTFhAMVqgOtBh0KWgd4EAQYAiABEgKYgfD_BwE'
+  pi.date = '2024-02-27'
+  pi.openprice, pi.supplier = 26.9, 'Aquário'
+  pi.url = 'https://loja.aquario.com.br/conector-plug-n-macho-para-cabo-rgc213/p'
+  prices.add_price_via_nm(pi.nmcode, pi)
+  pi = copy.copy(pi_tmp)
+  pi.date = '2024-02-27'
+  pi.openprice, pi.supplier = 33.5, 'Net Computadores'
+  pi.url = 'https://netcomputadores.com.br/p/nmachorgc213-conector-nmacho-para-cabos/17615'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2023-05-01'
@@ -670,8 +648,14 @@ def gather_data():
   pi.nmcode, pi.nm_alt = 12787728, None
   pi.fname = '35 conector N M p cabo cellflex 1_2 [CM-23] 12787728.xlsx'
   pi_tmp = copy.copy(pi)
-  pi.date = '2021-11-10'
-  pi.openprice, pi.supplier = 29.18, 'Ponto Eletrônico'
+  pi.date = '2024-02-27'
+  pi.openprice, pi.supplier = 49.05, 'Shopee / STM Telecom'
+  pi.url = 'https://shopee.com.br/Conector-Cellflex-N-50-Ohms-Macho-1-2%27%27-Flex%C3%ADvel-Cm-23-i.1060572709.23696917485'
+  prices.add_price_via_nm(pi.nmcode, pi)
+  pi = copy.copy(pi_tmp)
+  pi.date = '2024-02-27'
+  pi.openprice, pi.supplier = 55.65, 'Mercado Livre / STM Telecom'
+  pi.url = 'https://produto.mercadolivre.com.br/MLB-2778721703-conector-cellflex-n-50-ohms-macho-12-flexivel-cm-23-_JM'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2023-05-01'
@@ -683,20 +667,14 @@ def gather_data():
   pi.nmcode, pi.nm_alt = 11474498, None
   pi.fname = '36 conector N M p cabo cellflex 7_8 [NM-LCF78-C02] 11474498.xlsx'
   pi_tmp = copy.copy(pi)
-  pi.date = '2021-11-10'
-  pi.openprice, pi.supplier = 141.9, 'Americanas'
+  pi.date = '2024-02-27'
+  pi.openprice, pi.supplier = 185.0, 'Broadcast Shop BR'
+  pi.url = 'https://www.broadcastshop.com.br/produtos/conector-cabo-7-8-n-macho-rfs-kmp-nm-lcf78-c02/'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
-  pi.date = '2021-11-10'
-  pi.openprice, pi.supplier = 122.9, 'Bit Electronics'
-  prices.add_price_via_nm(pi.nmcode, pi)
-  pi = copy.copy(pi_tmp)
-  pi.pdate = '2021-11-10'
-  pi.openprice, pi.supplier = 122.9, 'VHTelecom'
-  prices.add_price_via_nm(pi.nmcode, pi)
-  pi = copy.copy(pi_tmp)
-  pi.date = '2021-11-10'
-  pi.openprice, pi.supplier = 72.82, 'Bit Electronics'
+  pi.date = '2024-02-27'
+  pi.openprice, pi.supplier = 186.0, 'Ponto Eletrônico'
+  pi.url = 'https://www.pontoeletronicolojavirtual.com.br/produtos/conector-cabo-7-8-n-macho-rfs-kmp-nm-lcf78-c02/'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2023-05-01'
@@ -707,8 +685,14 @@ def gather_data():
   pi = PriceItem()
   pi.nmcode, nm_alt = 12791749, None
   pi.fname = '37 conector TNC fêmea p RG58 [USF 00108] 12791749.xlsx'
-  pi.date = '2021-11-10'
-  pi.openprice, pi.supplier = 15.0, 'Central Cabos'
+  pi.date = '2024-02-27'
+  pi.openprice, pi.supplier = 15.64, 'Shop Antena'
+  pi.url = 'https://www.shopantenas.com.br/radiocomunicacao/conectores/conector-tnc-femea-rg58-crimpagem-ap2221'
+  prices.add_price_via_nm(pi.nmcode, pi)
+  pi = copy.copy(pi_tmp)
+  pi.date = '2024-02-27'
+  pi.openprice, pi.supplier = 13.54, 'Central Cabos'
+  pi.url = 'https://www.centralcabos.com.br/conector-tnc-femea-rgc58-crimp/p'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2023-05-01'
@@ -744,14 +728,14 @@ def gather_data():
   pi.nmcode, nm_alt = 10999118, None
   pi.fname = '39 conector TNC macho p RG58 [TM-1] 10999118.xlsx'
   pi_tmp = copy.copy(pi)
-  pi.date = '2019-07-05'
-  pi.sapreq = 4509364725
-  pi.netprice, pi.currency = 7.9, 'BRL'
+  pi.date = '2024-02-27'
+  pi.openprice, pi.supplier = 15.2, 'MultComercial'
+  pi.url = 'https://www.multcomercial.com.br/conector-tnc-macho-reto-cabo-prensa-cabo-rg-58-rgc-58-tm-1-gav-92-klc.html'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
-  pi.date = '2019-03-14'
-  pi.sapreq = 4509085032
-  pi.netprice, pi.currency = 7.9, 'BRL'
+  pi.date = '2024-02-27'
+  pi.openprice, pi.supplier = 15.35, 'Pradosom'
+  pi.url = 'https://www.pradosom.com.br/telefonia-e-radio/acessorios/conector-tnc-macho-reto-psoldar-tm-1-rgc58-klc'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2023-05-01'
@@ -763,17 +747,14 @@ def gather_data():
   pi.nmcode, nm_alt = 11766051, None
   pi.fname = '40 conector TNC macho p RGC213 [TM-10] 11766051.xlsx'
   pi_tmp = copy.copy(pi)
-  pi.date = '2018-05-07'
-  pi.sapreq = 4508498381
-  pi.netprice, pi.currency = 12.52, 'BRL'
+  pi.date = '2024-02-27'
+  pi.openprice, pi.supplier = 27.9, 'Ecotron Componentes'
+  pi.url = 'https://www.ecotroncomponentes.com.br/componentes-eletronicos/conectores/conector-tnc-macho-rg-rgc213-tm-10-15816'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
-  pi.date = '2021-11-10'
+  pi.date = '2024-02-27'
   pi.openprice, pi.supplier = 22.0, 'Rádio Componentes'
-  prices.add_price_via_nm(pi.nmcode, pi)
-  pi = copy.copy(pi_tmp)
-  pi.date = '2021-11-10'
-  pi.openprice, pi.supplier = 30.48, 'Net Computadores'
+  pi.url = 'https://www.radiocomponentes.com.br/conector-tnc-macho-prensa-cabo-rgc-rg213-tm-10-p1124'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2023-05-01'
@@ -797,18 +778,11 @@ def gather_data():
   # NM 42
   pi = PriceItem()
   pi.nmcode, nm_alt = 12787926, None
-  pi.fname = '42 divisor combinador sbfx 800-900MHz term N fêmea [PS727-02-BB] 12787926.xlsx'
+  pi.fname = '42 divisor potência faixa 800-900MHz tipo-N fêmea [PS727-02-BB] 12787926.xlsx'
   pi_tmp = copy.copy(pi)
-  pi.date = '2021-11-01'
-  pi.openprice, pi.supplier = 14.9, 'Rádio Componentes'
-  prices.add_price_via_nm(pi.nmcode, pi)
-  pi = copy.copy(pi_tmp)
-  pi.pdate = '2021-11-10'
-  pi.openprice, pi.supplier = 22.9, 'Scky Tecc'
-  prices.add_price_via_nm(pi.nmcode, pi)
-  pi = copy.copy(pi_tmp)
-  pi.date = '2021-11-10'
-  pi.openprice, pi.supplier = 20.9, 'Ponto Eletrônico'
+  pi.date = '2024-02-27'
+  pi.openprice, pi.supplier = 396.13, 'VH Telecom'
+  pi.url = 'https://vhtelecom.lojaintegrada.com.br/DIVISOR-SPLITTER-1_2-700-2700MHZ-140DBC-IP65-VHT'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2023-05-01'
@@ -820,24 +794,9 @@ def gather_data():
   pi.nmcode, nm_alt = 12787945, None
   pi.fname = '43 acoplador direcional F p cc 10dB [DC3827-8_10-B] 12787945.xlsx'
   pi_tmp = copy.copy(pi)
-  pi.date = '2018-02-09'
-  pi.sapreq = 4508185302
-  pi.netprice, pi.currency = 2404.88, 'BRL'
-  prices.add_price_via_nm(pi.nmcode, pi)
-  pi = copy.copy(pi_tmp)
-  pi.date = '2018-02-09'
-  pi.sapreq = 4508185302
-  pi.netprice, pi.currency = 2404.88, 'BRL'
-  prices.add_price_via_nm(pi.nmcode, pi)
-  pi = copy.copy(pi_tmp)
-  pi.date = '2018-02-08'
-  pi.sapreq = 4508185027
-  pi.netprice, pi.currency = 2177.09, 'BRL'
-  prices.add_price_via_nm(pi.nmcode, pi)
-  pi = copy.copy(pi_tmp)
-  pi.date = '2021-02-26'
-  pi.sapreq = 4510794556
-  pi.netprice, pi.currency = 1790.0, 'BRL'
+  pi.date = '2024-02-26'
+  pi.openprice, pi.supplier = 80.83, 'Amazon / Daji-Direct'
+  pi.url = 'https://www.amazon.com.br/Acoplador-Direcional-800MHz-2500MHz-Manuseamento-Imped%C3%A2ncia/dp/B0C4Z3XZCN'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2023-05-01'
@@ -849,14 +808,9 @@ def gather_data():
   pi.nmcode, nm_alt = 12787904, None
   pi.fname = '44 acoplador direcional F p cc 6dB [DC3827-05_07-B] 12787904.xlsx'
   pi_tmp = copy.copy(pi)
-  pi.date = '2019-07-25'
-  pi.sapreq = 4510794556
-  pi.netprice, pi.currency = 2677.12, 'BRL'
-  prices.add_price_via_nm(pi.nmcode, pi)
-  pi = copy.copy(pi_tmp)
-  pi.date = '2018-02-09'
-  pi.sapreq = 4508478416
-  pi.netprice, pi.currency = 2976.6, 'BRL'
+  pi.date = '2024-02-26'
+  pi.openprice, pi.supplier = 80.83, 'Amazon / Daji-Direct'
+  pi.url = 'https://www.amazon.com.br/Acoplador-Direcional-800MHz-2500MHz-Manuseamento-Imped%C3%A2ncia/dp/B0C4Z3XZCN'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2023-05-01'
@@ -868,14 +822,9 @@ def gather_data():
   pi.nmcode, nm_alt = 12787906, None
   pi.fname = '45 acoplador direcional F p cc 20dB [DC3827-20-B] 12787906.xlsx'
   pi_tmp = copy.copy(pi)
-  pi.date = '2018-02-09'
-  pi.sapreq = 4508185302
-  pi.netprice, pi.currency = 2404.88, 'BRL'
-  prices.add_price_via_nm(pi.nmcode, pi)
-  pi = copy.copy(pi_tmp)
-  pi.date = '2018-02-09'
-  pi.sapreq = 4508185027
-  pi.netprice, pi.currency = 2177.09, 'BRL'
+  pi.date = '2024-02-26'
+  pi.openprice, pi.supplier = 80.83, 'Amazon / Daji-Direct'
+  pi.url = 'https://www.amazon.com.br/Acoplador-Direcional-800MHz-2500MHz-Manuseamento-Imped%C3%A2ncia/dp/B0C4Z3XZCN'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2023-05-01'
@@ -887,14 +836,9 @@ def gather_data():
   pi.nmcode, nm_alt = 12787907, None
   pi.fname = '46 acoplador direcional F p cc 30dB [DC3827-30-B] 12787907.xlsx'
   pi_tmp = copy.copy(pi)
-  pi.date = '2018-02-09'
-  pi.sapreq = 4508185302
-  pi.netprice, pi.currency = 2404.88, 'BRL'
-  prices.add_price_via_nm(pi.nmcode, pi)
-  pi = copy.copy(pi_tmp)
-  pi.date = '2018-02-09'
-  pi.sapreq = 4508185027
-  pi.netprice, pi.currency = 2177.09, 'BRL'
+  pi.date = '2024-02-26'
+  pi.openprice, pi.supplier = 80.83, 'Amazon / Daji-Direct'
+  pi.url = 'https://www.amazon.com.br/Acoplador-Direcional-800MHz-2500MHz-Manuseamento-Imped%C3%A2ncia/dp/B0C4Z3XZCN'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2023-05-01'
