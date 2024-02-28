@@ -60,8 +60,6 @@ def get_df_from_xlsx_ppubase():
   df = pd.read_excel(ppubase_filepath)
   return df
 
-
-
 def adhoctest():
   pass
 

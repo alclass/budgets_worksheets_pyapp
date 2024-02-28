@@ -26,14 +26,15 @@ def show_filenames_check():
   print('nms_from_prices', prices.size, 'nms_from_filenames', len(nms_from_filenames))
 
 
-def show_prices_as_df():
+def show_prices_as_df_or_prettyprint():
   prices = pdd.gather_data()
-  prices.show_prices_as_pandas_df()
+  # prices.show_prices_as_pandas_df()
+  prices.show_prices_as_prettyprint()
 
 
 def process():
   # list_prices()
-  show_prices_as_df()
+  show_prices_as_df_or_prettyprint()
 
 
 if __name__ == '__main__':

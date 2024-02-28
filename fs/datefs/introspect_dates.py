@@ -23,6 +23,32 @@ DEFAULT_DATE_SEPARATOR = '-'
 ORDERPOS_TOKENS_AVAILABLE = ['ymd', 'ydm', 'dmy', 'mdy']
 
 
+def make_date_or_none(pdate):
+  if pdate is None:
+    return None
+  try:
+    sdate = str(pdate).strip(' \t\r\n')
+    sdate = sdate.split(' ')[0]
+    pp = sdate.split('-')
+    year = int(pp[0])
+    month = int(pp[1])
+    day = 1
+    if len(pp) > 2:
+      day = int(pp[2])
+    odate = datetime.date(year=year, month=month, day=day)
+    return odate
+  except (IndexError, TypeError, ValueError):
+    pass
+  return None
+
+
+def make_date_or_today(pdate):
+  odate = make_date_or_none(pdate)
+  if odate is None:
+    return datetime.date.today()
+  return odate
+
+
 def convert_date_to_strmmddyyyy_or_none_opt_sep_zfill(pdate, sep='/', zfill=None):
   target_posorder = 'mdy'
   # strdate
@@ -35,12 +61,6 @@ def convert_date_to_strmmddyyyy_or_itsreprtoday_opt_sep_zfill(pdate, sep='/', zf
     return strdate
   today = datetime.date.today()
   return convert_date_to_strmmddyyyy_or_none_opt_sep_zfill(today, sep, zfill)
-
-
-def convert_date_to_strmmddyyyy_or_none_opt_sep_zfill(pdate, sep='/', zfill=None):
-  target_posorder = 'mdy'
-  # strdate
-  return form_strdate_w_date_sep_posorder_opt_zfill(pdate, sep, target_posorder, zfill)
 
 
 def convert_date_to_strmmddyyyy_or_itsreprtoday_opt_sep_zfill(pdate, sep='/', zfill=0):

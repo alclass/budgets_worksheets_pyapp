@@ -40,15 +40,22 @@ class ExchangeRateDate(Base):
   def quote_as_datetime(self):
     if self.refdate is None:
       return None
-    return datetime.datetime(
+    dt = datetime.datetime(
       self.refdate.year,
       self.refdate.month,
-      self.refdate.day,
-      self.quotestime.hour,
-      self.quotestime.minute,
-      self.quotestime.second,
-      self.quotestime.microsecond
+      self.refdate.day
     )
+    if self.quotestime:
+      dt = datetime.datetime(
+        self.refdate.year,
+        self.refdate.month,
+        self.refdate.day,
+        self.quotestime.hour,
+        self.quotestime.minute,
+        self.quotestime.second,
+        self.quotestime.microsecond,
+      )
+    return dt
 
   @quote_as_datetime.setter
   def quote_as_datetime(self, pdatetime):

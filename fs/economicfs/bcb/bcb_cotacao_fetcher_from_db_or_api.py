@@ -197,7 +197,7 @@ class BCBCotacaoFetcher:
   def pop_dates_n_try_find_cotacao(self):
     if len(self.dates_stack) > 0:
       self.target_date = self.dates_stack.pop()
-      print('Popped date', self.target_date)
+      # print('Popped date', self.target_date)
       namedtuple_cotacao = self.verify_date_n_try_find_its_corresponding_cotacao()
       if namedtuple_cotacao is None:
         return self.pop_dates_n_try_find_cotacao()  # recurse until at most dates_stack gets empty

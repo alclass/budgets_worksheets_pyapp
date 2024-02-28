@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-models/budgets/pb/read_ppubase_from_xlsx.py
+models/budgets/pb/insert_ppubase_from_xlsx_to_db.py
 
 import os
 import pandas as pd
@@ -25,6 +25,10 @@ class Insertor:
     self.cursor = None
     self.n_inserted = 0
     self.seq = 0
+    self.df = None
+    self.set_df_from_xlsx_ppubase()
+
+  def set_df_from_xlsx_ppubase(self):
     self.df = dbs.get_df_from_xlsx_ppubase()
     self.reset_column_names()
 

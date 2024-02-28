@@ -179,6 +179,7 @@ def call_api_bcb_cotacao_dolar_on_date(pdate, connection_error_raised=0):
     gen_msg = 'BCB API day with no quotes'
     print('msg', gen_msg, 'date', refdate, 'result dict', resdict)
     res_bcb_api = namedtuple_bcb_api1(
+      curr_num=sett.CURR_BRL, curr_den=sett.CURR_USD,
       cotacao_compra=None, cotacao_venda=None, cotacao_datahora=None,
       param_date=refdate,
       error_msg=None, gen_msg=gen_msg,
