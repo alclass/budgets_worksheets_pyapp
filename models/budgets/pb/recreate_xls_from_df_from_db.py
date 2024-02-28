@@ -4,9 +4,7 @@ models/budgets/pb/recreate_xls_from_df_from_db.py
   Reads data from db, translate them to a pandas DataFrame, writes them to a xls file.
 """
 import sqlite3
-
 import pandas as pd
-
 import models.budgets.pb.db_n_file_settings as dbs  # for dbs.get_orcdados_folderpath
 
 

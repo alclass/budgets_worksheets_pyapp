@@ -237,8 +237,10 @@ class MonetCorrCalculator:
     This factor-component is: 1 + cpi_var_ratio
     """
     if self.are_both_cpi_n_exrate_available():
-      return 1 + self.cpi_var_ratio
-    return None
+      cpi_ratio = self.cpi_var_ratio
+      if cpi_ratio:
+        return 1 + cpi_ratio
+    return 1
 
   @property
   def exrate_var_ratio(self):

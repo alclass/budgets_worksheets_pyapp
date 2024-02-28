@@ -7,9 +7,10 @@ commands/fetch/verify_n_update_local_cpi_db.py
 import datetime
 from dateutil.relativedelta import relativedelta
 import fs.datefs.years_date_functions as dtfs
+import fs.datefs.refmonths_mod as rmfs
 import commands.fetch.cpi.read_cpis_from_db as cpi  # .get_last_available_cpi_n_refmonth_fromdb_by_series
 import commands.fetch.cpi.bls_cpi_api_fetcher as cftch  # .CPIFetcher
-MIN_REFMONTHS_ELAPSED_FOR_A_NEW_REMOTE_FETCH = 3
+MIN_REFMONTHS_ELAPSED_FOR_A_NEW_REMOTE_FETCH = 1
 
 
 class Verifier:
@@ -31,7 +32,7 @@ class Verifier:
   @property
   def current_refmonthdate(self):
     if self._current_refmonthdate is None:
-      self._current_refmonthdate = dtfs.make_refmonthdate_or_none(self.today)
+      self._current_refmonthdate = rmfs.make_refmonthdate_or_none(self.today)
       if self._current_refmonthdate is None:
         error_msg = 'Error: current refmonthdate was not derived from %s' % str(self.today)
         raise ValueError(error_msg)
@@ -45,10 +46,10 @@ class Verifier:
                  f' ie {self.mostrecent_refmonthdate_in_db}')
       print(scr_msg)
     else:
-      self.mostrecent_refmonthdate_in_db = dtfs.make_refmonthdate_or_none(self.mostrecent_refmonthdate_in_db)
+      self.mostrecent_refmonthdate_in_db = rmfs.make_refmonthdate_or_none(self.mostrecent_refmonthdate_in_db)
 
   def verify_more_than_one_refmonth(self):
-    current_refmonthdate = dtfs.make_refmonthdate_or_current(self.today)
+    current_refmonthdate = rmfs.make_refmonthdate_or_current(self.today)
     reladelt = relativedelta(current_refmonthdate, self.mostrecent_refmonthdate_in_db)
     self.n_months_elapsed = 12 * reladelt.years + reladelt.months
 

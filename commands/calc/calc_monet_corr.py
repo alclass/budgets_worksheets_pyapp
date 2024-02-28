@@ -222,8 +222,8 @@ def adhoctest2():
   """
   -dl "2023-05-20" "2023-06-21"
   calc_monet_corr_between_datelist_n_mostrecent(args.datelist)
-  yearini = 2020
-  yearfim = 2022
+    yearini = 2020
+    yearfim = 2022
   # read_yearrange_from_db(yearini, yearfim)
   calc_monet_corr_between_datelist_n_mostrecent(args.datelist)
   """

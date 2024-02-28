@@ -252,6 +252,17 @@ def get_all_cpis_n_refmonths_from_db_as_dataframe(p_seriesid=None):
   return df
 
 
+def adhoctest1():
+  for seriesid in available_cpi_seriesid_list:
+    print('seriesid', seriesid)
+    baselineindex, refmonthdate = get_last_available_cpi_n_refmonth_fromdb_by_series(seriesid)
+    scr_msg = f"\t refmonth={refmonthdate} => idx={baselineindex:.4f} (last available)"
+    print(scr_msg)
+    baselineindex, refmonthdate = get_cpi_baselineindex_for_refmonth_m2_in_db(refmonthdate, seriesid)
+    scr_msg = f"\t refmonth={refmonthdate} => idx={baselineindex:.4f} (M2 ie Month-minus-2)"
+    print(scr_msg)
+
+
 def adhoctest2():
   """
   df = get_all_cpis_n_refmonths_from_db_as_dataframe()
@@ -275,15 +286,11 @@ def adhoctest2():
   print('n rows', df.shape[0])
 
 
-def adhoctest():
-  for seriesid in available_cpi_seriesid_list:
-    print('seriesid', seriesid)
-    baselineindex, refmonthdate = get_last_available_cpi_n_refmonth_fromdb_by_series(seriesid)
-    scr_msg = f"\t{refmonthdate} => {baselineindex:.4f}"
-    print(scr_msg)
-    baselineindex, refmonthdate = get_cpi_baselineindex_for_refmonth_m2_in_db(refmonthdate, seriesid)
-    scr_msg = f"\t{refmonthdate} => {baselineindex:.4f}"
-    print(scr_msg)
+def adhoctest3():
+  refmonthdate = '2023-10-01'
+  res = get_cpi_baselineindex_for_refmonth_in_db(refmonthdate)
+  scrmsg = f'get_cpi_baselineindex_for_refmonth_in_db({refmonthdate}) => {res}'
+  print(scrmsg)
 
 
 def process():
@@ -293,6 +300,8 @@ def process():
 if __name__ == '__main__':
   """
   process()
-  adhoctest()
-  """
   adhoctest2()
+  adhoctest1()
+  """
+  adhoctest3()
+

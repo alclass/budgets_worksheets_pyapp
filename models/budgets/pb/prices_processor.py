@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-"""
+models/budgets/pb/prices_processor.py
+
 import copy
 import os
-
+"""
 import pandas
 import commands.show.corr_monet_n_indices_calculator_from_dates as cmc  # cmc.CorrMonetWithinDatesCalculator
 
@@ -141,8 +142,6 @@ class PriceItem:
       'sapreq': self.sapreq,
     }
     return pdict
-
-
 
   def __str__(self):
     outstr = f"""

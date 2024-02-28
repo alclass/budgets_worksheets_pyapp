@@ -4,6 +4,7 @@ models/budgets/pb/price_data_as_dict.py
 
 """
 import copy
+import os
 from models.budgets.pb.prices_processor import PriceItem
 from models.budgets.pb.prices_processor import Prices
 from models.budgets.pb.prices_processor import show_qtd_of_prices_per_nm
@@ -18,9 +19,14 @@ def gather_data():
   pi.nmcode, pi.nm_alt = 10668440, None
   pi.fname = '01 centelhador fêmea-fêmea p cc [A002] 10668440.xlsx'
   pi_tmp = copy.copy(pi)
-  pi.date = '2019-08-15'
+  pi.date = '2024-02-27'
   pi.openprice, pi.supplier = 72.59, 'Mercado Livre / Comunicação10'
   pi.url = 'https://produto.mercadolivre.com.br/MLB-3115630592-centelhador-n-fmea-x-n-fmea-reto-painel-surto-_JM'
+  prices.add_price_via_nm(pi.nmcode, pi)
+  pi = copy.copy(pi_tmp)
+  pi.date = '2024-02-27'
+  pi.openprice, pi.supplier = 69.0, 'Tolentino Radiocomunicação'
+  pi.url = 'https://www.tolentinoradiocomunicacao.com.br/index.php?route=product/product&product_id=319'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2023-05-01'
@@ -32,6 +38,11 @@ def gather_data():
   pi.nmcode, pi.nm_alt = 12790478, None
   pi.fname = '02 Conjunto de aterramento cellflex1_2 [601] 12790478.xlsx'
   pi_tmp = copy.copy(pi)
+  pi.date = '2024-02-24'
+  pi.openprice, pi.supplier = 128.6, 'Ponto Eletrônico'
+  pi.url = 'https://www.pontoeletronicolojavirtual.com.br/produtos/conjunto-de-aterramento-para-cabo-de-rg-213-rfs-kmp/'
+  prices.add_price_via_nm(pi.nmcode, pi)
+  pi = copy.copy(pi_tmp)
   pi.date = '2019-08-15'
   pi.sapreq = 4509486915
   pi.netprice, pi.currency = 89.44, 'BRL'
@@ -47,7 +58,7 @@ def gather_data():
   pi.fname = '03 Conjunto de aterramento cellflex7_8 [512455] 12788990.xlsx'
   pi_tmp = copy.copy(pi)
   pi.date = '2024-02-24'
-  pi.openprice, pi.supplier = 168.80, 'Ponto Eletrônico'
+  pi.openprice, pi.supplier = 168.8, 'Ponto Eletrônico'
   pi.url = 'https://www.pontoeletronicolojavirtual.com.br/produtos/conjunto-de-aterramento-para-cabo-de-rg-213-rfs-kmp/'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
@@ -169,12 +180,12 @@ def gather_data():
   pi.fname = '09 adaptador cabo coaxial [KLC-19] 11642768.xlsx'
   pi_tmp = copy.copy(pi)
   pi.date = '2024-02-27'
-  pi.penprice, pi.supplier = 36.8, 'Ponto Eletrônico'
+  pi.openprice, pi.supplier = 36.8, 'Ponto Eletrônico'
   pi.url = 'https://www.pontoeletronicolojavirtual.com.br/produtos/adaptador-n-macho-x-femea-tnc-klc-klc-19/'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2024-02-27'
-  pi.penprice, pi.supplier = 32.6, 'Mercado Livre / STM Telecom'
+  pi.openprice, pi.supplier = 32.6, 'Mercado Livre / STM Telecom'
   pi.url = 'https://produto.mercadolivre.com.br/MLB-2778718223-adaptador-converso-reto-n-50-ohms-macho-x-tnc-fmea-klc-19-_JM'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
@@ -188,12 +199,12 @@ def gather_data():
   pi.fname = '10 adaptador cabo coaxial [KA-1] 10394994.xlsx'
   pi_tmp = copy.copy(pi)
   pi.date = '2024-02-27'
-  pi.penprice, pi.supplier = 20.0, 'MultComercial'
+  pi.openprice, pi.supplier = 20.0, 'MultComercial'
   pi.url = 'https://www.multcomercial.com.br/adaptador-uhf-femea-x-femea-reto-ka-1-gav-97-klc.html'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2024-02-27'
-  pi.penprice, pi.supplier = 16.9, 'Rádio Componentes'
+  pi.openprice, pi.supplier = 16.9, 'Rádio Componentes'
   pi.url = 'https://www.radiocomponentes.com.br/adaptador-uhf-femea-x-femea-emenda-para-cabo-rg-58-rg-213-p467'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
@@ -207,12 +218,12 @@ def gather_data():
   pi.fname = '11 adaptador cabo coaxial [KLC-2] 11718061.xlsx'
   pi_tmp = copy.copy(pi)
   pi.date = '2024-02-27'
-  pi.penprice, pi.supplier = 22.0, 'Rádio Componentes'
+  pi.openprice, pi.supplier = 22.0, 'Rádio Componentes'
   pi.url = 'https://www.radiocomponentes.com.br/adaptador-bnc-femea-x-n-macho-p585'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2024-02-27'
-  pi.penprice, pi.supplier = 19.01, 'Shop Antena'
+  pi.openprice, pi.supplier = 19.01, 'Shop Antena'
   pi.url = 'https://www.shopantenas.com.br/conectores/adaptadores/conversao-entre-series/adaptador-de-conversao-reto-n-50-ohms-macho-x-bnc-50-ohms-femea-klc-2'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
