@@ -161,12 +161,12 @@ def gather_data():
   pi.fname = '08 adaptador cabo coaxial [KLC-18] 11642305.xlsx'
   pi_tmp = copy.copy(pi)
   pi.date = '2024-02-24'
-  pi.opengrossprice, supplier = 27.0, 'Rádio Componentes'
+  pi.opengrossprice, pi.supplier = 27.0, 'Rádio Componentes'
   pi.url = 'https://www.radiocomponentes.com.br/adaptador-de-conversao-n-femea-x-tnc-macho-klc-18-p1084'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2024-02-24'
-  pi.opengrossprice, supplier = 36.67, 'Magalu / MultComercial'
+  pi.opengrossprice, pi.supplier = 36.67, 'Magalu / MultComercial'
   pi.url = 'https://www.magazineluiza.com.br/adaptador-macho-tnc-reto-e-femea-n-klc-18-gav-134-klc-multcomercial/p/cbckj24gje/ga/otga/'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
@@ -694,6 +694,7 @@ def gather_data():
   pi = PriceItem()
   pi.nmcode, nm_alt = 12791749, None
   pi.fname = '37 conector TNC fêmea p RG58 [USF 00108] 12791749.xlsx'
+  pi_tmp = copy.copy(pi)
   pi.date = '2024-02-27'
   pi.opengrossprice, pi.supplier = 15.64, 'Shop Antena'
   pi.url = 'https://www.shopantenas.com.br/radiocomunicacao/conectores/conector-tnc-femea-rg58-crimpagem-ap2221'
@@ -1045,6 +1046,7 @@ def gather_data():
   pi.netprice, pi.currency =  334.95, 'BRL'
   prices.add_price_via_nm(pi.nmcode, pi)
   # NM 58
+  pi = PriceItem()
   pi.nmcode, nm_alt = 12788214, None
   pi.fname = '58 divisor de potência RF1_4 [PS447-04-B] 12788214.xlsx'
   pi_tmp = copy.copy(pi)

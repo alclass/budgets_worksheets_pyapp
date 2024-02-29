@@ -11,57 +11,10 @@ import pandas
 import prettytable
 import commands.show.corr_monet_n_indices_calculator_from_dates as cmc  # cmc.CorrMonetWithinDatesCalculator
 import fs.datefs.introspect_dates as idt
-PIS_DEFAULT = 0.0165
-COFINS_DEFAULT = 0.076
-ICMS_DEFAULT = 0.04
-IPI_DEFAULT = 0.0325
+import models.budgets.pb.nm_metadata_fetcher as nmi  # nmi.AllNMsInfo
+import models.budgets.pb.net_gross_prices as ngp  # ngp.NetNGrossPrice
+ICMS_GROSS_TO_NET = 0.16
 
-
-def calc_fator_basecalc_p_pis_cofins(cofins=None, pis=None):
-  pis = PIS_DEFAULT if pis is None else pis
-  cofins = COFINS_DEFAULT if cofins is None else cofins
-  pis_cofins_basecalc = 1 / (1 - (pis+cofins))
-  return pis_cofins_basecalc
-
-
-def calc_fator_basecalc_p_ipi(cofins=None, icms=None, ipi=None, pis=None):
-  pis_cofins_basecalc = calc_fator_basecalc_p_pis_cofins(cofins=cofins, pis=pis)
-  icms = ICMS_DEFAULT if icms is None else icms
-  ipi = IPI_DEFAULT if ipi is None else ipi
-  ipi_fator_base = pis_cofins_basecalc / (1 - (icms*(1+ipi)))
-  return ipi_fator_base
-
-
-def calc_fator_basecalc_p_icms(cofins=None, icms=None, ipi=None, pis=None):
-  pis = PIS_DEFAULT if pis is None else pis
-  cofins = COFINS_DEFAULT if cofins is None else cofins
-  ipi = IPI_DEFAULT if ipi is None else ipi
-  icms = ICMS_DEFAULT if icms is None else icms
-  pis_cofins_basecalc = calc_fator_basecalc_p_pis_cofins(cofins=cofins, pis=pis)
-  ipi_fator_base = calc_fator_basecalc_p_ipi(cofins=cofins, icms=icms, ipi=ipi, pis=pis)
-  normvalue_ipi = ipi * ipi_fator_base
-  fator_basecalc_p_icms = ipi_fator_base + normvalue_ipi
-  return fator_basecalc_p_icms
-
-
-def calc_factor_net_to_gross_price(cofins=None, icms=None, ipi=None, pis=None):
-  """
-  Obs: all factors are calculated "normalizedly", ie when initial price is 1
-  """
-  pis = PIS_DEFAULT if pis is None else pis
-  cofins = COFINS_DEFAULT if cofins is None else cofins
-  ipi = IPI_DEFAULT if ipi is None else ipi
-  icms = ICMS_DEFAULT if icms is None else icms
-  v_pis_cofins = (pis + cofins) * calc_fator_basecalc_p_pis_cofins(cofins=cofins, pis=pis)
-  v_ipi = ipi * calc_fator_basecalc_p_ipi(cofins=cofins, icms=icms, ipi=ipi, pis=pis)
-  v_icms = icms * calc_fator_basecalc_p_icms(cofins=cofins, icms=icms, ipi=ipi, pis=pis)
-  factor_net_to_full_price = 1 + v_pis_cofins + v_ipi + v_icms
-  return factor_net_to_full_price
-
-
-def calc_factor_gross_to_net_price(cofins=None, icms=None, ipi=None, pis=None):
-  inverse_factor = 1 / calc_factor_net_to_gross_price(cofins=cofins, icms=icms, ipi=ipi, pis=pis)
-  return inverse_factor
 
 def show_qtd_of_prices_per_nm(prices):
   n_tot_prices = 0
@@ -104,11 +57,11 @@ class Prices:
     return output_tuplelist
 
   def calc_avg_netprice_of_nm(self, nmcode):
-    pis = self.nn_n_priceitemlist_dict[nmcode]
+    priceitems_per_nm = self.nn_n_priceitemlist_dict[nmcode]
     avg_netprice = 0.0
-    for pi in pis:
-      avg_netprice += pi.calc_netprice
-    avg_netprice = avg_netprice / len(pis)
+    for pi in priceitems_per_nm:
+      avg_netprice += pi.mone_corr_netprice
+    avg_netprice = avg_netprice / len(priceitems_per_nm)
     return avg_netprice
 
   def print_allprices_per_nm(self):
@@ -138,16 +91,40 @@ class Prices:
         date, mone_corr netprice, supplier, url, fname, sapreq
     """
     column_names = PriceItem.get_stat_col_list_for_pi()
-    nms = sorted(self.nn_n_priceitemlist_dict.keys())
+    # nms = sorted(self.nn_n_priceitemlist_dict.keys())
+    nms = self.nn_n_priceitemlist_dict.keys()
     for nm in nms:
       priceitems = self.nn_n_priceitemlist_dict[nm]
       price_meta = priceitems[0]
       print('='*40)
-      print('NM:', price_meta.nmcode, 'total of prices:', len(priceitems))
+      nm = price_meta.nmcode
+      seq = price_meta.seq
+      pn = price_meta.partnumber
+      hline1 = f"seq: | {seq} | NM: | {nm} | part-number: | {pn} | descrição: | {price_meta.description}"
+      print(hline1)
+      n_prices = len(priceitems)
+      family = price_meta.familycode
+      ncm = price_meta.ncmcode
+      ipi = price_meta.ipi
+      fabr = price_meta.manufacturer_sname
+      ft_bru_a_liq = price_meta.factor_grossprice_to_net
+      hline2 = (f"NCM: | {ncm} | IPI: | {ipi:.4f} | família: | {family} | fabricante: | {fabr}"
+                f" | fator brut-a-líq: | {ft_bru_a_liq:.4f}")
+      print(hline2)
+      fname = price_meta.fname
+      hline3 = f"nome de arquivo com as printscreens comprovantes: | [{fname}]"
+      print(hline3)
       pt = prettytable.PrettyTable(column_names)
       for pi in priceitems:
         pt.add_row(pi.values_in_listorder_pi())
       print(pt)
+      qty = price_meta.qty
+      tipounid = price_meta.meas_unit
+      avgprice = self.calc_avg_netprice_of_nm(nm)
+      totalprice = avgprice * qty
+      fline1 = (f"nº de preços (amostra):  | {n_prices} | preço-médio:| {avgprice:.2f} | por {tipounid}"
+                f" | quant.: | {qty} | preço líquido total do item: | {totalprice:.2f}")
+      print(fline1)
     # return df.to_string()
 
 
@@ -161,11 +138,11 @@ class PriceItem:
   ]
   column_names_for_pi = [
     'date', 'calc_netprice', 'mone_corr_mult_fact', 'mone_corr_netprice',
-    'supplier',   'sapreq',  'url',   'fname',
+    'supplier',   'sapreq',  'url',
   ]
 
   def __init__(self):
-    self.seq = None  # a sequencial number
+    self._seq = None  # a sequencial number
     self.nmcode = None  # the material item code
     self.nm_alt = None  # an alternative material item code
     self._date = None  # price date
@@ -173,14 +150,96 @@ class PriceItem:
     self._meas_unit = self.meas_unit_default  # unit price unit-type: unit, metro, kg
     self.opengrossprice = None  # openprice is a full price informed in general in a webpage
     self.currency = 'BRL'  # money currency in its 3-letter code (example: 'BRL' Brazilian Reais)
-    self._factor_price_to_netprice = None
+    self._factor_grossprice_to_net = None
     self._calc_netprice = None  # this is needed when the openprice exists, not the netprice itself
     self._mone_corr_mult_fact = None  # monetary correction multiplication factor
     self._mone_corr_netprice = None  # this is the work netprice, monetarily corrected if needed
-    self.supplier = None  # the vendor or supplier
-    self.url = None  # url of price if openprice
+    self._supplier = None  # the vendor or supplier
+    self._url = None  # url of price if openprice
     self.fname = None  # xlsx data filename
-    self.sapreq = None  # if price comes from a pedido-sap, this number comes in here
+    self._sapreq = None  # if price comes from a pedido-sap, this number comes in here
+    self.nminfo = nmi.AllNMsInfo()
+
+  @property
+  def seq(self):
+    try:
+      nm_o = self.nminfo.get_nminfo_by_nm(self.nmcode)
+      return nm_o.seq
+    except (AttributeError, TypeError):
+      pass
+    return -1
+
+  @property
+  def qty(self):
+    try:
+      nm_o = self.nminfo.get_nminfo_by_nm(self.nmcode)
+      return nm_o.qty
+    except (AttributeError, TypeError):
+      pass
+    return -1
+
+  @property
+  def description(self):
+    try:
+      nm_o = self.nminfo.get_nminfo_by_nm(self.nmcode)
+      return nm_o.description
+    except (AttributeError, TypeError):
+      pass
+    return 'no description'
+
+  @property
+  def meas_unit(self):
+    try:
+      nm_o = self.nminfo.get_nminfo_by_nm(self.nmcode)
+      return nm_o.meas_unit
+    except (AttributeError, TypeError):
+      pass
+    return 'UN'
+
+  @property
+  def familycode(self):
+    try:
+      nm_o = self.nminfo.get_nminfo_by_nm(self.nmcode)
+      return nm_o.familycode
+    except (AttributeError, TypeError):
+      pass
+    return None
+
+  @property
+  def manufacturer_sname(self):
+    try:
+      nm_o = self.nminfo.get_nminfo_by_nm(self.nmcode)
+      return nm_o.manufacturer_sname
+    except (AttributeError, TypeError):
+      pass
+    return None
+
+  @property
+  def partnumber(self):
+    try:
+      nm_o = self.nminfo.get_nminfo_by_nm(self.nmcode)
+      return nm_o.partnumber
+    except (AttributeError, TypeError):
+      pass
+    return None
+
+  @property
+  def ipi(self):
+    try:
+      nm_o = self.nminfo.get_nminfo_by_nm(self.nmcode)
+      return nm_o.ipi
+    except (AttributeError, TypeError):
+      pass
+    return None
+
+  @property
+  def ncmcode(self):
+    try:
+      nm_o = self.nminfo.get_nminfo_by_nm(self.nmcode)
+      return nm_o.ncmcode
+    except (AttributeError, TypeError):
+      pass
+    return None
 
   @property
   def date(self):
@@ -189,6 +248,38 @@ class PriceItem:
   @date.setter
   def date(self, pdate):
     self._date = idt.make_date_or_none(pdate)
+
+  @property
+  def supplier(self):
+    if self._supplier is not None:
+      return self._supplier
+    if self.sapreq is not None:
+      return 'histórico SAP'
+    return 'n/inf'
+
+  @supplier.setter
+  def supplier(self, supplier):
+    self._supplier = supplier
+
+  @property
+  def url(self):
+    if self._url is not None:
+      return self._url
+    return 'n/a (histórico SAP)'
+
+  @url.setter
+  def url(self, url):
+    self._url = url
+
+  @property
+  def sapreq(self):
+    if self._sapreq is not None:
+      return self._sapreq
+    return 'n/a'
+
+  @sapreq.setter
+  def sapreq(self, sapreq):
+    self._sapreq = sapreq
 
   @property
   def meas_unit(self):
@@ -203,22 +294,34 @@ class PriceItem:
       self._mone_corr_netprice = self.calc_netprice * self.mone_corr_mult_fact
     return self._mone_corr_netprice
 
-  @property
-  def factor_price_to_netprice(self):
-    if self._factor_price_to_netprice is not None:
-      return self._factor_price_to_netprice
-    self._factor_price_to_netprice = 0.7
-    return self._factor_price_to_netprice
+  def calc_n_set_factor_grossprice_to_net(self):
+    """
+    An example with:
+      cofins = 0.0760 | pis = 0.0165 | icms_gross_to_net = 0.1600 | ipi = 0.0325
+      pis_cofins_basecalc = 1.1019 | ipi_basecalc = 1.4258 | icms_basecalc = 1.4721
+      factor_gross_to_net = 0.7337 | factor_net_to_gross = 1.4721
+    """
+    ipi_default = 0.0325
+    ipi = self.ipi or ipi_default
+    netgross_o = ngp.NetNGrossPrice(ipi=ipi, icms_gross_to_net=ICMS_GROSS_TO_NET)
+    self._factor_grossprice_to_net = netgross_o.factor_gross_to_net_price
 
-  @factor_price_to_netprice.setter
-  def factor_price_to_netprice(self, factor):
+  @property
+  def factor_grossprice_to_net(self):
+    if self._factor_grossprice_to_net is not None:
+      return self._factor_grossprice_to_net
+    self.calc_n_set_factor_grossprice_to_net()
+    return self._factor_grossprice_to_net
+
+  @factor_grossprice_to_net.setter
+  def factor_grossprice_to_net(self, factor):
     """
     The multiplication factor from price to netprice is a formula
     """
     try:
       factor = float(factor)
       factor = 1.0 if factor < 1.0 else factor
-      self._factor_price_to_netprice = factor
+      self._factor_grossprice_to_net = factor
     except (TypeError, ValueError):
       factor = 1.0
 
@@ -233,7 +336,7 @@ class PriceItem:
       self._calc_netprice = self.mone_corr_mult_fact * self.netprice
       return self._calc_netprice
     if self.opengrossprice is not None:
-      imtermediate_netprice = self.opengrossprice * self.factor_price_to_netprice
+      imtermediate_netprice = self.opengrossprice * self.factor_grossprice_to_net
       if not self.is_pricedate_older_than_3_months():
         self._calc_netprice = imtermediate_netprice
         return self._calc_netprice
@@ -370,22 +473,7 @@ def adhoctest():
   """
   test go-n-come for price & netprice
   """
-  f_pis_cofins = calc_fator_basecalc_p_pis_cofins()
-  f_ipi = calc_fator_basecalc_p_ipi()
-  f_icms = calc_fator_basecalc_p_icms()
-  scrmsg = f"f_pis_cofin={f_pis_cofins:.4f} | f_ipi={f_ipi:.4f} | f_icms={f_icms:.4f}"
-  print(scrmsg)
-  f_net_to_gross = calc_factor_net_to_gross_price()
-  f_gross_to_net = calc_factor_gross_to_net_price()
-  scrmsg = f"f_net_to_gross={f_net_to_gross:.4f} | f_gross_to_net={f_gross_to_net:.4f}"
-  print(scrmsg)
-  netprice = 100
-  grossprice = f_net_to_gross * netprice
-  scrmsg = f"netprice={netprice:.4f} | grossprice={grossprice:.4f}"
-  print(scrmsg)
-  calc_netprice = grossprice * f_gross_to_net
-  scrmsg = f"backing up grossprice={grossprice:.4f} | calc_netprice={calc_netprice:.4f}"
-  print(scrmsg)
+  pass
 
 
 def process():

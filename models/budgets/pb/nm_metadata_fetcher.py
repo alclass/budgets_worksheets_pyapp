@@ -25,6 +25,13 @@ class AllNMsInfo:
     self.df = get_pandas_df_from_xlsx()
     self.process()
 
+  def get_nminfo_by_nm(self, nmcode):
+    try:
+      return self.nminfo_nm_dict[nmcode]
+    except IndexError:
+      pass
+    return None
+
   def process(self):
     for row in self.df.iterrows():
       try:
@@ -34,6 +41,7 @@ class AllNMsInfo:
         nminfo.nmcode = int(series['nmcode'])
         nminfo.ipi = series['ipi']
         nminfo.familycode = int(series['familycode'])
+        nminfo.ncmcode = int(series['ncmcode'])
         nminfo.partnumber = series['partnumber']
         nminfo.manufacturer_sname = series['manufacturer_sname']
         nminfo.textobreve = series['textobreve']
@@ -44,7 +52,7 @@ class AllNMsInfo:
         continue
       self.nminfo_seqlist.append(nminfo)
       self.nminfo_nm_dict[nminfo.nmcode] = nminfo
-      print(nminfo)
+      # print(nminfo)
 
   def printout(self):
     for i, nminfo in enumerate(self.nminfo_seqlist):
