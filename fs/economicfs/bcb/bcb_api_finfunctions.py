@@ -147,7 +147,7 @@ def call_api_bcb_cotacao_dolar_on_date(pdate, connection_error_raised=0):
       BCB REST API for fetching BRL/USD exchange rate date."""
     raise ValueError(error_msg)
   url = url_base + url_quer_interpol % {'mmddyyyy': mmddyyyy}
-  print('calling', url)
+  # print('calling', url)
   try:
     res = requests.get(url)
   except requests.exceptions.ConnectionError:
@@ -177,7 +177,7 @@ def call_api_bcb_cotacao_dolar_on_date(pdate, connection_error_raised=0):
     # in general, this case means that the date does not have quotes as happens for holidays and weekend days
     # but the important fact is that the response came with a 200 OK status code
     gen_msg = 'BCB API day with no quotes'
-    print('msg', gen_msg, 'date', refdate, 'result dict', resdict)
+    # print('msg', gen_msg, 'date', refdate, 'result dict', resdict)
     res_bcb_api = namedtuple_bcb_api1(
       curr_num=sett.CURR_BRL, curr_den=sett.CURR_USD,
       cotacao_compra=None, cotacao_venda=None, cotacao_datahora=None,

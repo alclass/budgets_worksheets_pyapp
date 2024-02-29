@@ -210,7 +210,7 @@ def put_cotacao_into_db_n_return_namedtuple(namedtuple_res_bcb_api1, pdate):
   session.commit()
   log_msg = 'After session.commit() ' + str(db_found_exch)
   logger.info(log_msg)
-  print(log_msg)
+  # print(log_msg)
   # now it's time to set db_found_exch, ie it's been instantiated, in the namedtuple var
   namedtuple_res_bcb_api1 = add_exchanger_to_res_bcb_api_namedtuple(db_found_exch, namedtuple_res_bcb_api1)
   session.close()

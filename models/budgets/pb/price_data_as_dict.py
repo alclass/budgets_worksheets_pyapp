@@ -138,17 +138,14 @@ def gather_data():
   pi.nmcode, pi.nm_alt = 11671439, None
   pi.fname = '07 adaptador cabo coaxial [KLC1] 11671439.xlsx'
   pi_tmp = copy.copy(pi)
-  prices.add_price_via_nm(pi.nmcode, pi)
-  pi.date = '2021-10-28'
-  pi.opengrossprice, pi.supplier = 27.95, 'Magalu'
-  prices.add_price_via_nm(pi.nmcode, pi)
-  pi = copy.copy(pi_tmp)
-  pi.date = '2021-10-28'
+  pi.date = '2024-02-27'
   pi.opengrossprice, pi.supplier = 26.68, 'Rádio Componentes'
+  pi.url = 'https://www.radiocomponentes.com.br/adaptador-bnc-macho-x-n-femea-klc-1-p834'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
-  pi.date = '2021-10-28'
-  pi.opengrossprice, pi.supplier = 25.90, 'ShopAntenas'
+  pi.date = '2024-02-27'
+  pi.opengrossprice, pi.supplier = 42.6, 'Ponto Eletrônico'
+  pi.url = 'https://www.pontoeletronicolojavirtual.com.br/produtos/adaptador-bnc-macho-x-femea-n-klc-klc-1/'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2023-05-01'

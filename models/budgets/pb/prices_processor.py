@@ -6,6 +6,8 @@ import copy
 import os
 """
 import datetime
+import os.path
+
 from dateutil import relativedelta
 import pandas
 import prettytable
@@ -13,6 +15,7 @@ import commands.show.corr_monet_n_indices_calculator_from_dates as cmc  # cmc.Co
 import fs.datefs.introspect_dates as idt
 import models.budgets.pb.nm_metadata_fetcher as nmi  # nmi.AllNMsInfo
 import models.budgets.pb.net_gross_prices as ngp  # ngp.NetNGrossPrice
+import models.budgets.pb.db_n_file_settings as dbs  # dbs.get_orcdados_batch_output_filepath_w_filename
 ICMS_GROSS_TO_NET = 0.16
 
 
@@ -90,53 +93,99 @@ class Prices:
       p1 the price_item itself, composed of:
         date, mone_corr netprice, supplier, url, fname, sapreq
     """
-    column_names = PriceItem.get_stat_col_list_for_pi()
+    column_names = PriceItem.get_stat_col_list_for_pi_pt()
     # nms = sorted(self.nn_n_priceitemlist_dict.keys())
     nms = self.nn_n_priceitemlist_dict.keys()
+    c = 0
     for nm in nms:
+      c += 1
+      # if c > 5:
+      #   break
       priceitems = self.nn_n_priceitemlist_dict[nm]
       price_meta = priceitems[0]
       print('='*40)
       nm = price_meta.nmcode
       seq = price_meta.seq
       pn = price_meta.partnumber
-      hline1 = f"seq: | {seq} | NM: | {nm} | part-number: | {pn} | descrição: | {price_meta.description}"
-      print(hline1)
+      outputfilename = f"{seq:02}.txt"  # "xlsx"
+      outputfilepath = dbs.get_orcdados_batch_output_filepath_w_filename(outputfilename)
+      if os.path.isfile(outputfilepath):
+        print('File', outputfilename, 'already exists. Continuing.')
+        continue
+      outfd = open(outputfilepath, 'w', encoding='utf-8')
+      print(outputfilename)
       n_prices = len(priceitems)
       family = price_meta.familycode
       ncm = price_meta.ncmcode
-      ipi = price_meta.ipi
+      ipi = f"{price_meta.ipi:.4f}".replace('.', ',')
       fabr = price_meta.manufacturer_sname
-      ft_bru_a_liq = price_meta.factor_grossprice_to_net
-      hline2 = (f"NCM: | {ncm} | IPI: | {ipi:.4f} | família: | {family} | fabricante: | {fabr}"
-                f" | fator brut-a-líq: | {ft_bru_a_liq:.4f}")
-      print(hline2)
+      ft_bru_a_liq = f"{price_meta.factor_grossprice_to_net:.4f}".replace('.', ',')
       fname = price_meta.fname
-      hline3 = f"nome de arquivo com as printscreens comprovantes: | [{fname}]"
-      print(hline3)
-      pt = prettytable.PrettyTable(column_names)
+      # pt = prettytable.PrettyTable(column_names)
+      hline1 = ';'
+      for column_name in column_names:
+        hline1 += f'"{column_name}";'
+      print(hline1)
+      outfd.write(hline1 + '\n')
       for pi in priceitems:
-        pt.add_row(pi.values_in_listorder_pi())
-      print(pt)
+        line = ';'
+        for val in pi.values_in_listorder_pi():
+          # pt.add_row(pi.values_in_listorder_pi())
+          if isinstance(val, float):
+            val = f"{val:.2f}".replace('.', ',')
+          line += f'"{val}";'
+        outfd.write(line + '\n')
+        print(line)
+      # prettiedtable = str(pt)
+      # prettiedtable = prettiedtable.replace('+', '|').replace('.', ',')
       qty = price_meta.qty
       tipounid = price_meta.meas_unit
       avgprice = self.calc_avg_netprice_of_nm(nm)
       totalprice = avgprice * qty
-      fline1 = (f"nº de preços (amostra):  | {n_prices} | preço-médio:| {avgprice:.2f} | por {tipounid}"
-                f" | quant.: | {qty} | preço líquido total do item: | {totalprice:.2f}")
+      fline1 = ';'*8 + 'nome de arquivo com as printscreens comprovantes:'
       print(fline1)
+      outfd.write(fline1 + '\n')
+      fline1 = ';'*8 + f'[{fname}]'
+      print(fline1)
+      outfd.write(fline1 + '\n')
+      avgprc_str = f"{avgprice:.4f}".replace('.', ',')
+      totalprice_str = f"{totalprice:.2f}".replace('.', ',')
+      fline2 = (f';nº de preços (amostra):; {n_prices}; preço-médio:; {avgprc_str}'
+                f'; qtd (expressa em {tipounid}):; {qty}; preço líquido total do item'
+                f' (a transportar à aba [síntese preços]:; {totalprice_str}')
+      print(fline2)
+      outfd.write(fline2 + '\n')
+      description = price_meta.description
+      description = description.replace('"', "pol")
+      hline1 = f';seq:;{seq:02};NM:;{nm};part-number:;"{pn}";descrição: {description}'
+      print(hline1)
+      outfd.write(hline1 + '\n')
+      hline2 = (f';NCM:; {ncm}; IPI:;{ipi}; família: {family}; fabricante: {fabr}'
+                f'; fator brut-a-líq:; {ft_bru_a_liq}')
+      print(hline2)
+      outfd.write(hline2 + '\n')
+      hline3 = ';' * 8  # 9 altogether
+      print(hline3)
+      outfd.write(hline3 + '\n')
+      print()
+      outfd.close()
     # return df.to_string()
 
 
 class PriceItem:
 
   known_measure_units = ['unit', 'metro', 'kg']
-  meas_unit_default = 'unit'
+  meas_unit_default = 'UN'  # 'unit'
   column_names = [
     'seq',   'nmcode',   'nm_alt',   'date',   'netprice',   'meas_unit',   'openprice',
     'multfact',   'currency',   'supplier',   'url',   'fname',   'sapreq',
   ]
-  column_names_for_pi = [
+  column_names_for_pi_pt = [
+    'data', 'preço líq.', 'correção monetária', 'preço líq. corrigido',
+    'fornecedor',   'contrato/pedido SAP',  'url',
+  ]
+
+  column_names_for_pi_en = [
     'date', 'calc_netprice', 'mone_corr_mult_fact', 'mone_corr_netprice',
     'supplier',   'sapreq',  'url',
   ]
@@ -171,9 +220,13 @@ class PriceItem:
 
   @property
   def qty(self):
+    """
+    qty (quantity) is integer (for the first use we have as building it),
+      this needs to be updated to float later one.
+    """
     try:
       nm_o = self.nminfo.get_nminfo_by_nm(self.nmcode)
-      return nm_o.qty
+      return int(nm_o.qty)
     except (AttributeError, TypeError):
       pass
     return -1
@@ -186,15 +239,6 @@ class PriceItem:
     except (AttributeError, TypeError):
       pass
     return 'no description'
-
-  @property
-  def meas_unit(self):
-    try:
-      nm_o = self.nminfo.get_nminfo_by_nm(self.nmcode)
-      return nm_o.meas_unit
-    except (AttributeError, TypeError):
-      pass
-    return 'UN'
 
   @property
   def familycode(self):
@@ -265,7 +309,7 @@ class PriceItem:
   def url(self):
     if self._url is not None:
       return self._url
-    return 'n/a (histórico SAP)'
+    return 'n/inf (histórico SAP)'
 
   @url.setter
   def url(self, url):
@@ -275,15 +319,11 @@ class PriceItem:
   def sapreq(self):
     if self._sapreq is not None:
       return self._sapreq
-    return 'n/a'
+    return 'n/inf'
 
   @sapreq.setter
   def sapreq(self, sapreq):
     self._sapreq = sapreq
-
-  @property
-  def meas_unit(self):
-    return self._meas_unit
 
   @property
   def mone_corr_netprice(self):
@@ -370,6 +410,19 @@ class PriceItem:
         self._mone_corr_mult_fact = 1.0
     return self._mone_corr_mult_fact
 
+  @property
+  def meas_unit(self):
+    """
+    try:
+      nm_o = self.nminfo.get_nminfo_by_nm(self.nmcode)
+      return nm_o.meas_unit
+    except (AttributeError, TypeError):
+      pass
+    """
+    if self._meas_unit is None:
+      return 'UN'
+    return self._meas_unit
+
   @meas_unit.setter
   def meas_unit(self, meas_unit):
     self._meas_unit = meas_unit
@@ -397,15 +450,19 @@ class PriceItem:
     return cls.column_names
 
   @classmethod
-  def get_stat_col_list_for_pi(cls):
-    return cls.column_names_for_pi
+  def get_stat_col_list_for_pi_pt(cls):
+    return cls.column_names_for_pi_pt
+
+  @classmethod
+  def get_stat_col_list_for_pi_en(cls):
+    return cls.column_names_for_pi_en
 
   def get_dict_keys(self):
     return self.as_dict().keys()
 
   def values_in_listorder_pi(self):
     values_in_listorder = []
-    for fieldname in self.column_names_for_pi:
+    for fieldname in self.column_names_for_pi_en:
       value = eval('self.' + fieldname)
       values_in_listorder.append(value)
     return values_in_listorder

@@ -23,6 +23,32 @@ def get_orcdados_folderpath():
   return orcsdados_folderpath
 
 
+def get_orcdados_batch_output_folderpath():
+  batch_output_foldername = 'batch_output'
+  base_folderpath = get_orcdados_folderpath()
+  batch_output_folderpath = os.path.join(base_folderpath, batch_output_foldername)
+  if not os.path.isdir(batch_output_folderpath):
+    os.makedirs(batch_output_folderpath)
+  return batch_output_folderpath
+
+
+def get_xlsxfilepaths_from_batch_output_folder(dotext='.xlsx'):
+  dotext = '.xlsx' if dotext is None else dotext
+  dotext = '.' + dotext if not dotext.startswith('.') else dotext
+  orcsdados_folderpath = get_orcdados_batch_output_folderpath()
+  filenames = os.listdir(orcsdados_folderpath)
+  filenames = filter(lambda e: e.endswith(dotext), filenames)
+  filepaths = map(lambda e: os.path.join(orcsdados_folderpath, e), filenames)
+  filepaths = sorted(filter(lambda e: os.path.isfile(e), filepaths))
+  return filepaths
+
+
+def get_orcdados_batch_output_filepath_w_filename(filename):
+  batch_output_folderpath = get_orcdados_batch_output_folderpath()
+  batch_output_filepath = os.path.join(batch_output_folderpath, filename)
+  return batch_output_filepath
+
+
 def get_orcdados_sqlitefilepath():
   orcsdados_folderpath = get_orcdados_folderpath()
   orcsdados_sqlitefilepath = os.path.join(orcsdados_folderpath, ORCDADOS_SQLFILENAME)
@@ -59,6 +85,7 @@ def get_df_from_xlsx_ppubase():
   ppubase_filepath = get_xlsx_ppubase_filepath()
   df = pd.read_excel(ppubase_filepath)
   return df
+
 
 def adhoctest():
   pass
