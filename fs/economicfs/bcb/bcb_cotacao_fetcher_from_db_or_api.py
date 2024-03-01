@@ -132,6 +132,7 @@ class BCBCotacaoFetcher:
     self.dates_stack = create_dates_stack_for_n_last_days(self.date, self.dates_stack_size)
     self.target_date = None
     self._target_datetime = None
+    self._cotacao_venda = None
     self.namedtuple_cotacao = None
     self.process()
 
@@ -139,6 +140,15 @@ class BCBCotacaoFetcher:
     self.curr_num, self.curr_den = dbs.DEFAUT_CURRENCY_PAIR
     if currency_pair is not None:
       self.curr_num, self.curr_den = currency_pair
+
+  @property
+  def cotacao_venda(self):
+    if self.namedtuple_cotacao is not None:
+      cotacao_10_to_power_of = self.namedtuple_cotacao.cotacao_venda
+      _cotacao_venda = cotacao_10_to_power_of / dbs.EXRATE_INTEGER_TO_FLOAT_DIVISOR
+      return _cotacao_venda
+    return None
+
 
   @property
   def target_datetime(self):

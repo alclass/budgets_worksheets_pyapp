@@ -24,6 +24,8 @@ ORDERPOS_TOKENS_AVAILABLE = ['ymd', 'ydm', 'dmy', 'mdy']
 
 
 def make_date_or_none(pdate):
+  if isinstance(pdate, datetime.date):
+    return pdate
   if pdate is None:
     return None
   try:

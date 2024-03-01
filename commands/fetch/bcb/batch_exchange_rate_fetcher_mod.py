@@ -156,7 +156,7 @@ class Dispatcher:
       pdate = self.args.date
       plist = [pdate]
       return self.apply(plist)
-    if self.args.today:
+    if self.args.topdate:
       plist = [self.today]
       return self.apply(plist)
 

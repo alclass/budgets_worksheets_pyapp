@@ -4,15 +4,14 @@ models/budgets/pb/prices_processor.py
 
 import copy
 import os
+import prettytable
 """
 import datetime
-import os.path
-
+import os
 from dateutil import relativedelta
 import pandas
-import prettytable
 import commands.show.corr_monet_n_indices_calculator_from_dates as cmc  # cmc.CorrMonetWithinDatesCalculator
-import fs.datefs.introspect_dates as idt
+import fs.datefs.introspect_dates as idt  # idt.for make_date_or_none()
 import models.budgets.pb.nm_metadata_fetcher as nmi  # nmi.AllNMsInfo
 import models.budgets.pb.net_gross_prices as ngp  # ngp.NetNGrossPrice
 import models.budgets.pb.db_n_file_settings as dbs  # dbs.get_orcdados_batch_output_filepath_w_filename
@@ -69,7 +68,7 @@ class Prices:
 
   def print_allprices_per_nm(self):
     nms = sorted(self.nn_n_priceitemlist_dict.keys())
-    output_tuplelist = []
+    # output_tuplelist = []
     for nm in nms:
       priceitems = self.nn_n_priceitemlist_dict[nm]
       for pi in priceitems:
@@ -363,7 +362,7 @@ class PriceItem:
       factor = 1.0 if factor < 1.0 else factor
       self._factor_grossprice_to_net = factor
     except (TypeError, ValueError):
-      factor = 1.0
+      self._factor_grossprice_to_net = 1.0
 
   @property
   def calc_netprice(self):

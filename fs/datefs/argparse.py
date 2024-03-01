@@ -129,7 +129,7 @@ class Dispatcher:
     if self.args.date:
       self.datelist = self.args.date  # args.date is already a list
       return self.apply()
-    if self.args.today:
+    if self.args.topdate:
       self.datelist = [self.today]  # today, differently from args.date, needs to be enclosed into a list
       return self.apply()
     if self.args.filepath:
