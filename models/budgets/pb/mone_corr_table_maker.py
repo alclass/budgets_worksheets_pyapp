@@ -3,6 +3,8 @@
 
 import copy
 """
+import datetime
+
 import models.budgets.pb.price_data_as_dict as pdd  # pdd.gather_data
 import commands.show.corr_monet_n_indices_calculator_from_dates as cmc  # cmc.CorrMonetWithinDatesCalculator
 import fs.datefs.introspect_dates as idt  # idt.for make_date_or_none()
@@ -22,12 +24,13 @@ def dates_from_prices():
 
 class MoneCorrTableMaker:
 
-  def __init__(self):
+  def __init__(self, topdate=None):
+    self.topdate = topdate
     self.dates = dates_from_prices()
     self.process()
 
   def process(self):
-    cmo = cmc.CorrMonetWithinDatesCalculator()
+    cmo = cmc.CorrMonetWithinDatesCalculator(self.topdate)
     for pdate in self.dates:
       cmo.add_cpi_n_exr_on_date(pdate)
     cmo.process()
@@ -35,11 +38,12 @@ class MoneCorrTableMaker:
 
 def adhoctest():
   dates = dates_from_prices()
-  dates = sorted(set(dates))
-  print(len(dates))
+  # dates = sorted(set(dates))
+  print('size', len(dates))
   for pdate in dates:
     print(pdate)
-  mk_o = MoneCorrTableMaker()
+  topdate = datetime.date(year=2024, month=2, day=1)
+  mk_o = MoneCorrTableMaker(topdate)
 
 
 def process():

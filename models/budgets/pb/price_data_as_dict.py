@@ -88,7 +88,7 @@ def gather_data():
   pi = copy.copy(pi_tmp)
   pi.date = '2024-02-24'
   pi.opengrossprice, pi.supplier = 61.6, 'MercadoLivre / Cross do Brasil'
-  pi.url = 'https://produto.mercadolivre.com.br/MLB-2045345929-kit-aterramento-rgc213-3-unidades-_JM#position=14&search_layout=stack&type=item&tracking_id=bc5fa194-752e-4058-b227-7dd495a4ff08'
+  pi.url = 'https://produto.mercadolivre.com.br/MLB-2045345929-kit-aterramento-rgc213-3-unidades-_JM'
   prices.add_price_via_nm(pi.nmcode, pi)
   pi = copy.copy(pi_tmp)
   pi.date = '2023-05-01'

@@ -61,8 +61,8 @@ def get_dates_from_strdates_file():
 
 class CorrMonetWithinDatesCalculator:
   def __init__(self, topdate=None):
-    topdate = idt.make_date_or_none(topdate)
-    self.topdate = datetime.date.today() if topdate is None else topdate
+    self.topdate = idt.make_date_or_none(topdate)
+    self.topdate = datetime.date.today() if self.topdate is None else self.topdate
     self.mostrecentdate = None
     self._most_recent_cpi = None
     self.m2refmonthdate = None
@@ -275,6 +275,7 @@ class CorrMonetWithinDatesCalculator:
     for i, pdate in enumerate(self.dates):
       seq = i + 1
       cpi_var, cpi_i, cpi_f = self.get_triple_cpivar_cpiini_cpifim_on_date(pdate)
+      # cpi_var = 0 if cpi_var is None else cpi_var
       # exr_var, exr_i, exr_f = self.get_exchangerate_variation_from(pdate)
       exr_var, exr_i, exr_f = self.get_triple_exrvar_exrini_exrfim_on_date(pdate)
       exr_var = 0 if exr_var is None else exr_var
