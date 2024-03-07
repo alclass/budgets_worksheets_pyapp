@@ -149,7 +149,6 @@ class BCBCotacaoFetcher:
       return _cotacao_venda
     return None
 
-
   @property
   def target_datetime(self):
     """

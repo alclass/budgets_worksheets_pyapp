@@ -34,7 +34,7 @@ The output will be the money correcting/updating indices
 """
 from collections import namedtuple
 import datetime
-import settings as cfg
+import settings as sett
 import sqlite3
 import fs.db.db_settings as dbs
 import fs.economicfs.bcb.bcb_cotacao_fetcher_from_db_or_api as bcbfetch  # bcbfetch.BCBCotacaoFetcher
@@ -49,7 +49,7 @@ nt_cpi_n_exr = namedtuple('nt_cpi_n_exr', 'cpi exr')
 
 
 def get_dates_from_strdates_file():
-  datefilepath = cfg.get_datafile_abspath_in_app(DEFAULT_DATESFILENAME)
+  datefilepath = sett.get_datafile_abspath_in_app(DEFAULT_DATESFILENAME)
   fd = open(datefilepath)
   text = fd.read()
   dates = text.split('\n')
@@ -112,7 +112,7 @@ class CorrMonetWithinDatesCalculator:
         curr_num=? and
         curr_num=?;"""
     tuplevalues = (pdate, curr_numerator, curr_denominator)
-    conn = cfg.get_sqlite_connection()
+    conn = sett.get_sqlite_connection()
     try:
       cursor = conn.cursor()
       retval = cursor.execute(sql, tuplevalues)
@@ -158,7 +158,7 @@ class CorrMonetWithinDatesCalculator:
       raise ValueError(errmsg)
     cpi = ftcpi.get_cpi_baselineindex_for_refmonth_in_db(pdate)
     # exr = self.get_exrate_sellquote_w_date_n_currencypair(pdate)
-    exr = self.get_exchangerate_on(pdate)
+    exr = self.get_exchangerate_via_bcb_on(pdate)
     exr = 0.0 if exr is None else exr
     nt_cpi_n_exr_o = nt_cpi_n_exr(cpi=cpi, exr=exr)
     self.cpi_exr_per_date_dict[pdate] = nt_cpi_n_exr_o
@@ -227,11 +227,17 @@ class CorrMonetWithinDatesCalculator:
       correction_indices.append(correction_indice)
     return correction_indices
 
-  def get_exchangerate_on(self, pdate):
+  @staticmethod
+  def get_exchangerate_via_bcb_on(pdate):
+    """
+    Gets the exr attribute from bcbfetch.BCBCotacaoFetcher(pdate)
+    This one does the division:
+      exr = exr10k / dbs.EXRATE_INTEGER_TO_FLOAT_DIVISOR
+    where exr10k is the 10k-multiplied value in db
+    """
     try:
       fetcher = bcbfetch.BCBCotacaoFetcher(pdate)
       exr = fetcher.cotacao_venda
-      # exr = exr10k / dbs.EXRATE_INTEGER_TO_FLOAT_DIVISOR
       return exr
     except (AttributeError, TypeError):
       pass
@@ -275,7 +281,9 @@ class CorrMonetWithinDatesCalculator:
     for i, pdate in enumerate(self.dates):
       seq = i + 1
       cpi_var, cpi_i, cpi_f = self.get_triple_cpivar_cpiini_cpifim_on_date(pdate)
-      # cpi_var = 0 if cpi_var is None else cpi_var
+      if cpi_f is None:
+        errmsg = f"Either cpi_f={cpi_f} or cpi_i={cpi_i} or both were not found on date {pdate}."
+        raise ValueError(errmsg)
       # exr_var, exr_i, exr_f = self.get_exchangerate_variation_from(pdate)
       exr_var, exr_i, exr_f = self.get_triple_exrvar_exrini_exrfim_on_date(pdate)
       exr_var = 0 if exr_var is None else exr_var
@@ -295,7 +303,9 @@ def process():
   pydate = datetime.date(2020, 10, 15)
 
   """
-  comparator = CorrMonetWithinDatesCalculator()
+  _, last_cpi_refmonth = ftcpi.get_last_available_cpi_n_refmonth_fromdb_by_series()
+  print('last_cpi_refmonth', last_cpi_refmonth)
+  comparator = CorrMonetWithinDatesCalculator(last_cpi_refmonth)
   comparator.process_datesfile()
 
 
