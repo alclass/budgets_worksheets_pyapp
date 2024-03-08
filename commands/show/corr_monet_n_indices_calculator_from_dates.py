@@ -60,18 +60,53 @@ def get_dates_from_strdates_file():
 
 
 class CorrMonetWithinDatesCalculator:
-  def __init__(self, topdate=None):
+  def __init__(self, topdate=None, allow_cpi_fallback_to_m_minus_2=False):
+    self.allow_cpi_fallback_to_m_minus_2 = allow_cpi_fallback_to_m_minus_2
     self.topdate = idt.make_date_or_none(topdate)
     self.topdate = datetime.date.today() if self.topdate is None else self.topdate
+    self.workdates = []
+    self.refmonth_minus_n = 1
     self.mostrecentdate = None
     self._most_recent_cpi = None
-    self.m2refmonthdate = None
+    self.mostrecent_cpi_available_date = None
     self.find_mostrecent()
     self.cpi_exr_per_date_dict = {}  # type nt_cpi_n_exr
 
   @property
   def dates(self):
+    """
+    'dates' included all dates: workdates, refmonthdates & topdate
+    workdates are the comparing & processing dates
+    """
     return sorted(self.cpi_exr_per_date_dict.keys())
+
+  def set_workdates(self, dates):
+    self.workdates = sorted(set(dates))
+
+  @property
+  def cpi_refmonth(self):
+    if self.refmonth_minus_n == 1:
+      return self.m_minus_1_refmonthdate
+    return self.m_minus_2_refmonthdate
+
+  @property
+  def size(self):
+    return len(self.workdates)
+
+  @property
+  def refmonthdate(self):
+    m2_month = rfm.make_refmonthdate_or_current(self.topdate)
+    return m2_month
+
+  @property
+  def m_minus_1_refmonthdate(self):
+    m2_month = rfm.calc_refmonth_minus_n(self.topdate, 1)
+    return m2_month
+
+  @property
+  def m_minus_2_refmonthdate(self):
+    m2_month = rfm.calc_refmonth_minus_n(self.topdate, 2)
+    return m2_month
 
   def find_mostrecent(self):
     """
@@ -128,27 +163,27 @@ class CorrMonetWithinDatesCalculator:
     return None
 
   @property
-  def most_recent_cpi_m2(self):
+  def most_recent_cpi_refmonth(self):
     """
     TO-DO: use this method with the purpose of verifying that cpi is close to topdate,
            otherwise, raise an exception for, a supposition, the cpi index is not yet available
     """
     if self._most_recent_cpi is None:
-      self._most_recent_cpi, self.m2refmonthdate = ftcpi.get_cpi_baselineindex_for_refmonth_m2_in_db(
+      self._most_recent_cpi, self.mostrecent_cpi_available_date = ftcpi.get_cpi_baselineindex_for_refmonth_m2_in_db(
         self.mostrecentdate
       )
-    return self._most_recent_cpi, self.m2refmonthdate
+    return self._most_recent_cpi, self.mostrecent_cpi_available_date
 
   def get_n_store_exrate_on_date(self, pdate):
     self.add_cpi_n_exr_on_date(pdate)
     nt_cpi_n_exr_o = self.cpi_exr_per_date_dict[pdate]
     return nt_cpi_n_exr_o.exr
 
-  def get_n_store_cpi_for_m1_refmonth(self, pdate):
+  def get_n_store_cpi_according_to_minus_n_refmonth(self, pdate):
     pdate = idt.make_date_or_none(pdate)
-    m1date = rfm.calc_refmonth_minus_n(pdate, 1)
-    self.add_cpi_n_exr_on_date(m1date)
-    nt_cpi_n_exr_o = self.cpi_exr_per_date_dict[m1date]
+    m_minus_n_date = rfm.calc_refmonth_minus_n(pdate, self.refmonth_minus_n)
+    self.add_cpi_n_exr_on_date(m_minus_n_date)
+    nt_cpi_n_exr_o = self.cpi_exr_per_date_dict[m_minus_n_date]
     return nt_cpi_n_exr_o.cpi
 
   def add_cpi_n_exr_on_date(self, pdate):
@@ -158,14 +193,19 @@ class CorrMonetWithinDatesCalculator:
       raise ValueError(errmsg)
     cpi = ftcpi.get_cpi_baselineindex_for_refmonth_in_db(pdate)
     # exr = self.get_exrate_sellquote_w_date_n_currencypair(pdate)
+    if cpi is None:
+      if self.allow_cpi_fallback_to_m_minus_2:
+        # consider M-2 instead of M-1
+        self.refmonth_minus_n = 2
+        cpi = ftcpi.get_cpi_baselineindex_for_refmonth_in_db(self.m_minus_2_refmonthdate)
     exr = self.get_exchangerate_via_bcb_on(pdate)
     exr = 0.0 if exr is None else exr
     nt_cpi_n_exr_o = nt_cpi_n_exr(cpi=cpi, exr=exr)
     self.cpi_exr_per_date_dict[pdate] = nt_cpi_n_exr_o
 
   def get_triple_cpivar_cpiini_cpifim_on_date(self, pdate):
-    cpi_i = self.get_n_store_cpi_for_m1_refmonth(pdate)
-    cpi_f = self.get_n_store_cpi_for_m1_refmonth(self.topdate)
+    cpi_i = self.get_n_store_cpi_according_to_minus_n_refmonth(pdate)
+    cpi_f = self.get_n_store_cpi_according_to_minus_n_refmonth(self.topdate)
     if cpi_i is None or cpi_f is None:
       return None, None, None,
     try:
@@ -195,7 +235,7 @@ class CorrMonetWithinDatesCalculator:
       ini_cpi_baselineindex = nt_cpi_n_exr_o.cpi
     else:
       ini_cpi_baselineindex = ftcpi.get_cpi_baselineindex_for_refmonth_in_db(pdate)
-    fim_cpi_baselineindex = self.get_n_store_cpi_for_m1_refmonth(self.topdate)
+    fim_cpi_baselineindex = self.get_n_store_cpi_according_to_minus_n_refmonth(self.topdate)
     if ini_cpi_baselineindex is None:
       return None, None, None, None
     try:
@@ -207,8 +247,8 @@ class CorrMonetWithinDatesCalculator:
   def calc_composite_corr_mone_from_date(self, pdate):
     exr_i = self.get_n_store_exrate_on_date(pdate)
     exr_f = self.get_n_store_exrate_on_date(self.topdate)
-    cpi_i = self.get_n_store_cpi_for_m1_refmonth(pdate)
-    cpi_f = self.get_n_store_cpi_for_m1_refmonth(self.topdate)
+    cpi_i = self.get_n_store_cpi_according_to_minus_n_refmonth(pdate)
+    cpi_f = self.get_n_store_cpi_according_to_minus_n_refmonth(self.topdate)
     if cpi_i is None:
       return 0.0
     try:
@@ -266,8 +306,9 @@ class CorrMonetWithinDatesCalculator:
     return None, None, None
 
   def process_datesfile(self):
-    dates = get_dates_from_strdates_file()
-    for pdate in dates:
+    self.workdates = get_dates_from_strdates_file()
+    self.workdates = sorted(set(self.workdates))
+    for pdate in self.workdates:
       self.add_cpi_n_exr_on_date(pdate)
     self.process()
 
@@ -278,7 +319,7 @@ class CorrMonetWithinDatesCalculator:
       'seq', 'date', 'cpi_ini', 'cpi_fim', 'cpi_var',
       'exchange_ini', 'exchange_fim', 'exchange_var', 'multiplier',
     ]
-    for i, pdate in enumerate(self.dates):
+    for i, pdate in enumerate(self.workdates):
       seq = i + 1
       cpi_var, cpi_i, cpi_f = self.get_triple_cpivar_cpiini_cpifim_on_date(pdate)
       if cpi_f is None:
@@ -296,6 +337,14 @@ class CorrMonetWithinDatesCalculator:
       ptab.add_row(list(output_tuple))
     print(ptab)
 
+  def __str__(self):
+    outstr = f"""{self.__class__.__name__}  refmonth_minus_n={self.refmonth_minus_n}
+    final exchange date = {self.topdate} | fallback_to_m2 = {self.allow_cpi_fallback_to_m_minus_2}
+    final_cpi_refmonth = {self.cpi_refmonth} | dates processed = {self.size}
+    {self.workdates}
+    """
+    return outstr
+
 
 def process():
   """
@@ -305,8 +354,10 @@ def process():
   """
   _, last_cpi_refmonth = ftcpi.get_last_available_cpi_n_refmonth_fromdb_by_series()
   print('last_cpi_refmonth', last_cpi_refmonth)
-  comparator = CorrMonetWithinDatesCalculator(last_cpi_refmonth)
+  today = datetime.date.today()
+  comparator = CorrMonetWithinDatesCalculator(today, allow_cpi_fallback_to_m_minus_2=True)  # last_cpi_refmonth
   comparator.process_datesfile()
+  print(comparator)
 
 
 if __name__ == '__main__':

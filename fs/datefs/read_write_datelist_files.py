@@ -45,6 +45,29 @@ def fetch_wordlist_from_textfile_w_filepath(p_filepath=None):
   return strdatelist
 
 
+def fetch_basic_yyyymmdd_dates_from_textfile_w_path(p_filepath=None):
+  """
+  The date introspected here is the one from make_date_or_none(),
+    ie, dates are expected to be yyyy-mm-dd
+
+  @see next function fetch_dates_from_strdates_in_text_wo_sep_but_of_oneform_from_filepath()
+    for a routine that is capable of introspecting dates
+      finding field-separator (/, - or .) and position (day, month, year) if possible
+  """
+  if p_filepath is None or not os.path.isfile(p_filepath):
+    filepath = form_datesfilepath_w_folderpath_n_filename()
+  else:
+    filepath = p_filepath
+  text = open(filepath).read()
+  dates = text.split('\n')
+  dates = map(lambda e: e.strip('\t\r\n'), dates)
+  dates = filter(lambda e: e != '', dates)
+  dates = map(lambda e: intr.make_date_or_none(e), dates)
+  dates = filter(lambda e: e is not None, dates)
+  dates = sorted(set(dates))
+  return dates
+
+
 def fetch_dates_from_strdates_in_text_wo_sep_but_of_oneform_from_filepath(filepath=None):
   """
   strdates with sep come in 12 combinations
