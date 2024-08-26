@@ -3,6 +3,7 @@ migrations/
 venv/
 .idea/
 local_settings.py
+**/*.dat
 **/*.htm
 **/*.html
 **/*.pyc

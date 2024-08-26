@@ -6,10 +6,10 @@ fs/datesetc/argparse_dates.py
 import argparse
 import datetime
 import fs.datefs.dategenerators as hilodt
-import fs.datefs.years_date_functions as dtfs
+import fs.datefs.convert_to_date_wo_intr_sep_posorder as dtfs
 import fs.datefs.introspect_dates as intr  # intr.introspect_possible_month_position_in_date
 import fs.datefs.read_write_datelist_files as rwdt  # .fetch_dates_from_textfile_w_filepath
-DEFAULT_TXT_DATES_FILENAME = 'datesfile.txt'
+DEFAULT_INPUT_TXT_DATES_FILENAME = 'datesfile.txt'
 
 
 def get_args():
@@ -129,7 +129,7 @@ class Dispatcher:
     if self.args.date:
       self.datelist = self.args.date  # args.date is already a list
       return self.apply()
-    if self.args.topdate:
+    if self.args.fim:
       self.datelist = [self.today]  # today, differently from args.date, needs to be enclosed into a list
       return self.apply()
     if self.args.filepath:
@@ -143,7 +143,7 @@ class Dispatcher:
 
 
 def adhoctest():
-  filepath = rwdt.get_datesfilepath_from_datafolder_w_filename()
+  filepath = rwdt.form_new_datesfilepath_w_folderpath_n_filename()
   plist = rwdt.fetch_dates_from_strdates_intext_from_filepath_w_sep_n_posorder(filepath)
   print(plist)
 

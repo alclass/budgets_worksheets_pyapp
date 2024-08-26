@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-commands/fetch/exchange_rate_lister_mod.py
-commands/fetch/batch_exchange_rate_fetcher_mod.py
-  calls bcbfetch.BCBCotacaoFetcher (to search for daily BRL/USD BCD cotações) for each date entered as input.
+commands/fetch/bcb/exchange_rate_lister_mod.py
+  calls bcbfetch.BCBCotacaoFetcher (to search for daily BRL/USD BCD cotações)
+  for each date entered as input.
 
 Input is available as:
  => a sole date
@@ -18,17 +18,20 @@ import os
 import pandas
 from prettytable import PrettyTable
 import xlsxwriter
-import fs.datefs.years_date_functions as dtfs
+# import fs.datefs.years_date_functions as yedtfs
+import fs.datefs.convert_to_date_wo_intr_sep_posorder as dtfs
 import fs.datefs.argparse as ap
 import fs.economicfs.bcb.bcb_api_finfunctions as apis
 import fs.numberfs.tableaufunctions as tblfs
 import fs.economicfs.bcb.bcb_cotacao_fetcher_from_db_or_api as bcbfetch  # bcbfetch.BCBCotacaoFetcher
+import fs.datefs.read_write_datelist_files as rwfs
+import local_settings as ls
 
 
 def convert_dates(pdates):
   odates = []
   for pdate in pdates:
-    odate = dtfs.returns_date_or_none(pdate)
+    odate = dtfs.make_date_or_none(pdate)
     odates.append(odate)
   return odates
 
@@ -45,29 +48,35 @@ class Lister:
     self.process_dates()
 
   def xlsxwrite_exchangerate_results(self):
-    fpath = dtfs.get_appsroot_abspath_for_filename_w_tstamp(self.excelfilename)
+    """
+    fpath = ls..get_appsroot_abspath_for_filename_w_tstamp(self.excelfilename)
+
+    """
+    datafolderpath = ls.DATA_FOLDERPATH(self.excelfilename)
+    fpath = os.path.join(datafolderpath, self.excelfilename)
+    print('fpath', fpath)
     workbook = xlsxwriter.Workbook(fpath)
     worksheet = workbook.add_worksheet()
     cellref = 'B4'
     worksheet.write(cellref, 'Seq')
-    cellref = tblfs.move_cell_along_columns(cellref, 1)
+    cellref = tblfs.Tableau.move_cell_along_columns(cellref, 1)
     worksheet.write(cellref, 'Data')
-    cellref = tblfs.move_cell_along_columns(cellref, 1)
+    cellref = tblfs.Tableau.move_cell_along_columns(cellref, 1)
     worksheet.write(cellref, 'valor câmbio')
-    cellref = tblfs.move_cell_along_columns(cellref, 1)
+    cellref = tblfs.Tableau.move_cell_along_columns(cellref, 1)
     worksheet.write(cellref, 'data câmbio')
-    cellref = tblfs.move_cell_along_tableau(cellref, -3, 1)
+    cellref = tblfs.Tableau.move_cell_along_tableau(cellref, -3, 1)
     for i, dt_exrt_n_dc in enumerate(self.cotacao_namedtuplelist):
       pdate, exchange_rate, data_cotacao = dt_exrt_n_dc
       seq = i + 1
       worksheet.write(cellref, seq)
-      cellref = tblfs.move_cell_along_columns(cellref, 1)
+      cellref = tblfs.Tableau.move_cell_along_columns(cellref, 1)
       worksheet.write(cellref, pdate)
-      cellref = tblfs.move_cell_along_columns(cellref, 1)
+      cellref = tblfs.Tableau.move_cell_along_columns(cellref, 1)
       worksheet.write(cellref, exchange_rate)
-      cellref = tblfs.move_cell_along_columns(cellref, 1)
+      cellref = tblfs.Tableau.move_cell_along_columns(cellref, 1)
       worksheet.write(cellref, data_cotacao)
-      cellref = tblfs.move_cell_along_tableau(cellref, -3, 1)
+      cellref = tblfs.Tableau.move_cell_along_tableau(cellref, -3, 1)
     workbook.close()
 
   def pretty_table_print_exchangerate_results(self):
@@ -96,7 +105,7 @@ class Lister:
 
   def save_html_file(self):
     htmlfilename = 'exchange_rates_test.html'
-    fpath = dtfs.get_appsroot_abspath_for_filename_w_tstamp(htmlfilename)
+    fpath = rwfs.get_appsroot_abspath_for_filename_w_tstamp(htmlfilename)
     _, htmlfilename = os.path.split(fpath)
     print('Writing ', htmlfilename)
     text = self.ptab.get_html_string()
@@ -107,7 +116,9 @@ class Lister:
   def process_dates(self):
     self.cotacao_namedtuplelist = []
     today = datetime.date.today()
+    _ = today
     for pdate in self.dates:
+      _ = pdate
       self.cotacao_namedtuplelist.append(self.cotacao_namedtuplelist)
 
   def create_df(self):
