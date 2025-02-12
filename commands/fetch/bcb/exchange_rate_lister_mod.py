@@ -49,17 +49,29 @@ class Lister:
 
   def xlsxwrite_exchangerate_results(self):
     """
-    fpath = ls..get_appsroot_abspath_for_filename_w_tstamp(self.excelfilename)
+    fpath = ls.get_appsroot_abspath_for_filename_w_tstamp(self.excelfilename)
 
+    detected problem
+    Previously, Tableau was used statically like the following statement:
+      cellref = tblfs.Tableau.move_cell_along_columns(cellref, 1)
+    The IDEA complaint that Tableau was not given, but str
+      Looking up the method signature, Tableau is the 'self' first parameter
+      That was the hind that Tableau should be used as an instantiated object
+    DO-TO: change the usage to an object instantiated and retest it.
     """
     datafolderpath = ls.DATA_FOLDERPATH(self.excelfilename)
     fpath = os.path.join(datafolderpath, self.excelfilename)
     print('fpath', fpath)
     workbook = xlsxwriter.Workbook(fpath)
     worksheet = workbook.add_worksheet()
+    # cellref = Tableau('B4')
     cellref = 'B4'
     worksheet.write(cellref, 'Seq')
-    cellref = tblfs.Tableau.move_cell_along_columns(cellref, 1)
+    tabloh = tblfs.Tableau(cellref)
+    tabloh.move_cell_along_columns(1)
+    # -----------------
+    # update the lines below with an instantiated Tableau instaad of its static use
+    # -----------------
     worksheet.write(cellref, 'Data')
     cellref = tblfs.Tableau.move_cell_along_columns(cellref, 1)
     worksheet.write(cellref, 'valor câmbio')

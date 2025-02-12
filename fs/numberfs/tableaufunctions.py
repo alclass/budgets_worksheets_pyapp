@@ -7,7 +7,7 @@ fs/numberfs/tableaufunctions.py
 import math  # for math.log(n, base)
 import string  # for ZERO_PLUS_UPPERCASE_ASCII_LETTERS
 import fs.textfs.strfs as strfs
-import fs.numberfs.numfunctions as nfs
+# import fs.numberfs.numfunctions as nfs
 import fs.numberfs.tableau_letter_index as tli  # .TableauLetterIndex
 ZERO_PLUS_UPPERCASE_ASCII_LETTERS = '0' + string.ascii_uppercase
 NSYSTEM27SIZE = len(ZERO_PLUS_UPPERCASE_ASCII_LETTERS)
@@ -15,10 +15,12 @@ NSYSTEM27SIZE = len(ZERO_PLUS_UPPERCASE_ASCII_LETTERS)
 
 class Tableau:
 
-  def __init__(self):
+  def __init__(self, ini_cellref=None):
     self.x_as_letters = ''
     self.y = 0
-    self.cellref = None
+    self.cellref = ini_cellref
+    if self.cellref is None:
+      self.cellref = 'A1'
     self.cell_letters = None
 
   def x_to_letters(self):
@@ -60,8 +62,6 @@ class Tableau:
       or, in the other direction:
         n = (il[p0]*(26**0)) + (il[p1]*(26**1)) + (il[p2]*(26**2)) + ... + (il[pN]*(26**N))
 
-    :param cell_letters:
-    :return: (int) number
     """
     if self.cell_letters is None or self.cell_letters == '':
       return None
@@ -92,10 +92,6 @@ class Tableau:
       l(pN)...l(p2)l(p1)l(p0) is
       number = nlp0*(27**0) + nlp1*(27**1) + nlp2*(27**2) + ... + nlpN*(27**pN)
 
-    :param cell_letters:
-    :param to_number:
-    :param pos_order:
-    :return:
     """
     self.cell_letters = self.cell_letters.upper()
     if len(self.cell_letters) > 0:
@@ -177,9 +173,9 @@ class Tableau:
     self.cell_letters = self.cell_letters.upper()
     # i = ZERO_PLUS_UPPERCASE_ASCII_LETTERS.index(cell_letters)
     if with_recursive:
-      fromcolumn = convert_columnletters_to_number_recursively(cell_letters)
+      fromcolumn = self.convert_columnletters_to_number_recursively()
     else:
-      fromcolumn = convert_columnletters_to_number_nonrecursively(cell_letters)
+      fromcolumn = self.convert_columnletters_to_number_nonrecursively()
     next_column = fromcolumn + ncolumns
     if next_column <= 0:
       error_msg = 'Moved column outside the tableu (negative columns %d)' % next_column
@@ -207,7 +203,7 @@ class Tableau:
     return next_cell_letters
 
 
-  def move_rows_by(number, nrows):
+  def move_rows_by(self, number, nrows):
     """
     """
     if nrows == 0:
