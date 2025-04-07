@@ -121,8 +121,8 @@ def get_cpi_baselineindex_for_refmonth_in_db(refmonthdate, p_seriesid=None):
 
 def get_last_available_cpi_n_refmonth_fromdb_by_series(p_seriesid=None):
   """
-  It searches for index by the most recent refmonthdate
-  returns both the index and the most recent refmonthdate
+  searches for the cpi on the most recent refmonthdate
+  returns both the index and the its corresponding most recent refmonthdate
   """
   conn = sett.get_sqlite_connection()
   cursor = conn.cursor()

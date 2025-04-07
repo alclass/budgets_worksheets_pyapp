@@ -60,7 +60,7 @@ import fs.datefs.introspect_dates as intr
 import fs.datefs.read_write_datelist_files as rwdl
 import fs.datefs.argparse as ap  # ap.get_args
 import commands.calc.multiplication_factor_calc as mfcalc
-import commands.calc.datamass_for_multfactortable as prices_dmass  # .get_date_n_price_tuplelist
+import commands.calc.cpi.adhoctests.datamass_for_multfactortable as prices_dmass  # .get_date_n_price_tuplelist
 
 
 def create_df_w_prices():

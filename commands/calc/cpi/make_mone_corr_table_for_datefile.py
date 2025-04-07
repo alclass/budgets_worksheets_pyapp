@@ -3,14 +3,14 @@
 commands/calc/cpi/make_mone_corr_table_for_datefile.py
 
 import copy
+import datetime
+import fs.datefs.introspect_dates as intd
 import fs.datefs.introspect_dates as idt  # idt.for make_date_or_none()
 import models.budgets.pb.price_data_as_dict as pdd  # pdd.gather_data
 """
-import datetime
 import os
 import settings as sett
 import commands.show.corr_monet_n_indices_calculator_from_dates as cmc  # cmc.CorrMonetWithinDatesCalculator
-import fs.datefs.introspect_dates as intd
 import fs.datefs.read_write_datelist_files as rwdf
 
 
