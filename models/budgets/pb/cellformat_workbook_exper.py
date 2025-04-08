@@ -13,12 +13,23 @@ import settings as sett
 
 class CellFormatExperimenter:
 
+  excelfilename = 'workbook_cellformat_experiment.xlsx'
+
   def __init__(self):
-    self.wrkbk = xw.Workbook()
+    self._excelfilepath = None
+    self.wrkbk = xw.Workbook(self.excelfilepath)
+
+  @property
+  def excelfilepath(self):
+    if self._excelfilepath is None:
+      datafolderpath = sett.get_datafolder_abspath()
+      self._excelfilepath = os.path.join(datafolderpath, self.excelfilename)
+    return self._excelfilepath
 
   def do_cellformat(self):
     print('@do_cellformat()')
     props = {'bold': True, 'font_color': 'red'}
+    print('props', props)
     cell_format_o = self.wrkbk.add_format(props)  # Set properties at creation.
     wrksh = self.wrkbk.add_worksheet()
     wrksh.write(0, 0, 'Foo', cell_format_o)
@@ -27,7 +38,7 @@ class CellFormatExperimenter:
     wrksh.write(3, 0, '', cell_format_o)
     wrksh.set_row(0, 18, cell_format_o)
     wrksh.set_column('A:D', 20, cell_format_o)
-    cell_format_o.set_font_color('green')
+    cell_format_o.set_font_color('blue')
     wrksh.write('B1', 'Cell B1', cell_format_o)
     wrkbk2 = xw.Workbook('currency_format.xlsx')
     wrksh = wrkbk2.add_worksheet()
@@ -36,14 +47,17 @@ class CellFormatExperimenter:
     wrkbk2.close()
 
   def save_workbook_to_file(self):
-    filename = 'workbook_cellformat_experiment.xlsx'
-    datafolderpath = sett.get_datafolder_abspath()
-    filepath = os.path.join(datafolderpath, filename)
-    self.wrkbk.w
+    print('Closing', self.excelfilepath)
+    self.wrkbk.close()
+
+  def process(self):
+    self.do_cellformat()
+    self.save_workbook_to_file()
 
 
 def adhoctest():
-  do_cellformat()
+  c_o = CellFormatExperimenter()
+  c_o.process()
 
 
 def process():

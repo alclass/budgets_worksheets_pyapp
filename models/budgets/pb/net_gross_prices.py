@@ -60,7 +60,34 @@ def calc_factor_gross_to_net_price(cofins=None, icms=None, ipi=None, pis=None):
   return inverse_factor
 
 
+def transform_grossprice_from_sourceicms_to_targeticms(grossprice, from_icms, to_icms):
+  obj = NetNGrossPrice(icms_gross_to_net=from_icms)
+  netprice = obj.calc_n_get_netprice_from_gross(gross_given=grossprice)
+  price = obj.calc_n_get_grossprice_from_net(netprice)
+  print('price', price)
+
+
 class NetNGrossPrice:
+
+  """
+  This class allows calculations with consume taxes
+  The functionality at larger was organized based on the 4-consumer-tax in Brazil
+    (until 2025 and before the sistematic of Federal and State IVA)
+  It does the following:
+    1) given a product's net price (ie price without taxes),
+       it can calculate its gross price (ie price with taxes)
+    2) it can do the inverse of 1) above, ie:
+       given a gross price (ie price with taxes),
+       it can calculate a product's net price (ie price without taxes)
+    3) it can retransform a gross price when its origin-ICMS is different from the target-ICMS:
+       Example:
+          suppose a gross price has a 16̈́% ICMS informed and
+          one wants to transform it to a 18% ICMS price
+      This class can do this retransform with method
+       given a gross price (ie price with taxes),
+       it can calculate a product's net price (ie price without taxes)
+
+  """
 
   def __init__(self, cofins=None, icms=None, ipi=None, pis=None, icms_gross_to_net=None):
     self.cofins, self.icms, self.ipi, self.pis = cofins, icms, ipi, pis
@@ -166,11 +193,11 @@ class NetNGrossPrice:
     )
 
   def calc_n_get_netprice_from_gross(self, gross_given):
-    netprice = gross_given * self._factor_gross_to_net_price
+    netprice = gross_given * self.factor_gross_to_net_price
     return netprice
 
   def calc_n_get_grossprice_from_net(self, net_given):
-    grossprice = net_given * self._factor_net_to_gross_price
+    grossprice = net_given * self.factor_net_to_gross_price
     return grossprice
 
   def __str__(self):
@@ -219,7 +246,7 @@ def adhoctest2():
   grossprice = fromto_price.calc_n_get_grossprice_from_net(netprice)
   scrmsg = f'gross_given = {gross_given} | netprice = {netprice} | grossprice = {grossprice}'
   print(scrmsg)
-
+  transform_grossprice_from_sourceicms_to_targeticms(100, 0.16, 0.2)
 
 def process():
   pass
