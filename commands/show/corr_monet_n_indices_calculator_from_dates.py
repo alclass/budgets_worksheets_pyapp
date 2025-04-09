@@ -323,8 +323,11 @@ class CorrMonetWithinDatesCalculator:
       seq = i + 1
       cpi_var, cpi_i, cpi_f = self.get_triple_cpivar_cpiini_cpifim_on_date(pdate)
       if cpi_f is None:
+        """
         errmsg = f"Either cpi_f={cpi_f} or cpi_i={cpi_i} or both were not found on date {pdate}."
         raise ValueError(errmsg)
+        """
+        continue
       # exr_var, exr_i, exr_f = self.get_exchangerate_variation_from(pdate)
       exr_var, exr_i, exr_f = self.get_triple_exrvar_exrini_exrfim_on_date(pdate)
       exr_var = 0 if exr_var is None else exr_var

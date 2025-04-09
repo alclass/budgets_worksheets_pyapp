@@ -12,6 +12,7 @@ import os
 import settings as sett
 import commands.show.corr_monet_n_indices_calculator_from_dates as cmc  # cmc.CorrMonetWithinDatesCalculator
 import fs.datefs.read_write_datelist_files as rwdf
+import fs.datefs.introspect_dates as idt  # idt.for make_date_or_none()
 
 
 def get_datedata_filepath():
@@ -33,7 +34,8 @@ class MoneCorrTableMaker:
 
   def __init__(self, topdate=None, fallback_to_cpi_m2date=False):
     self.fallback_to_cpi_m2date = fallback_to_cpi_m2date
-    self.topdate = topdate
+    # self.topdate = topdate
+    self.topdate = idt.make_date_or_none(topdate)
     self.dates = read_dates_from_datefiles()
     self.process()
 

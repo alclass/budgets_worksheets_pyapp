@@ -12,6 +12,7 @@ import datetime
 import pandas as pd
 from dateutil.relativedelta import relativedelta
 import settings as sett
+import sqlite3
 import fs.datefs.refmonths_mod as rfm
 import fs.db.db_settings as dbs
 cur_seriesid = 'CUUR0000SA0'
@@ -19,6 +20,32 @@ sur_seriesid = 'SUUR0000SA0'
 DEFAULT_SERIESID = 'CUUR0000SA0'
 available_cpi_seriesid_list = [cur_seriesid, sur_seriesid]
 NTCpiMonth = collections.namedtuple('NTCpiMonth', field_names=['cpi', 'refmonthdate'])
+
+
+def adapt_date_iso(val):
+  """Adapt datetime.date to ISO 8601 date."""
+  return val.isoformat()
+
+
+def adapt_datetime_iso(val):
+  """Adapt datetime.datetime to timezone-naive ISO 8601 date."""
+  return val.isoformat()
+
+
+def adapt_datetime_epoch(val):
+  """Adapt datetime.datetime to Unix timestamp."""
+  return int(val.timestamp())
+
+
+def convert_date(val):
+  """Convert ISO 8601 date to datetime.date object."""
+  return datetime.date.fromisoformat(val)
+
+
+# https://docs.python.org/3/library/sqlite3.html
+# (with examples) https://github.com/python/cpython/issues/99392
+sqlite3.register_adapter(datetime.date, adapt_date_iso)
+sqlite3.register_converter("date", convert_date)
 
 
 def get_min_or_max_available_refmonthdate_in_cpi_db(lowest=True, p_seriesid=None):
@@ -269,7 +296,7 @@ def adhoctest2():
   print(df.head())
   print(df.info())
   """
-  year = 2021
+  year = 2025
   ret = get_cpis_n_refmonths_as_tuplelist_fromdb_by_year_n_series(year=year)
   print(year, 'get_cpis_n_refmonths_as_tuplelist_fromdb_by_year_n_series')
   print(ret)
@@ -287,7 +314,10 @@ def adhoctest2():
 
 
 def adhoctest3():
-  refmonthdate = '2023-10-01'
+  """
+  refmonthdate = '2024-12-01'
+  """
+  refmonthdate = '2025-02-01'
   res = get_cpi_baselineindex_for_refmonth_in_db(refmonthdate)
   scrmsg = f'get_cpi_baselineindex_for_refmonth_in_db({refmonthdate}) => {res}'
   print(scrmsg)
@@ -300,8 +330,8 @@ def process():
 if __name__ == '__main__':
   """
   process()
-  adhoctest2()
   adhoctest1()
   """
   adhoctest3()
-
+  adhoctest2()
+  adhoctest1()
