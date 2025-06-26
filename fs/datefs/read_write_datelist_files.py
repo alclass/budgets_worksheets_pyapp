@@ -8,8 +8,10 @@ import fs.os.sufix_incrementor as sfx_incr
 import fs.datefs.introspect_dates as intr  # .convert_strdate_to_date_or_none_w_sep_n_order
 import fs.datefs.convert_to_date_wo_intr_sep_posorder as cnv  # .convert_str_or_attrsobj_to_date_or_none
 import settings as sett
+DEFAULT_DATE_SEPARATOR = '-'
 DEFAULT_TXT_INPUT_DATES_FILENAME = 'datesfile.txt'
 DEFAULT_TXT_OUTPUT_DATES_FILENAME = 'datesfile_processed_to_norm_yyyy-mm-dd.txt'
+DEFAULT_POSORDER = 'ymd'
 
 
 def get_datafolder_abspath_for_filename_w_tstamp(filename):
@@ -158,6 +160,10 @@ def form_default_datesfilepath():
   return form_datesfilepath_w_folderpath_n_filename(None, None)
 
 
+def form_default_inputdatesfilepath():
+  return form_datesfilepath_w_folderpath_n_filename(DEFAULT_TXT_INPUT_DATES_FILENAME, None)
+
+
 def get_appsroot_abspath_for_filename_w_tstamp(filename):
   strdt = make_tstamp_for_filename()
   name, ext = os.path.splitext(filename)
@@ -205,6 +211,14 @@ def save_without_existence_check_genarator_to_file(genfunc, output_filepath):
 
 class DateFileReaderWriter:
 
+  ALL_POSORDER_COMBS = [
+    # year is never in the middle (like for example dym)
+    'ymd', 'ydm', 'dmy', 'mdy'
+  ]
+  ALL_DATE_SEPARATORS = [
+    '-', '/', '.',
+  ]
+
   def __init__(self, input_filepath=None, output_filepath=None):
     self.input_filepath, self.output_filepath = input_filepath, output_filepath
     self.treat_filepaths()
@@ -212,7 +226,7 @@ class DateFileReaderWriter:
     self.strdatelist = None    # may be the whole or a subset of self.words
     self.n_dates_gencounted = 0
     self.sep = '-'  # default, it may be replaced at runtime
-    self.posorder = 'ymd'  # default, it may be replaced at runtime
+    self._posorder = 'ymd'  # default, it may be replaced at runtime
     self.bool_keep_sep_n_posorder_fix = True
     self.bool_generator_ongoing = False  # either datelist is taken all at once or 'generated'
     self.bool_generator_has_run = False
@@ -225,6 +239,32 @@ class DateFileReaderWriter:
   def treat_filepaths(self):
     self.treat_input_filepath()
     self.treat_output_filepath()
+
+  @property
+  def posorder(self):
+    if self._posorder is None:
+      self._posorder = DEFAULT_POSORDER
+    return os.path.split(self.input_filepath)[0]
+
+  @posorder.setter
+  def posorder(self, p_posorder):
+    if p_posorder is None or p_posorder not in self.ALL_POSORDER_COMBS:
+      self._posorder = DEFAULT_POSORDER
+    else:
+      self._posorder = p_posorder
+
+  @property
+  def sep(self):
+    if self._sep is None:
+      self._sep = DEFAULT_DATE_SEPARATOR
+    return self._sep
+
+  @sep.setter
+  def sep(self, p_sep):
+    if p_sep is None or p_sep not in self.ALL_DATE_SEPARATORS:
+      self._sep = DEFAULT_DATE_SEPARATOR
+    else:
+      self._sep = p_sep
 
   @property
   def input_filename(self):
@@ -248,7 +288,7 @@ class DateFileReaderWriter:
 
   def treat_input_filepath(self):
     if self.input_filepath is None:
-      self.input_filepath = form_default_datesfilepath()
+      self.input_filepath = form_default_inputdatesfilepath()
     if not os.path.isfile(self.input_filepath):
       error_msg = f"""Input dates file {self.input_filename} does not exist.
       In folderpath = {self.input_folderpath}
@@ -300,7 +340,7 @@ class DateFileReaderWriter:
     """
     if self.bool_keep_sep_n_posorder_fix:
       self.datelist = intr.extract_datelist_from_strdatelist_w_sep_n_posorder(
-        self.words, self.sep, self.posorder
+        self.words, self.sep, self._posorder
       )
     else:
       self.datelist = intr.extract_datelist_from_strdatelist_considering_any_sep_n_posorder(self.words)
