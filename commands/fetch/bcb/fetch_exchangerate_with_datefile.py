@@ -5,7 +5,7 @@ commands/fetch/bcb/fetch_exchangerate_with_datefile.py
 jetbrains://pycharm/navigate/reference?project=local_settings.py&path=fs%2Fdatefs%2Fread_write_datelist_files.py
 
 """
-import fs.datefs.read_write_datelist_files as rw
+import fs.datefs.read_write_datelist_files_fs as rw
 
 
 def read_dates_from_files():

@@ -8,7 +8,7 @@ import datetime
 import fs.datefs.dategenerators as hilodt
 import fs.datefs.convert_to_date_wo_intr_sep_posorder as dtfs
 import fs.datefs.introspect_dates as intr  # intr.introspect_possible_month_position_in_date
-import fs.datefs.read_write_datelist_files as rwdt  # .fetch_dates_from_textfile_w_filepath
+import fs.datefs.read_write_datelist_files_fs as rwdt  # .fetch_dates_from_textfile_w_filepath
 DEFAULT_INPUT_TXT_DATES_FILENAME = 'datesfile.txt'
 
 

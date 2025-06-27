@@ -9,7 +9,7 @@ import datetime
 import unittest
 import fs.datefs.convert_to_date_wo_intr_sep_posorder as mkdt
 import fs.datefs.refmonths_mod as rfm  # .calc_refmonth_plus_n
-import fs.datefs.read_write_datelist_files as rwdt  # .calc_refmonth_plus_n
+import fs.datefs.read_write_datelist_files_fs as rwdt  # .calc_refmonth_plus_n
 
 
 class TestCaseDateFunctions(unittest.TestCase):

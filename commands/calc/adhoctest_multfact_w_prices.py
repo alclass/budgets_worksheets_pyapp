@@ -8,7 +8,7 @@ import datetime
 from dateutil.relativedelta import relativedelta
 import commands.calc.cpi.adhoctests.datamass_for_multfactortable as prices_dmass  # .get_date_n_price_tuplelist
 import commands.calc.calc_monet_corr as cmc  # .DatePriceRecordsMonetCorrCalculator
-import fs.datefs.read_write_datelist_files as rwdt
+import fs.datefs.read_write_datelist_files_fs as rwdt
 nt_dateprice_constr = collections.namedtuple('NTDeP', field_names=['date', 'price'])
 
 

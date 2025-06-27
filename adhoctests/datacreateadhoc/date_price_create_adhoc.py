@@ -2,7 +2,7 @@ import datetime
 import math
 import random
 import collections
-import fs.datefs.read_write_datelist_files as daterw
+import fs.datefs.read_write_datelist_files_fs as daterw
 import commands.calc.calc_monet_corr as cmc  # cmc.MonetCorrCalculator
 date_price_ntconstr = collections.namedtuple('NTDateNPrice', field_names=['date', 'price'])
 

@@ -57,7 +57,7 @@ from dateutil.relativedelta import relativedelta
 import pandas as pd
 import fs.datefs.convert_to_date_wo_intr_sep_posorder as cnv
 import fs.datefs.introspect_dates as intr
-import fs.datefs.read_write_datelist_files as rwdl
+import fs.datefs.read_write_datelist_files_fs as rwdl
 import fs.datefs.argparse as ap  # ap.get_args
 import commands.calc.multiplication_factor_calc as mfcalc
 import commands.calc.cpi.adhoctests.datamass_for_multfactortable as prices_dmass  # .get_date_n_price_tuplelist

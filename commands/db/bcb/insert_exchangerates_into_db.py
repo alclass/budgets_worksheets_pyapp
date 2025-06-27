@@ -10,7 +10,7 @@ import argparse
 import datetime
 import fs.economicfs.bcb.bcb_cotacao_fetcher_from_db_or_api as fin
 import fs.datefs.dategenerators as gendt
-import fs.datefs.read_write_datelist_files as rwdt
+import fs.datefs.read_write_datelist_files_fs as rwdt
 
 
 def fetch_exchangerate_thru_api(pdate):
