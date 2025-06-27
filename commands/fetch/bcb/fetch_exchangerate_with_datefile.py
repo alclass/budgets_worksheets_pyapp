@@ -18,8 +18,10 @@ def read_dates_from_files():
   print(scrmpg)
   res = reader.fetch_dates_converting_from_strlist_w_sep_n_posorder()
   print(res)
-  res = reader.fetch_dates_converting_from_strlist_w_sep_n_posorder(True)
+  res = reader.join_datelist_as_text_or_none()
+  reader.introspect_seq_n_orderpos_from_datelist()
   print(res)
+  print(reader)
 
 
 def process():

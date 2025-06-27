@@ -4,17 +4,28 @@ fs/datefs/read_write_datelist_files.py
 """
 import datetime
 import os
+# from urllib3.contrib.pyopenssl import orig_util_SSLContext
+
 import fs.os.sufix_incrementor as sfx_incr
 import fs.datefs.introspect_dates as intr  # .convert_strdate_to_date_or_none_w_sep_n_order
 import fs.datefs.convert_to_date_wo_intr_sep_posorder as cnv  # .convert_str_or_attrsobj_to_date_or_none
 import settings as sett
 DEFAULT_DATE_SEPARATOR = '-'
+DEFAULT_DATE_POSORDER = 'ymd'
 DEFAULT_TXT_INPUT_DATES_FILENAME = 'datesfile.txt'
 DEFAULT_TXT_OUTPUT_DATES_FILENAME = 'datesfile_processed_to_norm_yyyy-mm-dd.txt'
-DEFAULT_POSORDER = 'ymd'
 
 
-def get_datafolder_abspath_for_filename_w_tstamp(filename):
+def get_filepath_in_configdatafolder_w_filename_n_tstampsufix(filename):
+  """
+  gets the abspath
+  Example:
+    suppose:
+      filename = 'testfile.txt'
+      conffolderpath = '/full/path'
+    Then, the returned result will be:
+      "/full/path/testfile_20250626T204817.txt"
+  """
   strdt = make_tstamp_for_filename()
   name, ext = os.path.splitext(filename)
   if name.find(' ') > -1:
@@ -43,7 +54,9 @@ def fetch_wordlist_from_textfile_w_filepath(p_filepath=None):
     words = list(map(lambda e: e.strip('\t\r\n'), words))
     # notice that words itself is an iterable/list, so the list-comprehension below
     # will help pick up the elment(s) to be appended to strdatelist
-    _ = [strdatelist.append(word) for word in words]
+    _ = [strdatelist.append(word) if word != '' else word for word in words]
+  # while '' in strdatelist:
+  #   strdatelist.remove('')
   return strdatelist
 
 
@@ -211,7 +224,7 @@ def save_without_existence_check_genarator_to_file(genfunc, output_filepath):
 
 class DateFileReaderWriter:
 
-  ALL_POSORDER_COMBS = [
+  ALL_DATE_POSORDER_COMBS = [
     # year is never in the middle (like for example dym)
     'ymd', 'ydm', 'dmy', 'mdy'
   ]
@@ -243,13 +256,13 @@ class DateFileReaderWriter:
   @property
   def posorder(self):
     if self._posorder is None:
-      self._posorder = DEFAULT_POSORDER
+      self._posorder = DEFAULT_DATE_POSORDER
     return os.path.split(self.input_filepath)[0]
 
   @posorder.setter
   def posorder(self, p_posorder):
-    if p_posorder is None or p_posorder not in self.ALL_POSORDER_COMBS:
-      self._posorder = DEFAULT_POSORDER
+    if p_posorder is None or p_posorder not in self.ALL_DATE_POSORDER_COMBS:
+      self._posorder = DEFAULT_DATE_POSORDER
     else:
       self._posorder = p_posorder
 
@@ -268,22 +281,38 @@ class DateFileReaderWriter:
 
   @property
   def input_filename(self):
-    return os.path.split(self.input_filepath)[-1]
+    try:
+      _, filename = os.path.split(self.input_filepath)
+      return filename
+    except (IndexError, ValueError):
+      pass
+    return None
 
   @property
   def input_folderpath(self):
-    return os.path.split(self.input_filepath)[0]
+    try:
+      folderpath, _ = os.path.split(self.input_filepath)
+      return folderpath
+    except (IndexError, ValueError):
+      pass
+    return None
 
   @property
   def output_filename(self):
-    if self.output_filepath:
-      return os.path.split(self.output_filepath)[-1]
+    try:
+      _, filename = os.path.split(self.output_filepath)
+      return filename
+    except (IndexError, ValueError):
+      pass
     return None
 
   @property
   def output_folderpath(self):
-    if self.output_filepath:
-      return os.path.split(self.output_filepath)[0]
+    try:
+      folderpath, _ = os.path.split(self.output_filepath)
+      return folderpath
+    except (IndexError, ValueError):
+      pass
     return None
 
   def treat_input_filepath(self):
@@ -412,6 +441,23 @@ class DateFileReaderWriter:
       scrmsg = f"{i+1} orig={self.words[i]} | strdate={self.strdatelist[i]} | date={pdate}"
       print(scrmsg)
 
+  def read_input(self):
+    pass
+
+  def __str__(self):
+    outstr = f"""Class ReaderWriter:
+    input_filepath = {self.input_filepath}
+    output_filepath = {self.output_filepath}
+    n_dates_gencounted = {self.n_dates_gencounted}
+    sep = {self.sep}
+    posorder = {self.posorder}
+    bool_keep_sep_n_posorder_fix = {self.bool_keep_sep_n_posorder_fix}
+    bool_generator_ongoing = {self.bool_generator_ongoing}
+    bool_generator_has_run = {self.bool_generator_has_run}
+    datelist = {self.datelist}
+    """
+    return outstr
+
 
 def adhoc_test():
   dates_rw = DateFileReaderWriter()
@@ -446,6 +492,11 @@ def adhoc_test2():
   returned_datelist = convert_strdatelist_to_datelist_w_sep_n_posorder(strdatelist, sep='-', posorder='ymd')
   print('strdatelist', strdatelist, 'expect_datelist', expect_datelist)
   print('returned_datelist', returned_datelist)
+  filename = 'testfile.txt'
+  fp = get_filepath_in_configdatafolder_w_filename_n_tstampsufix(filename)
+  print('fp of ', filename, ' => ', fp)
+  res = fetch_wordlist_from_textfile_w_filepath()
+  print('fetch_wordlist_from_textfile_w_filepath => ', res)
 
 
 def process():
