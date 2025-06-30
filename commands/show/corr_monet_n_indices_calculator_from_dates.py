@@ -356,7 +356,8 @@ def process():
 
   """
   _, last_cpi_refmonth = ftcpi.get_last_available_cpi_n_refmonth_fromdb_by_series()
-  print('last_cpi_refmonth', last_cpi_refmonth)
+  scrmsg = f"'last_cpi_refmonth = {last_cpi_refmonth}"
+  print(scrmsg)
   today = datetime.date.today()
   comparator = CorrMonetWithinDatesCalculator(today, allow_cpi_fallback_to_m_minus_2=True)  # last_cpi_refmonth
   comparator.process_datesfile()

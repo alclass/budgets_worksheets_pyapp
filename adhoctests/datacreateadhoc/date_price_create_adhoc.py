@@ -10,7 +10,7 @@ date_price_ntconstr = collections.namedtuple('NTDateNPrice', field_names=['date'
 def make_ntlist_dates_n_random_prices_from_datesfile(datesfilepath=None):
   dtrw = daterw.DateFileReaderWriter(datesfilepath)
   ntlist = []
-  for pdate in dtrw.gen_dates_converting_strdates_w_or_wo_sep_n_posorder():
+  for pdate in dtrw.gen_n_dont_store_pydates_converting_textfile_w_or_wo_sep_n_posorder():
     price = random.random() * 100
     price = round(price, 2)
     scrline = f"{pdate} | {price} "

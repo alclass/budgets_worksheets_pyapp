@@ -73,10 +73,9 @@ def convert_date_to_strmmddyyyy_or_itsreprtoday_opt_sep_zfill(pdate, sep='/', zf
   return convert_date_to_strmmddyyyy_or_none_opt_sep_zfill(today, sep, zfill)
 
 
-def convert_strdate_to_date_or_none_w_sep_n_posorder(strdate, sep='-', orderpos='ymd'):
+def convert_strdate_to_date_or_none_w_sep_n_posorder(strdate: str, sep='-', orderpos='ymd') -> datetime.date | None:
   try:
-    ppp = strdate.split(' ')
-    pp = ppp[0].split(sep)
+    pp = strdate.split(sep)
     year = None
     month = None
     day = None

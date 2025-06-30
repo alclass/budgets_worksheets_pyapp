@@ -74,7 +74,7 @@ class Dispatcher:
   args = Namespace(date=None, today=False, refmonthdate=None, datelist=None, daterange=None)
 
   Obs:
-    None is equivalent to False (and vice versa)
+    None has context of False
   """
 
   arg_fieldnames = ['date', 'today', 'refmonthdate', 'datelist', 'daterange']

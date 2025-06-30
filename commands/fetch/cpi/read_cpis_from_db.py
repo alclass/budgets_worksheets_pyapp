@@ -22,22 +22,27 @@ available_cpi_seriesid_list = [cur_seriesid, sur_seriesid]
 NTCpiMonth = collections.namedtuple('NTCpiMonth', field_names=['cpi', 'refmonthdate'])
 
 
-def adapt_date_iso(val):
+def adapt_date_iso(val: datetime.date):
   """Adapt datetime.date to ISO 8601 date."""
   return val.isoformat()
 
 
-def adapt_datetime_iso(val):
+def adapt_datetime_iso(val: datetime.datetime):
   """Adapt datetime.datetime to timezone-naive ISO 8601 date."""
   return val.isoformat()
 
 
-def adapt_datetime_epoch(val):
-  """Adapt datetime.datetime to Unix timestamp."""
+def adapt_datetime_epoch(val: datetime.datetime):
+  """Adapt datetime.datetime to Unix timestamp.
+  The datetime.datetime object in Python's standard datetime module
+    has the timestamp() method. This method returns the time elapsed
+    since the Unix epoch (January 1, 1970, 00:00:00 UTC)
+    as a floating-point number, typically representing seconds.
+  """
   return int(val.timestamp())
 
 
-def convert_date(val):
+def convert_date(val: str):
   """Convert ISO 8601 date to datetime.date object."""
   return datetime.date.fromisoformat(val)
 
@@ -321,6 +326,11 @@ def adhoctest3():
   res = get_cpi_baselineindex_for_refmonth_in_db(refmonthdate)
   scrmsg = f'get_cpi_baselineindex_for_refmonth_in_db({refmonthdate}) => {res}'
   print(scrmsg)
+  today = datetime.date.today()
+  refmonthdate = datetime.date(year=today.year, month=today.month, day=1)
+  ret = get_cpi_baselineindex_for_refmonth_m2_in_db(refmonthdate)
+  scrmsg = f'get_cpi_baselineindex_for_refmonth_in_db({refmonthdate}) => {res}'
+  print(scrmsg)
 
 
 def process():
@@ -331,7 +341,6 @@ if __name__ == '__main__':
   """
   process()
   adhoctest1()
+  adhoctest2()
   """
   adhoctest3()
-  adhoctest2()
-  adhoctest1()

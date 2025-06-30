@@ -4,10 +4,8 @@ fs/datefs/read_write_datelist_files_fs.py
 """
 import datetime
 import fs.datefs.convert_to_datetime_wo_intr_sep_posorder as dtfs
-
 import os
 # from urllib3.contrib.pyopenssl import orig_util_SSLContext
-
 import fs.os.sufix_incrementor as sfx_incr
 import fs.datefs.introspect_dates as intr  # .convert_strdate_to_date_or_none_w_sep_n_order
 import fs.datefs.convert_to_date_wo_intr_sep_posorder as cnv  # .convert_str_or_attrsobj_to_date_or_none
@@ -18,20 +16,20 @@ DEFAULT_TXT_INPUT_DATES_FILENAME = 'datesfile.txt'
 DEFAULT_TXT_OUTPUT_DATES_FILENAME = 'datesfile_processed_to_norm_yyyy-mm-dd.txt'
 
 
-def make_filepath_in_configdatafolder_w_fn_sufixed_yyyy_mm_dd(
+def make_new_sufixed_yyyy_mm_dd_fp_in_configdatafolder_giving_fn(
     infilename,
     p_datafolder_abspath=None,
     p_date=None
   ):
   """
-  make and return a file abspath where input filename is sufixed with a
-   date in the yyyy-mm-dd format
+  Makes and returns a file abspath equivalent to the input filename sufixed with a
+   date in the yyyy-mm-dd format and located in the config data folder
 
   Example:
     suppose:
       filename = 'testfile.txt'
-      conffolderpath = '/full/path'
-    Then, the returned result will be:
+      configfolderpath = '/full/path'
+    Then, the return result will be:
       "/full/path/testfile_20250626.txt"
       or, if filename is already taken,
       "/full/path/testfile_20250626_<n>.txt" when <n> represents a sequencial number 1, 2, 3...
@@ -42,26 +40,29 @@ def make_filepath_in_configdatafolder_w_fn_sufixed_yyyy_mm_dd(
     datafolder_abspath = p_datafolder_abspath
   indate = dtfs.convert_datetime_to_date_or_none(p_date)
   if indate is None:
-    indate = today = datetime.date.today()
+    indate = datetime.date.today()
   name, dot_ext = os.path.splitext(infilename)
   outfilename = f"{name}{indate}{dot_ext}"
   outfilepath = os.path.join(datafolder_abspath, outfilename)
-  i_iter, max_iter = 1, 1000
+  i_iter, max_iter = 0, 1000
   while os.path.isfile(outfilepath):
-    outfilename = f"{name}{indate}_{i_iter}{dot_ext}"
-    outfilepath = os.path.join(datafolder_abspath, outfilename)
+    i_iter += 1
     if i_iter > max_iter:
       errmsg = f"""i_iter={i_iter} > max_iter={max_iter} in trying to make
        filepath [{outfilepath}] with date yyyymmdd stamp
         Please, delete or move files out of datafolder and retry.
         datafolder = [{datafolder_abspath}]"""
       raise ValueError(errmsg)
+    outfilename = f"{name}{indate}_{i_iter}{dot_ext}"
+    outfilepath = os.path.join(datafolder_abspath, outfilename)
   return outfilepath
 
 
-def make_filepath_in_configdatafolder_w_filename_n_tstampsufix(infilename):
+def make_new_datetimestampsufix_fp_in_configdatafolder_giving_fn(infilename):
   """
-  make and return a file abspath where input filename is sufixed with a timestamp
+  Makes and returns a file abspath where input filename is sufixed with a timestamp
+  Makes and returns a file abspath equivalent to the input filename sufixed with a
+   datetime stamp in the yyyymmddThhmmss format and located in the config data folder
 
   Example:
     suppose:
@@ -80,6 +81,30 @@ def make_filepath_in_configdatafolder_w_filename_n_tstampsufix(infilename):
   datafolder_abspath = sett.get_datafolder_abspath()
   filepath = os.path.join(datafolder_abspath, outfilename)
   return filepath
+
+
+def fetch_iter_wordlist_from_textfile_w_filepath(p_filepath=None):
+  """
+  Gets via iteration (yielding one by one) each first non-empty word of the lines of a text file
+  """
+  if p_filepath is None or not os.path.isfile(p_filepath):
+    filepath = form_datesfilepath_w_folderpath_n_filename()
+  else:
+    filepath = p_filepath
+  fd = open(filepath, 'r')
+  line = fd.readline()
+  while line:
+    try:
+      line = line.lstrip().rstrip()
+      pp = line.split(' ')
+      words = list(filter(lambda w: w != '', pp))
+      if len(words) > 0:
+        word = words[0]
+        yield word
+    except (IndexError, ValueError):
+      pass
+    line = fd.readline()
+  return
 
 
 def fetch_wordlist_from_textfile_w_filepath(p_filepath=None):
@@ -284,7 +309,7 @@ def adhoc_test1():
   print('strdatelist', strdatelist, 'expect_datelist', expect_datelist)
   print('returned_datelist', returned_datelist)
   filename = 'testfile.txt'
-  fp = make_filepath_in_configdatafolder_w_filename_n_tstampsufix(filename)
+  fp = make_new_datetimestampsufix_fp_in_configdatafolder_giving_fn(filename)
   print('fp of ', filename, ' => ', fp)
   res = fetch_wordlist_from_textfile_w_filepath()
   print('fetch_wordlist_from_textfile_w_filepath => ', res)
