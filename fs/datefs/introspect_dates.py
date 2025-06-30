@@ -51,6 +51,23 @@ def make_date_or_today(pdate):
   return odate
 
 
+def make_refmonthdate_or_none(p_refmonthdate):
+  """
+  Makes (verify only or create) a refmonthdate
+
+  A refmonthdate is any date having, as a convention, day = 1
+  A refmonthdate is intended to represent yearly months i.e., year/month
+  """
+  supposed_refmonthdate = make_date_or_none(p_refmonthdate)
+  if supposed_refmonthdate is None:
+    return None
+  if supposed_refmonthdate.day == 1:
+    return supposed_refmonthdate
+  sr = supposed_refmonthdate
+  refmonthdate = datetime.date(year=sr.year, month=sr.month, day=1)
+  return refmonthdate
+
+
 def convert_date_to_strmmddyyyy_or_none_opt_sep_zfill(pdate, sep='/', zfill=None):
   target_posorder = 'mdy'
   # strdate
