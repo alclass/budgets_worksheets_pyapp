@@ -12,60 +12,82 @@ The data the script extracts is like the following pretty-print text table:
 +-------------+------+--------+---------+-----------+
 """
 import datetime
+import os
+import re
 import fs.db.db_settings as dbs
+from models.budgets.pb.tmp1 import recomp
+from models.finindices.cpis import cpis_cls
 import settings as sett
-import fs.datefs.introspect_dates as intr  # .convert_strdate_to_date_or_none_w_sep_n_order
-SERIESID_LIST = ['CUUR0000SA0', 'SUUR0000SA0']
+# import fs.datefs.introspect_dates as intr  # .convert_strdate_to_date_or_none_w_sep_n_order
 tablename = 'idxind_monthly_indices'
-
-
-class CPIDatum:
-
-  def __init__(
-      self,
-      seriesid: str,
-      year: str | int,
-      refmonthdate: str | datetime.date,
-      acc_index: float,
-      footnootes=None
-    ):
-    self.seriesid = seriesid
-    self.year = year
-    self.refmonthdate = refmonthdate
-    self.acc_index = acc_index
-    self.footnotes = footnootes
-
-  def treat_attribs(self):
-    try:
-      self.year = int(self.year)
-    except ValueError:
-      errmsg = f"year ({self.year}) was not passed as integer to class CPIDatum. Please, correct data and retry."
-      raise ValueError(errmsg)
-    if not isinstance(self.refmonthdate, datetime.datetime):
-      self.refmonthdate = intr.make_refmonthdate_or_none(self.refmonthdate)
-      if self.refmonthdate is None:
-        errmsg = f"refmonthdate (None) was not passed to class CPIDatum. Please, correct data and retry."
-        raise ValueError(errmsg)
-    if self.seriesid is None or self.seriesid not in SERIESID_LIST:
-      errmsg = (f"series {self.seriesid} was not passed to class CPIDatum"
-                f" belonging to list {SERIESID_LIST}. Please, correct data and retry.")
-      raise ValueError(errmsg)
-
-  def __str__(self):
-    outstr = """CPIDatum:
-    self.seriesid = 
-    self.year = 
-    self.refmonthdate = 
-    self.acc_index = 
-    self.footnotes = 
-    """
-    return outstr
+prettyprint_file_pattern = r'^(\d[4]\-\d[4]\s[1].+?[\.prettyprint\.dat]$)'
+cmpld_prettyprint_file_pattern = re.compile(prettyprint_file_pattern)
 
 
 class CPIPrettyPrintReader:
 
-  def __init__(self, cpidatum):
-    self.cpidatum = cpidatum
+  # "{year_fr}-{year_to} {seriesid}.prettyprint.dat"
+  prettyprint_file_pattern = prettyprint_file_pattern
+  cmpld_prettyprint_file_pattern = cmpld_prettyprint_file_pattern
+
+  def __init__(self, p_datafolder_abspath=None):
+    self.datafolder_abspath = p_datafolder_abspath
+    self.data_filename = None
+
+  def treat_attrs(self):
+    if self.datafolder_abspath is None or not os.path.isdir(self.datafolder_abspath):
+      errmsg = f"datafolder_abspath {self.datafolder_abspath} does not exist. Please, verify data and retry."
+      raise OSError(errmsg)
+
+  def read_line_into_cpidatum(self):
+    """
+    if not isinstance(self.cpidatum, cpis_cls.CPIDatum):
+      errmsg = f"cpidatum must have come up as type CPIDatum. Please, verify data and retry."
+      raise ValueError(errmsg)
+    """
+    pass
+
+  @property
+  def data_filepath(self) -> os.path or None:
+    if self.data_filename is None:
+      return None
+    return os.path.join(self.datafolder_abspath, self.data_filename)
+
+  def read_text_datafile(self):
+    """
+    """
+    for line in open(self.data_filepath, 'r').readline():
+      pp = line.split('|')
+      if len(pp) > 3:
+        seriesid = pp[0]
+        year = pp[1]
+        month = pp[2]
+        cpi_index = pp[3]
+        footnotes = pp[4]
+        cpidatum = cpis_cls.CPIDatum(
+          seriesid,
+          year,
+          month,
+          cpi_index,
+          footnotes,
+        )
+        scrmsg = f"cpidatum = {cpidatum}"
+        print(scrmsg)
+
+  def datafile_by_pattern_name(self):
+    filenames = os.listdir(self.datafolder_abspath)
+    data_filename = None
+    for filename in filenames:
+      match = self.cmpld_prettyprint_file_pattern.search(filename)
+      data_filename = None if match is None else match.group(1)
+      if data_filename:
+        break
+    if data_filename is not None:
+      self.data_filename = data_filename
+
+  def read_thru_datafolder(self, p_datafolder_abspath=None):
+    pass
+
 
 def get_triplelist_for_dbinserting():
   seriesid = 'CUUR0000SA0'
@@ -143,6 +165,15 @@ def process():
 
 
 def adhoctest():
+  """
+  https://www.kaggle.com/code/albeffe/regex-exercises-solutions
+  https://www.w3resource.com/python-exercises/re/
+  https://learnbyexample.github.io/py_regular_expressions/Exercise_solutions.html
+  https://pythonistaplanet.com/python-regex-exercises/
+  https://realpython.com/regex-python/
+  https://www.rexegg.com/regex-boundaries.php
+
+  """
   pass
 
 
@@ -151,4 +182,3 @@ if __name__ == '__main__':
   process()
   """
   adhoctest()
-  process()
