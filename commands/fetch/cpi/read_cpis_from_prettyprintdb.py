@@ -20,7 +20,7 @@ from models.finindices.cpis import cpis_cls
 import settings as sett
 # import fs.datefs.introspect_dates as intr  # .convert_strdate_to_date_or_none_w_sep_n_order
 tablename = 'idxind_monthly_indices'
-prettyprint_file_pattern = r'^(\d[4]\-\d[4]\s[1].+?[\.prettyprint\.dat]$)'
+prettyprint_file_pattern = r'^(\d{4}\-\d{4}\s{1}.+?\.prettyprint\.dat)$'
 cmpld_prettyprint_file_pattern = re.compile(prettyprint_file_pattern)
 
 
@@ -31,137 +31,125 @@ class CPIPrettyPrintReader:
   cmpld_prettyprint_file_pattern = cmpld_prettyprint_file_pattern
 
   def __init__(self, p_datafolder_abspath=None):
+    self.found_datafilenames = []
     self.datafolder_abspath = p_datafolder_abspath
-    self.data_filename = None
+    if self.datafolder_abspath is None:
+      self.datafolder_abspath = sett.get_datafolder_abspath()
+    self.cpis = []
+    self.cpis_dict = {}  # this is a 2-D dict, one for seriesid, the other for refmonth
+    self.process()
 
   def treat_attrs(self):
     if self.datafolder_abspath is None or not os.path.isdir(self.datafolder_abspath):
       errmsg = f"datafolder_abspath {self.datafolder_abspath} does not exist. Please, verify data and retry."
       raise OSError(errmsg)
 
-  def read_line_into_cpidatum(self):
+  def get_filepath_from_filename(self, filename):
+    return os.path.join(self.datafolder_abspath, filename)
+
+  def show_cpis_found(self):
+    for cpi in self.cpis:
+      scrmsg = f"cpidatum = {cpi}"
+      print(scrmsg)
+
+  def read_line_into_cpidatum(self, line):
     """
     if not isinstance(self.cpidatum, cpis_cls.CPIDatum):
       errmsg = f"cpidatum must have come up as type CPIDatum. Please, verify data and retry."
       raise ValueError(errmsg)
     """
-    pass
-
-  @property
-  def data_filepath(self) -> os.path or None:
-    if self.data_filename is None:
-      return None
-    return os.path.join(self.datafolder_abspath, self.data_filename)
-
-  def read_text_datafile(self):
-    """
-    """
-    for line in open(self.data_filepath, 'r').readline():
-      pp = line.split('|')
-      if len(pp) > 3:
+    pp = line.split('|')
+    pp = filter(lambda c: c != '', pp)
+    pp = list(map(lambda c: c.lstrip('\t ').rstrip(' '), pp))
+    # print('Introspecting line ->', pp)
+    if len(pp) > 3:
+      try:
         seriesid = pp[0]
-        year = pp[1]
-        month = pp[2]
+        year = int(pp[1])
+        mmonth = pp[2]
         cpi_index = pp[3]
         footnotes = pp[4]
         cpidatum = cpis_cls.CPIDatum(
-          seriesid,
-          year,
-          month,
-          cpi_index,
-          footnotes,
+          seriesid=seriesid,
+          year=year,
+          refmonthdate=mmonth,
+          acc_index=cpi_index,
+          footnootes=footnotes
         )
-        scrmsg = f"cpidatum = {cpidatum}"
-        print(scrmsg)
+        # scrmsg = f"Reading line cpidatum = {cpidatum}"
+        # print(scrmsg)
+        self.cpis.append(cpidatum)
+        if seriesid in self.cpis_dict:
+          refmonthdate_2nd_dim = self.cpis_dict[seriesid]
+          if cpidatum.refmonthdate in refmonthdate_2nd_dim:
+            # it has already been stored
+            return
+          refmonthdate_2nd_dim[cpidatum.refmonthdate] = cpidatum
+          # added in the 2th level: refmonthdate
+          return
+        else:
+          refmonthdate_2nd_dim = {cpidatum.refmonthdate: cpidatum}
+          self.cpis_dict[seriesid] = refmonthdate_2nd_dim
+          return
+      except (IndexError, ValueError):
+        pass
 
-  def datafile_by_pattern_name(self):
+  def read_text_datafile(self, prettyprint_filename):
+    """
+    """
+    prettyprint_filepath = self.get_filepath_from_filename(prettyprint_filename)
+    fd = open(prettyprint_filepath, 'r')
+    for line in fd.readlines():
+      line = line.strip(' \t\r\n')
+      self.read_line_into_cpidatum(line)
+
+  def read_prettyprint_files(self):
+    for i, prettyprint_filename in enumerate(self.found_datafilenames):
+      seq = i + 1
+      # scrmsg = f"{seq} -> reading prettyprint file {prettyprint_filename}"
+      # print(scrmsg)
+      self.read_text_datafile(prettyprint_filename)
+
+  def find_prettyprint_files(self):
     filenames = os.listdir(self.datafolder_abspath)
-    data_filename = None
+    # print('filenames:', filenames)
+    self.found_datafilenames = []
     for filename in filenames:
       match = self.cmpld_prettyprint_file_pattern.search(filename)
       data_filename = None if match is None else match.group(1)
       if data_filename:
-        break
-    if data_filename is not None:
-      self.data_filename = data_filename
+        filepath = self.get_filepath_from_filename(data_filename)
+        if os.path.isfile(filepath):
+          self.found_datafilenames.append(data_filename)
 
-  def read_thru_datafolder(self, p_datafolder_abspath=None):
+  def convert_stored_dict_to_a_spreadsheet(self):
     pass
 
-
-def get_triplelist_for_dbinserting():
-  seriesid = 'CUUR0000SA0'
-  triples_list = []
-  refmonthdate, rm_idx = '2023-11-01', 307.051
-  triple = (seriesid, refmonthdate, rm_idx)
-  triples_list.append(triple)
-  refmonthdate, rm_idx = '2023-12-01', 306.746
-  triple = (seriesid, refmonthdate, rm_idx)
-  triples_list.append(triple)
-  refmonthdate, rm_idx = '2024-01-01', 308.417
-  triple = (seriesid, refmonthdate, rm_idx)
-  triples_list.append(triple)
-  seriesid = 'SUUR0000SA0'
-  refmonthdate, rm_idx = '2023-11-01', 171.219
-  triple = (seriesid, refmonthdate, rm_idx)
-  triples_list.append(triple)
-  refmonthdate, rm_idx = '2023-12-01', 171.015
-  triple = (seriesid, refmonthdate, rm_idx)
-  triples_list.append(triple)
-  refmonthdate, rm_idx = '2024-01-01', 171.910
-  triple = (seriesid, refmonthdate, rm_idx)
-  triples_list.append(triple)
-  return triples_list
-
-
-class ManInsertor:
-
-  tablename = dbs.IDXIND_TABLENAME
-
-  def __init__(self):
-    self.conn = None
-    self.cursor = None
-    self.n_inserted = 0
-    self.triples_list = get_triplelist_for_dbinserting()
-    self.process()
-
-  def open_connection(self):
-    self.conn = sett.get_sqlite_connection()
-
-  def close_connection(self):
-    self.conn.close()
-
-  def db_insert_row_into_cpis(self, sql, tuplevalues):
-    cursor = self.conn.cursor()
-    db_o = cursor.execute(sql, tuplevalues)
-    print(self.n_inserted+1, 'Inserting', tuplevalues)
-    if db_o:
-      self.n_inserted += 1
-    cursor.close()
-
-  def db_insert_triples_list_into_cpis(self):
-    if len(self.triples_list) < 1:
-      print('No cpi info to inserto to db.')
-      return
-    self.open_connection()
-    sql = f"""INSERT OR IGNORE INTO `{self.tablename}`
-      (`seriesid`, `refmonthdate`, `baselineindex`, `created_at`) VALUES (?, ?, ?, ?);"""
-    for triple in self.triples_list:
-      seriesid, refmonthdate, rm_idx = triple
-      created_at = datetime.datetime.now()
-      tuplevalues = (seriesid, refmonthdate, rm_idx, created_at)
-      self.db_insert_row_into_cpis(sql, tuplevalues)
-    if self.n_inserted > 0:
-      print('DB Committing', self.n_inserted)
-      self.conn.commit()
-    self.close_connection()
+  def print_cpis(self):
+    """
+    For cpi display, the 2-D dict is sorted (to a tmp-dict) on the "two dimensions" each at a time
+    """
+    count = 0
+    cpis_dict = dict(sorted(self.cpis_dict.items()))
+    for seriesid in cpis_dict:
+      refmonthdate_2nd_dim = self.cpis_dict[seriesid]
+      refmonthdate_2d = dict(sorted(refmonthdate_2nd_dim.items()))
+      for refmonthdate in refmonthdate_2d:
+        count += 1
+        scrmsg = f"{count} seriesid {seriesid} | refmonthdate {refmonthdate}"
+        print(scrmsg)
+        cpidatum = refmonthdate_2nd_dim[refmonthdate]
+        print(cpidatum)
 
   def process(self):
-    self.db_insert_triples_list_into_cpis()
+    self.find_prettyprint_files()
+    self.read_prettyprint_files()
+    # self.show_cpis_found()
+    self.print_cpis()
 
 
 def process():
-  ManInsertor()
+  CPIPrettyPrintReader()
 
 
 def adhoctest():
@@ -179,6 +167,6 @@ def adhoctest():
 
 if __name__ == '__main__':
   """
-  process()
-  """
   adhoctest()
+  """
+  process()

@@ -4,6 +4,7 @@ models/finindices/cpis/cpis_cls.py
   contains CPI-related functions and/or classes
 """
 import datetime
+import fs.datefs.introspect_dates as intr
 SERIESID_LIST = ['CUUR0000SA0', 'SUUR0000SA0']
 DEFAULT_SERIESID = 'CUUR0000SA0'
 
@@ -15,7 +16,6 @@ def transform_mmonth_to_refmonthdate(mmonth, year):
   except ValueError:
     pass
   return None
-
 
 
 def find_seriesid_by_serieschar(serieschar):
@@ -42,6 +42,7 @@ class CPIDatum:
     self.refmonthdate = refmonthdate
     self.acc_index = acc_index
     self.footnotes = footnootes
+    self.treat_attribs()
 
   def treat_attribs(self):
     # 1 year
@@ -63,6 +64,7 @@ class CPIDatum:
           if refmonth is None:
             errmsg = f"refmonthdate (None) was not passed to class CPIDatum. Please, correct data and retry."
             raise ValueError(errmsg)
+          self.refmonthdate = refmonth
     # 3 refmonthdate
     if self.seriesid is None or self.seriesid not in SERIESID_LIST:
       errmsg = (f"series {self.seriesid} was not passed to class CPIDatum"
@@ -76,12 +78,12 @@ class CPIDatum:
       raise ValueError(errmsg)
 
   def __str__(self):
-    outstr = """CPIDatum:
-    self.seriesid = 
-    self.year = 
-    self.refmonthdate = 
-    self.acc_index = 
-    self.footnotes = 
+    outstr = f"""CPIDatum:
+    seriesid = {self.seriesid} 
+    year = {self.year} 
+    refmonthdate = {self.refmonthdate} 
+    acc_index =  {self.acc_index}
+    footnotes = {self.footnotes} 
     """
     return outstr
 

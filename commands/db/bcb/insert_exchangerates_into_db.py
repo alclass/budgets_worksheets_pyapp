@@ -161,7 +161,7 @@ class ArgDispatcher:
     return True
 
   def adhoctest(self):
-    print('In adhoctest() yearrange =', self.yearrange)
+    print('In adhoctest1() yearrange =', self.yearrange)
     if self.yearrange and isinstance(self.yearrange, list):
       yearini, yearfim = tuple(self.yearrange)
       for pdate in gendt.gen_dailydates_f_yearini_t_today_or_empty_opt_order(yearini, yearfim):

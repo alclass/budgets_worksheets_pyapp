@@ -44,7 +44,7 @@ def find_most_recent_exrate_date_for_currpair_or_any(currency_pair=None):
 
 def adhoctest():
   pdate = find_most_recent_exrate_date_for_currpair_or_any()
-  print(' adhoctest find_most_recent_exrate_date()', pdate)
+  print(' adhoctest1 find_most_recent_exrate_date()', pdate)
 
 
 def process():

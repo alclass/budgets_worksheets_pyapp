@@ -73,7 +73,7 @@ def adhoctest2():
 
 def adhoctest():
   """
-  In this adhoctest, one wants to change field named msg from a namedtuple.
+  In this adhoctest1, one wants to change field named msg from a namedtuple.
   As we know, a namedtuple is immutable, so a new one is created from
     an updated dict.
   """

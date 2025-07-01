@@ -28,6 +28,6 @@ def process():
 
 if __name__ == '__main__':
   """
-  adhoctest()
+  adhoctest1()
   """
   process()

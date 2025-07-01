@@ -28,7 +28,7 @@ def get_args():
 
 def adhoctest():
   """
-  TO-DO: adapt the argparse library for this adhoctest()
+  TO-DO: adapt the argparse library for this adhoctest1()
   """
   argsdict = get_args()
   if len(argsdict) == 0:
@@ -51,7 +51,7 @@ def process():
 
 if __name__ == "__main__":
   """
-  adhoctest()
+  adhoctest1()
   """
   process()
   adhoctest()
