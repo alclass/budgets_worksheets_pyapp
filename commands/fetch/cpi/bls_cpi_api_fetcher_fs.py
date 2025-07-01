@@ -1,8 +1,22 @@
 #!/usr/bin/env python3
 """
-commands/fetch/bls_cpi_api_fetcher.py
-  fetches BLS CPI (Consumer Price Index) monthly index data for the known series available
-    ie ['CUUR0000SA0', 'SUUR0000SA0']
+commands/fetch/bls_cpi_api_fetcher_fs.py
+  fetches BLS CPI (Consumer Price Index) monthly index data
+    for the known series available
+    i.e., ['CUUR0000SA0', 'SUUR0000SA0']
+
+This script uses version 1 of the public API:
+https://www.bls.gov/developers/api_signature.htm#years
+
+HTTP Type: 	POST
+URL: 	https://api.bls.gov/publicAPI/v1/timeseries/data/
+
+The JSON Payload is filled as:
+  {"seriesid":["Series1",..., "SeriesN"],
+   "startyear":"yearX",
+   "endyear":"yearY"
+}
+
 
 """
 import copy
@@ -13,49 +27,74 @@ import settings as cfg
 import commands.fetch.cpi.cpi_rest_api_fetcher_fs as ftchfs  # .fetch_json_response_w_restapi_reqdictdata
 
 
-class RestApiJsonRequestParamMaker:
+class USBLS_API_SeriesDataFetcher:
+  """
+  This class uses the API option for multiple series,
+    but with only one (if more are needed, the client user
+    should call one by one each time)
+  """
 
-  from_year = 2020
-  to_year = 2023
+  year_fr = 2020
+  year_to = 2023
   default_seriesidlist = ['CUUR0000SA0', 'SUUR0000SA0']
-  cpi_restapi_datadict_modelparam = {
-    'seriesid': default_seriesidlist,
-    'startyear': str(from_year),
-    'endyear': str(to_year)
-  }
+  datafileform = "{year} {seriesid} prettyprint.txt"
 
-  def __init__(self, from_year=None, to_year=None, seriesidlist=None):
-    self.from_year = from_year
-    self.to_year = to_year
+  def __init__(self, year_fr=None, year_to=None, seriesid=None):
+    self.year_fr = year_fr
+    self.year_to = year_to
     self.today = datetime.date.today()
     self.treat_years()
-    self.seriesidlist = seriesidlist  # conditional TO-DO: improve this attribute when new info about it is found
+    self.seriesid = seriesid  # conditional TO-DO: improve this attribute when new info about it is found
     self._restapi_reqdatadict = None
 
   def treat_years(self):
-    if self.to_year is None:
-      self.to_year = self.today.year
+    if self.year_to is None:
+      self.year_to = self.today.year
     # if year is not int-liked-typed a ValueError exception will be raised
-    self.to_year = int(self.to_year)
-    if self.from_year is None:
+    self.year_to = int(self.year_to)
+    if self.year_fr is None:
       # (formerly) self.from_year = dtfs.get_decade_year_tenmultiplebased_from_or_current()
       # if from_year is missing, probable cenario is to search for a newly added monthly index
-      self.from_year = self.to_year
-    self.from_year = int(self.from_year)
-    if self.to_year > self.today.year:
-      self.to_year = self.today.year
-    if self.from_year > self.to_year:
-      error_msg = (f"Error: from-year {self.from_year} is greater than to-year {self.to_year}"
+      self.year_fr = self.year_to
+    self.year_fr = int(self.year_fr)
+    if self.year_to > self.today.year:
+      self.year_to = self.today.year
+    if self.year_fr > self.year_to:
+      error_msg = (f"Error: from-year {self.year_fr} is greater than to-year {self.year_to}"
                    f" or currentyear {self.today.year} in class CPIFetcher.")
       raise ValueError(error_msg)
+
+  @property
+  def payload_as_json(self):
+    """
+    The JSON Payload is filled as:
+      {
+        "seriesid":["Series1",..., "SeriesN"],
+         "startyear":"yearX",
+         "endyear":"yearY"
+      }
+    """
+
+  @property
+  def seriesid_in_a_list(self):
+    return [self.seriesid]
+
+  @property
+  def payload_as_dict(self):
+    cpi_restapi_datadict_payload = {
+      'seriesid': self.default_seriesidlist,
+      'startyear': str(self.year_fr),
+      'endyear': str(self.year_to)
+    }
+    return cpi_restapi_datadict_payload
 
   @property
   def restapi_reqdatadict(self):
     if self._restapi_reqdatadict is not None:
       return self._restapi_reqdatadict
     self._restapi_reqdatadict = copy.copy(self.cpi_restapi_datadict_modelparam)
-    self._restapi_reqdatadict['startyear'] = str(self.from_year)
-    self._restapi_reqdatadict['endyear'] = str(self.to_year)
+    self._restapi_reqdatadict['startyear'] = str(self.year_fr)
+    self._restapi_reqdatadict['endyear'] = str(self.year_to)
     # there is already a default seriesid list in the restapi_reqdatadict
     # only change it if it's been given from __init__()
     if self.seriesidlist is not None:
@@ -67,8 +106,8 @@ class RestApiJsonRequestParamMaker:
     seriesidlist = self.seriesidlist or self.default_seriesidlist
     outstr = f"""RestApiJsonRequestParamMaker:
     today = {self.today}
-    from year = {self.from_year}
-    to year = {self.to_year}
+    from year = {self.year_fr}
+    to year = {self.year_to}
     series id list = {seriesidlist}
     """
     return outstr
@@ -79,7 +118,7 @@ class CPIFetcher:
   DEFAULT_JSON_OUTFILENAME = 'bls_cpi.json'
 
   def __init__(self, from_year=None, to_year=None, seriesidlist=None):
-    self.jsonreq = RestApiJsonRequestParamMaker(from_year, to_year, seriesidlist)
+    self.jsonreq = USBLS_API_SeriesDataFetcher(from_year, to_year, seriesidlist)
     self.processing_duration = None
     self.response_json_data = None
     self.seriesidlist = seriesidlist
@@ -88,11 +127,11 @@ class CPIFetcher:
 
   @property
   def from_year(self):
-    return self.jsonreq.from_year
+    return self.jsonreq.year_fr
 
   @property
   def to_year(self):
-    return self.jsonreq.to_year
+    return self.jsonreq.year_to
 
   @property
   def today(self):
@@ -119,7 +158,7 @@ class CPIFetcher:
 
   def dump_n_save_res_per_series(self):
     self.series_jsondumpfiles_saved = ftchfs.dump_n_save_json_response_per_each_series_inside_data(
-      self.response_json_data, folderpath=None, startyear=self.from_year, endyear=self.to_year
+      self.response_json_data, folderpath=None, year_fr=self.from_year, year_to=self.to_year
     )
 
   def write_json_api_request_as_file(self):
@@ -155,6 +194,10 @@ class CPIFetcher:
     return outstr
 
 
+def adhoctest():
+  pass
+
+
 def process():
   cpifetcher = CPIFetcher()
   cpifetcher.process()
@@ -162,4 +205,7 @@ def process():
 
 
 if __name__ == '__main__':
+  """
+  adhoctest()
+  """
   process()

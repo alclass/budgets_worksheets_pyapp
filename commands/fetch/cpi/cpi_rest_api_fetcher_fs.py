@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 """
-commands/fetch/bls_cpi_api_fetcher.py
-  contains functions for calling the public REST API that returns CPI month by month indices for known series (*)
+commands/fetch/cpi/cpi_rest_api_fetcher_fs.py
   contains functions to fetch CPI data from BLS's public REST API
+  contains functions for calling the public REST API
+    that returns CPI month by month indices
+    for known series (*)
+
+Obs: in the same package, module bls_cpi_api_fetcher_cls.py
+  is a class version (and client) of the functions module
 
 Acronyms:
   BLS => Burreau of Labor Statistics (USA's)
@@ -12,16 +17,26 @@ Acronyms:
   They are organized in another script for aggregating/mounting the json request data for the remote request
     that happens from here.
 
-The API available here is an open one, ie it's not necessary to authenticate into it.
-Another script in this system reads the data files recorded and insert the data into a sqlite db.
-In a nutshell, this system (this script and the ones accompanying) fetches API data
-  and buffers (or caches) them locally.
+The API available here is an open one,
+  ie it's not necessary to authenticate into it.
+
+Another script in this system reads the data files recorded on disk
+  and inserts the data into a sqlite db.
+
+In a nutshell, this system (this script and the ones accompanying)
+  fetches API data and buffers (or caches) them locally
+  (text-datafile or a sqlite-dbfile).
 
 Based on:
   www.bls.gov/developers/api_python.html
-  Example:
-    https://data.bls.gov/timeseries/CUUR0000SA0
-      shows a year-month table with the CPI_US indices
+
+The webpages that show data for the index seriesid's are:
+
+  https://data.bls.gov/timeseries/CUUR0000SA0
+    shows a year-month table with the CUUR0000SA0 CPI_US indices
+
+  https://data.bls.gov/timeseries/SUUR0000SA0
+    shows a year-month table with the SUUR0000SA0 CPI_US indices
 """
 import json
 import os
@@ -29,21 +44,45 @@ import prettytable
 import requests
 import settings as sett
 import fs.os.sufix_incrementor as osfs
+# obs: commands/fetch/bls_cpi_api_fetcher_fs.py import this
+# so care should be taken to avoid import it back (dual cyclic import)
 BLS_URL = 'https://api.bls.gov/publicAPI/v1/timeseries/data/'
 DEFAULT_HTTP_HEADERS = {'Content-type': 'application/json'}
 DICTKEY_SERIESID_K = 'seriesID'
 
 
-def form_pprint_dump_filename(seriesid, startyear=None, endyear=None):
+def form_pprint_dump_filename(seriesid, year_fr=None, year_to=None):
   prefix_year_range = ''
-  if startyear is not None and endyear is not None:
-    prefix_year_range = f"{startyear}-{endyear} "
+  if year_fr is not None and year_to is not None:
+    prefix_year_range = f"{year_fr}-{year_to} "
   pprint_dump_filename = f"{prefix_year_range}{seriesid}.prettyprint.dat"
   return pprint_dump_filename
 
 
+def convert_json_response_to_pretyprint(response_json_data):
+  pprint_dump = None
+  for series in response_json_data['Results']['series']:
+    pprint_dump = prettytable.PrettyTable(
+      [DICTKEY_SERIESID_K, 'year', 'period', 'value', 'footnotes']
+    )
+    seriesid = series[DICTKEY_SERIESID_K]
+    for item in series['data']:
+      year = item['year']
+      period = item['period']
+      value = item['value']
+      footnotes = ''
+      for footnote in item['footnotes']:
+        if footnote:
+          footnotes = footnotes + footnote['text'] + ','
+      if 'M01' <= period <= 'M12':
+        pprint_dump.add_row(
+          [seriesid, year, period, value, footnotes[0:-1]]
+        )  # ends items (in each series) looping
+  return pprint_dump
+
+
 def dump_n_save_json_response_per_each_series_inside_data(
-    response_json_data, folderpath=None, startyear=None, endyear=None
+    response_json_data, folderpath=None, year_fr=None, year_to=None
 ):
   """
     Saves a pretty-print representation of the response json data for each series id available
@@ -70,7 +109,7 @@ def dump_n_save_json_response_per_each_series_inside_data(
           pprint_dump.add_row(
             [seriesid, year, period, value, footnotes[0:-1]]
           )    # ends items (in each series) looping
-      pprint_dump_filename = form_pprint_dump_filename(seriesid, startyear, endyear)
+      pprint_dump_filename = form_pprint_dump_filename(seriesid, year_fr, year_to)
       filepath = save_series_pprint_as_file(pprint_dump_filename, pprint_dump, folderpath)
       if filepath:
         # filename may be the one above or a changed one if it was needed
@@ -105,7 +144,10 @@ def fetch_json_response_w_restapi_reqjsondata(rest_api_req_m_jsondata, p_headers
   print('Issuing REST API request to', BLS_URL)
   print('Json REST API Request:', rest_api_req_m_jsondata)
   # the call below may raise requests.exceptions.ConnectionError
+  print('Going to HTTP-post')
   p = requests.post(BLS_URL, data=rest_api_req_m_jsondata, headers=p_headers)
+  print(p)
+  print('Response: ', p.text)
   response_json_data = json.loads(p.text)
   return response_json_data
 
