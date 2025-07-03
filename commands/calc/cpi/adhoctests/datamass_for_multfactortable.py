@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-commands/calc/cpi/adhoctests/datamass_for_multfactortable.py
+commands/calc/cpi_us/adhoctests/datamass_for_multfactortable.py
 
 This script contains just an adhoc-test function that:
 

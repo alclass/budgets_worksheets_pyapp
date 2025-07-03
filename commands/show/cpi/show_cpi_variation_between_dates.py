@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-commands/show/cpi/show_cpi_variation_between_dates.py
+commands/show/cpi_us/show_cpi_variation_between_dates.py
 
 This script reads a dateadhoctests data (text) file inside the app's data folder,
   fetches CPI index mapping to month-date and outputs a 2-column data text.

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-commands/fetch/bcb/fetch_exchangerate_with_datefile.py
+commands/fetch/bcb_br/fetch_exchangerate_with_datefile.py
 jetbrains://pycharm/navigate/reference?project=local_settings.py&path=commands%2Ffetch%2Fbcb%2Ffetch_exchangerate_with_datefile.py
 
 """

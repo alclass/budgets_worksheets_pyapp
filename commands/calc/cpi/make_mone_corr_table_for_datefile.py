@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-commands/calc/cpi/make_mone_corr_table_for_datefile.py
+commands/calc/cpi_us/make_mone_corr_table_for_datefile.py
 
 import copy
 import datetime

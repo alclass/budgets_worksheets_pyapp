@@ -19,7 +19,7 @@ cur_seriesid = 'CUUR0000SA0'
 sur_seriesid = 'SUUR0000SA0'
 DEFAULT_SERIESID = 'CUUR0000SA0'
 available_cpi_seriesid_list = [cur_seriesid, sur_seriesid]
-NTCpiMonth = collections.namedtuple('NTCpiMonth', field_names=['cpi', 'refmonthdate'])
+NTCpiMonth = collections.namedtuple('NTCpiMonth', field_names=['cpi_us', 'refmonthdate'])
 
 
 def adapt_date_iso(val: datetime.date):
@@ -153,7 +153,7 @@ def get_cpi_baselineindex_for_refmonth_in_db(refmonthdate, p_seriesid=None):
 
 def get_last_available_cpi_n_refmonth_fromdb_by_series(p_seriesid=None):
   """
-  searches for the cpi on the most recent refmonthdate
+  searches for the cpi_us on the most recent refmonthdate
   returns both the index and the its corresponding most recent refmonthdate
   """
   conn = sett.get_sqlite_connection()
@@ -195,7 +195,7 @@ def trans_cpis_refmonths_from_tuplelist_to_dictlist(tuplelist):
 
 def get_all_cpis_n_refmonths_as_ntlist_fromdb_by_series(p_seriesid=None):
   """
-    pdict = {'cpi': cpi, 'refmonthdate': refmonthdate}
+    pdict = {'cpi_us': cpi_us, 'refmonthdate': refmonthdate}
     outdictlist.append(pdict)
 
   """
@@ -206,8 +206,8 @@ def get_all_cpis_n_refmonths_as_ntlist_fromdb_by_series(p_seriesid=None):
 def get_all_cpis_n_refmonths_as_dictlist_fromdb_by_series(p_seriesid=None):
   """
   for cpi_n_refmonth in tuplelist:
-    cpi, refmonthdate = cpi_n_refmonth
-    pdict = {'cpi': cpi, 'refmonthdate': refmonthdate}
+    cpi_us, refmonthdate = cpi_n_refmonth
+    pdict = {'cpi_us': cpi_us, 'refmonthdate': refmonthdate}
     outdictlist.append(pdict)
   """
   ntlist = get_all_cpis_n_refmonths_as_ntlist_fromdb_by_series(p_seriesid)

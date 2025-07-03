@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 commands/calc/tabulate_cpi_from_db_to_df.py
-  reads all db rows with cpi & refmonthdate into a pandas df (Data Frame) and reorganizes them
+  reads all db rows with cpi_us & refmonthdate into a pandas df (Data Frame) and reorganizes them
     into a year line month column table.
 
 The tabulation chosen is the following
@@ -19,9 +19,9 @@ from dateutil.relativedelta import relativedelta
 import os.path
 import fs.datefs.years_date_functions as dtfs
 import pandas as pd
-import commands.fetch.cpi.read_cpis_from_db as dbr  # get_as_df_all_available_cpi_baselineindices_in_db
+import commands.fetch.cpi_us.read_cpis_from_db as dbr  # get_as_df_all_available_cpi_baselineindices_in_db
 import settings as sett
-import commands.fetch.cpi.read_cpis_from_db as rcpi
+import commands.fetch.cpi_us.read_cpis_from_db as rcpi
 
 
 class Tabulator:

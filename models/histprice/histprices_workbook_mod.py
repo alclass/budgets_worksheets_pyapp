@@ -9,8 +9,8 @@ The namedtuple for the BCB API response data is the following:
   )
 import fs.datefs.convert_to_date_wo_intr_sep_posorder as cnv
 import datetime
-import fs.economicfs.bcb.bcb_fetchfunctions as prefs
-import fs.economicfs.bcb.bcb_financefunctions as finfs
+import fs.economicfs.bcb_br.bcb_fetchfunctions as prefs
+import fs.economicfs.bcb_br.bcb_financefunctions as finfs
 """
 import csv
 import glob
@@ -33,7 +33,7 @@ class HistPriceWorkbook:
     self.histprice_obj = histprice_obj
     self.tableau = tbfs.Tableau()
     self.tableau.cellref = 'a3'
-    self.tableau.insert_columns = ['date', 'price_i', 'cpi', 'exr', 'mul', 'price_f']
+    self.tableau.insert_columns = ['date', 'price_i', 'cpi_us', 'exr', 'mul', 'price_f']
     self.tableau.fixref_fields = ['date_f', 'cpi_f', 'exr_f']
     self._totalprice = 0
     self.worksheet = None

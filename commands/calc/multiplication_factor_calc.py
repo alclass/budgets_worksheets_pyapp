@@ -68,7 +68,7 @@ import pandas as pd
 from dateutil.relativedelta import relativedelta
 import fs.datefs.convert_to_date_wo_intr_sep_posorder as cnv
 import fs.indices.bcb_br.bcb_cotacao_fetcher_from_db_or_api as ftchr  # ftchr.BCBCotacaoFetcher
-import commands.fetch.cpi.read_cpis_from_db as cpi  # cpi.get_cpi_baselineindex_for_refmonth_in_db
+import commands.fetch.cpi_us.read_cpis_from_db as cpi  # cpi_us.get_cpi_baselineindex_for_refmonth_in_db
 DATAFRAME_COLUMNS = ['dt_i', 'cpi_i', 'exr_i', 'dt_f', 'cpi_f', 'exr_f', 'mult', 'mul1']
 DECIMAL_PLACES_FOR_EQ = 4
 
@@ -233,7 +233,7 @@ class MonetCorrCalculator:
 
   def get_cpi_var_factor(self):
     """
-    Calculates the "cpi-composite" for the multiplication factor in here
+    Calculates the "cpi_us-composite" for the multiplication factor in here
     This factor-component is: 1 + cpi_var_ratio
     """
     if self.are_both_cpi_n_exrate_available():
@@ -370,9 +370,9 @@ class MonetCorrCalculator:
   def __str__(self):
 
     outstr = f"""Monetary Correction Calculator:
-    on {self.dateini} => cpi {self.cpi_ini:04f} | on {self.datefim} => cpi {self.cpi_fim:04f}
-    cpi ratio = {self.cpi_var_ratio:04f} | cpi factor = {self.get_cpi_var_factor():04f}
-    exrate ratio = {self.exrate_var_ratio:04f} | cpi factor = {self.get_exrate_var_factor():04f}
+    on {self.dateini} => cpi_us {self.cpi_ini:04f} | on {self.datefim} => cpi_us {self.cpi_fim:04f}
+    cpi_us ratio = {self.cpi_var_ratio:04f} | cpi_us factor = {self.get_cpi_var_factor():04f}
+    exrate ratio = {self.exrate_var_ratio:04f} | cpi_us factor = {self.get_exrate_var_factor():04f}
     multiplication factor = {self.multiplication_factor}
     """
     return outstr

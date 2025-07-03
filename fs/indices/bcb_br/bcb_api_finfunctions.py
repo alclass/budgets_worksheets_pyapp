@@ -269,7 +269,7 @@ def adhoc_test():
 def adhoctest2():
   pdate = '2023-12-18'
   pdate = cnv.make_date_or_none(pdate)
-  print('Calling bcb api for date', pdate)
+  print('Calling bcb_br api for date', pdate)
   res_bcb_api = call_api_bcb_cotacao_dolar_on_date(pdate)
   print(res_bcb_api)
   pretry_print_api_list([res_bcb_api])

@@ -24,7 +24,7 @@ import datetime
 import os.path
 import time
 import settings as cfg
-import commands.fetch.cpi.cpi_rest_api_fetcher_fs as ftchfs  # .fetch_json_response_w_restapi_reqdictdata
+import commands.fetch.cpi_us.cpi_rest_api_fetcher_fs as ftchfs  # .fetch_json_response_w_restapi_reqdictdata
 
 
 class USBLS_API_SeriesDataFetcher:

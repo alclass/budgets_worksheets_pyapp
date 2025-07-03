@@ -4,7 +4,7 @@ models/exrate/generate_xlsx.py
 
 import os, pathlib
 import xlsxwriter
-import fs.economicfs.bcb.bcb_financefunctions as finfs
+import fs.economicfs.bcb_br.bcb_financefunctions as finfs
 """
 
 

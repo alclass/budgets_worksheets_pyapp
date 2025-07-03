@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-commands/fetch/cpi/cpi_insert_manually.py
+commands/fetch/cpi_us/cpi_insert_manually.py
 
 The webpages for both CUUR0000SA0 & SUUR0000SA0 have both a table and a linear-graphic; their URL's are:
   https://data.bls.gov/timeseries/CUUR0000SA0
@@ -64,7 +64,7 @@ class ManInsertor:
 
   def db_insert_triples_list_into_cpis(self):
     if len(self.triples_list) < 1:
-      print('No cpi info to inserto to db.')
+      print('No cpi_us info to inserto to db.')
       return
     self.open_connection()
     sql = f"""INSERT OR IGNORE INTO `{self.tablename}`

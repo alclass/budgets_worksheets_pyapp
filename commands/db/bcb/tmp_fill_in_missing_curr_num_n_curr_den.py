@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-commands/db/bcb/tmp_fill_in_missing_curr_num_n_curr_den.py
+commands/db/bcb_br/tmp_fill_in_missing_curr_num_n_curr_den.py
   Inserts the default curr_num (currency numerator) and curr_den (currency numerator) into the exchange rates table.
 
 The defaults:

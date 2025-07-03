@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-commands/fetch/bcb/exchange_rate_lister_mod.py
+commands/fetch/bcb_br/exchange_rate_lister_mod.py
   calls bcbfetch.BCBCotacaoFetcher (to search for daily BRL/USD BCD cotações)
   for each date entered as input.
 

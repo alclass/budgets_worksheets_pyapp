@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-commands/fetch/cpi/cpi_rest_api_fetcher_fs.py
+commands/fetch/cpi_us/cpi_rest_api_fetcher_fs.py
   contains functions to fetch CPI data from BLS's public REST API
   contains functions for calling the public REST API
     that returns CPI month by month indices

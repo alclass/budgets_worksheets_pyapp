@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-commands/fetch/cpi/cpi_apifetcher_to_prettyprint_cls.py
+commands/fetch/cpi_us/cpi_apifetcher_to_prettyprint_cls.py
   contains class Fetcher which is a client of the functions in
-    commands/fetch/cpi/cpi_apifetcher_to_prettyprint_cls.py
+    commands/fetch/cpi_us/cpi_apifetcher_to_prettyprint_cls.py
 
 Acronyms:
   BLS => Burreau of Labor Statistics (USA's)
@@ -23,12 +23,12 @@ This is chosen because:
 Running for fetching "many" year from bash-CLI:
 ===============================================
 The script cpi_apifetcher_to_prettyprint_cls.py
-  in commands/fetch/cpi
+  in commands/fetch/cpi_us
   may process various year with the help of bash's for-loop,
     as in the example below:
 ---------------------
 Fetching CPI for various years:
-  for i in {2010..2018}; do commands/fetch/cpi/cpi_apifetcher_to_prettyprint_cls.py --year $i; done
+  for i in {2010..2018}; do commands/fetch/cpi_us/cpi_apifetcher_to_prettyprint_cls.py --year $i; done
 ---------------------
 
 Based on:
@@ -38,13 +38,13 @@ Based on:
       shows a year-month table with the CPI_US indices
 """
 # from tkinter.messagebox import RETRY
-# import commands.fetch.cpi.bls_cpi_api_fetcher_fs as ftchfs
+# import commands.fetch.cpi_us.bls_cpi_api_fetcher_fs as ftchfs
 import argparse
 import datetime
 import json
 import os
 # import sys
-import commands.fetch.cpi.cpi_rest_api_fetcher_fs as ftchfs
+import commands.fetch.cpi_us.cpi_rest_api_fetcher_fs as ftchfs
 import fs.indices.bls_us.jsonfile_reqstatus_extractor_cls as statusex
 import fs.os.sufix_incrementor as osfs
 import settings as sett

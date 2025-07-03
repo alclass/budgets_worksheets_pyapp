@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-commands/fetch/cpi/read_cpis_from_prettyprintdb.py
+commands/fetch/cpi_us/read_cpis_from_prettyprintdb.py
 
 The data the script extracts is like the following pretty-print text table:
 
@@ -29,23 +29,35 @@ class CPIPrettyPrintReader:
   # "{year_fr}-{year_to} {seriesid}.prettyprint.dat"
   prettyprint_file_pattern = prettyprint_file_pattern
   cmpld_prettyprint_file_pattern = cmpld_prettyprint_file_pattern
+  prettyprint_file_tointerpot = "{year} {seriesid} prettyprint.txt"
+  bls_foldername = 'bls_cpi_data'
 
   def __init__(self, p_datafolder_abspath=None):
     self.found_datafilenames = []
+    self.seriesid = 'CUUR0000SA0'
     self.datafolder_abspath = p_datafolder_abspath
-    if self.datafolder_abspath is None:
-      self.datafolder_abspath = sett.get_datafolder_abspath()
+    self.treat_attrs()
     self.cpis = []
     self.cpis_dict = {}  # this is a 2-D dict, one for seriesid, the other for refmonth
     self.process()
 
   def treat_attrs(self):
+    if self.datafolder_abspath is None:
+      self.datafolder_abspath = sett.get_datafolder_abspath()
     if self.datafolder_abspath is None or not os.path.isdir(self.datafolder_abspath):
       errmsg = f"datafolder_abspath {self.datafolder_abspath} does not exist. Please, verify data and retry."
       raise OSError(errmsg)
 
-  def get_filepath_from_filename(self, filename):
-    return os.path.join(self.datafolder_abspath, filename)
+  @property
+  def bls_folderpath(self):
+    return os.path.join(self.datafolder_abspath, self.bls_foldername)
+
+  def get_ppfilepath_from_filename(self, filename):
+    return os.path.join(self.bls_folderpath, filename)
+
+  def get_ppfilepath_by_filename(self, year):
+    filename = prettyprint_file_pattern.format(year=year)
+    return self.get_ppfilepath_from_filename(filename)
 
   def show_cpis_found(self):
     for cpi in self.cpis:
@@ -94,21 +106,32 @@ class CPIPrettyPrintReader:
       except (IndexError, ValueError):
         pass
 
-  def read_text_datafile(self, prettyprint_filename):
+  def read_text_datafilepath(self, prettyprint_filepath):
     """
     """
-    prettyprint_filepath = self.get_filepath_from_filename(prettyprint_filename)
     fd = open(prettyprint_filepath, 'r')
     for line in fd.readlines():
       line = line.strip(' \t\r\n')
       self.read_line_into_cpidatum(line)
 
+  def read_text_datafilename(self, prettyprint_filename):
+    prettyprint_filepath = self.get_ppfilepath_from_filename(prettyprint_filename)
+    return self.read_text_datafilepath(prettyprint_filepath)
+
+  def read_text_datafile_by_year(self, year):
+    filename = self.prettyprint_file_tointerpot.format(seriesid=self.seriesid, year=year)
+    return self.read_text_datafilename(filename)
+
+  def get_cpis_dict(self, year):
+    self.read_text_datafile_by_year(year)
+    return self.cpis_dict
+
   def read_prettyprint_files(self):
     for i, prettyprint_filename in enumerate(self.found_datafilenames):
-      seq = i + 1
+      # seq = i + 1
       # scrmsg = f"{seq} -> reading prettyprint file {prettyprint_filename}"
       # print(scrmsg)
-      self.read_text_datafile(prettyprint_filename)
+      self.read_text_datafilename(prettyprint_filename)
 
   def find_prettyprint_files(self):
     filenames = os.listdir(self.datafolder_abspath)
@@ -118,7 +141,7 @@ class CPIPrettyPrintReader:
       match = self.cmpld_prettyprint_file_pattern.search(filename)
       data_filename = None if match is None else match.group(1)
       if data_filename:
-        filepath = self.get_filepath_from_filename(data_filename)
+        filepath = self.get_ppfilepath_from_filename(data_filename)
         if os.path.isfile(filepath):
           self.found_datafilenames.append(data_filename)
 
@@ -127,7 +150,7 @@ class CPIPrettyPrintReader:
 
   def print_cpis(self):
     """
-    For cpi display, the 2-D dict is sorted (to a tmp-dict) on the "two dimensions" each at a time
+    For cpi_us display, the 2-D dict is sorted (to a tmp-dict) on the "two dimensions" each at a time
     """
     count = 0
     cpis_dict = dict(sorted(self.cpis_dict.items()))

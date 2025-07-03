@@ -124,7 +124,7 @@ class Insertor:
 
   def __str__(self):
     bool_ins = self.n_inserted > 0
-    outstr = f"Sqlite inserted={bool_ins} {self.year}/{self.month:02} => cpi="
+    outstr = f"Sqlite inserted={bool_ins} {self.year}/{self.month:02} => cpi_us="
     outstr += f"{self.baselineindex} @ {self.seriesid}"
     return outstr
 
