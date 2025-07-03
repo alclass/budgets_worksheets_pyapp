@@ -6,7 +6,7 @@
   3) -- procdaterange=<dtini,dtfim>      |     fetches brl/usd exchange rate quotes for daterange <dtini,dtfim>
 """
 import sys
-import fs.economicfs.bcb.bcb_financefunctions as finfs
+import fs.indices.bcb_br.bcb_financefunctions as finfs
 import fs.datefs.dategenerators as gendt
 
 

@@ -8,7 +8,7 @@ import datetime
 import logging
 import os
 import settings as sett
-import fs.economicfs.bcb.bcb_api_finfunctions as apis
+import fs.indices.bcb_br.bcb_api_finfunctions as apis
 import fs.db.db_settings as dbs
 import fs.datefs.convert_to_date_wo_intr_sep_posorder as cnv
 import fs.datefs.convert_to_datetime_wo_intr_sep_posorder as cvdt

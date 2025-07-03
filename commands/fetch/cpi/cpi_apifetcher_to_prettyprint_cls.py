@@ -20,6 +20,17 @@ This is chosen because:
 (*) At the of writting, the two known series are: ['CUUR0000SA0', 'SUUR0000SA0']
   More seriesid will later on be added and probably moved to a configfile
 
+Running for fetching "many" year from bash-CLI:
+===============================================
+The script cpi_apifetcher_to_prettyprint_cls.py
+  in commands/fetch/cpi
+  may process various year with the help of bash's for-loop,
+    as in the example below:
+---------------------
+Fetching CPI for various years:
+  for i in {2010..2018}; do commands/fetch/cpi/cpi_apifetcher_to_prettyprint_cls.py --year $i; done
+---------------------
+
 Based on:
   www.bls.gov/developers/api_python.html
   Example:
@@ -32,8 +43,9 @@ import argparse
 import datetime
 import json
 import os
-import sys
+# import sys
 import commands.fetch.cpi.cpi_rest_api_fetcher_fs as ftchfs
+import fs.indices.bls_us.jsonfile_reqstatus_extractor_cls as statusex
 import fs.os.sufix_incrementor as osfs
 import settings as sett
 BLS_URL = 'https://api.bls.gov/publicAPI/v1/timeseries/data/'
@@ -80,6 +92,7 @@ class Fetcher:
     self.today = datetime.date.today()
     self.root_datafolder = root_datafolder
     self.treat_attrs()
+    self.bool_json_w_request_succeeded_for_year = False
     self.bool_prettyprintfile_is_already_present_in_folder = False  # to prove otherwise
     self.bool_jsonfile_is_already_present_in_folder = False
     self._prettyprintfilename = None
@@ -152,7 +165,10 @@ class Fetcher:
   @property
   def seriesid_in_a_list(self):
     """
-    within_quotes = f'{self.seriesid}'
+    The enclosing here is just within square brackets [] (i.e., put an element inside a list)
+    The "within quotes" part is done by json.loads() later on
+    This is to comply with the API's wellformedness rule
+      (@see the specific docstr or take a look at an example json file already downloaded to the data folder)
     """
     _seriesid_in_a_list = [self.seriesid]
     return _seriesid_in_a_list
@@ -180,9 +196,11 @@ class Fetcher:
 
   def save_json_response(self):
     if os.path.isfile(self.json_filepath):
-      scrmsg = f"json file {self.json_filepath} already exists, not saving it."
-      print(scrmsg)
-      return
+      scrmsg = f"""json file [{self.json_filename}] already exists in [{self.bls_cpi_datafolder}]
+      => Overwrite it? [Y/y, n] [ENTER] means Yes """
+      ans = input(scrmsg)
+      if ans.lower not in ['y', 'n', '']:
+        return
     json_str = self.response_json
     if type(json_str) not in [str, bytes, bytearray]:
       # from dict to str (loads returns a str which is text-file-writeable!)
@@ -234,6 +252,15 @@ class Fetcher:
     if os.path.isfile(self.json_filepath):
       self.bool_jsonfile_is_already_present_in_folder = True
 
+  def is_there_a_json_w_request_succeeded_for_year(self):
+    self.bool_json_w_request_succeeded_for_year = False
+    stat = statusex.JsonRequestStatusesReader()
+    if stat.has_request_succeeded(self.json_filename):
+      scrmsg = f"request_succeeded {self.json_filename}"
+      print(scrmsg)
+      self.bool_json_w_request_succeeded_for_year = True
+      return
+
   def verify_if_prettyprintfile_is_already_present_in_folder(self):
     self.bool_prettyprintfile_is_already_present_in_folder = False
     if os.path.isfile(self.prettyprintfilepath):
@@ -243,9 +270,7 @@ class Fetcher:
     text = open(self.json_filepath).read()
     self.response_json = json.loads(text)
 
-  def process(self):
-    print(self.payload_dict)
-    # return
+  def process_old(self):
     n_step = 1
     action_str = 'verify if refmonth data file has already been download, if so, nothing to do'
     scrmsg = f'Step {n_step} - {action_str}.'
@@ -269,17 +294,43 @@ class Fetcher:
       scrmsg = f'Step {n_step} - {action_str}.'
       print(scrmsg)
       self.read_json_from_json_stored_file()
-    else:
-      n_step += 1
-      action_str = 'fetch CPI data from the BLS API'
-      scrmsg = f'Step {n_step} - {action_str}.'
+
+  def process(self):
+    """
+    For an API fetch to happen, the system checks whether its json response been downloaded
+      and contains the REQUEST_SUCCEEDED statuscode at the beginning
+    If there isn't this, a download will be tried
+    """
+    print(self.payload_dict)
+    n_step = 1
+    action_str = "check if the year's json file exists and has the request succeeded status code."
+    scrmsg = f'Step {n_step} - {action_str}'
+    print(scrmsg)
+    self.is_there_a_json_w_request_succeeded_for_year()
+    bool_succeeded = self.bool_json_w_request_succeeded_for_year
+    if bool_succeeded:
+      scrmsg = f""" => answer -> json request succeeded for year {self.year}: {bool_succeeded}
+      no need to (re)download it. 
+      If its prettyprint is missing, regenerate it with generate_cpi_prettyprint_from_json.py"""
       print(scrmsg)
-      self.fetch_json_response_w_restapi_reqjsondata()
+      return
+    n_step += 1
+    action_str = 'fetch CPI data from the BLS API'
+    scrmsg = f'Step {n_step} - {action_str}.'
+    print(scrmsg)
+    self.fetch_json_response_w_restapi_reqjsondata()
     n_step += 1
     action_str = 'save fetched json or json-read to its prettyprint datafile'
     scrmsg = f'Step {n_step} - {action_str}.'
     print(scrmsg)
-    self.save_series_pprint_as_file()
+    # has to check request status code again
+    n_step += 1
+    self.is_there_a_json_w_request_succeeded_for_year()
+    if self.bool_json_w_request_succeeded_for_year:
+      scrmsg = f" => Step {n_step} -> json request succeeded for year {self.bool_json_w_request_succeeded_for_year}"
+      print(scrmsg)
+      n_step += 1
+      self.save_series_pprint_as_file()
 
   def __str__(self):
     outstr = f"""BLS CPI API-Fetcher: 
@@ -288,6 +339,7 @@ class Fetcher:
     datafolder = [{self.bls_cpi_datafolder}]
     json_filename = [{self.json_filename}]
     prettyprint_filename = [{self.prettyprintfilename}]
+    json_w_request_succeeded = {self.bool_json_w_request_succeeded_for_year}
     """
     return outstr
 

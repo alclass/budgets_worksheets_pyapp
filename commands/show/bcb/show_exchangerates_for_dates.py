@@ -34,7 +34,7 @@ import datetime
 # import datetime
 import sys
 import commands.show.corr_monet_n_indices_calculator_from_dates as composite
-import fs.economicfs.bcb.bcb_cotacao_fetcher_from_db_or_api as fin
+import fs.indices.bcb_br.bcb_cotacao_fetcher_from_db_or_api as fin
 import fs.datefs.dategenerators as gendt
 import fs.datefs.refmonths_mod as rmd
 import fs.datefs.convert_to_date_wo_intr_sep_posorder as cnv

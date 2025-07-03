@@ -23,8 +23,8 @@ import fs.datefs.convert_to_date_wo_intr_sep_posorder as cnv
 # import fs.datefs.introspect_dates as intr
 import fs.datefs.dategenerators as gendt
 import fs.db.db_settings as dbs
-import fs.economicfs.bcb.bcb_api_finfunctions as apis
-import fs.economicfs.bcb.bcb_fetchfunctions as fetchfs  # fetchfs.add_exchanger_to_res_bcb_api_namedtuple()
+import fs.indices.bcb_br.bcb_api_finfunctions as apis
+import fs.indices.bcb_br.bcb_fetchfunctions as fetchfs  # fetchfs.add_exchanger_to_res_bcb_api_namedtuple()
 import settings as sett
 _, modlevelogfn = os.path.split(__file__)
 modlevelogfn_extless = os.path.splitext(modlevelogfn)[0]

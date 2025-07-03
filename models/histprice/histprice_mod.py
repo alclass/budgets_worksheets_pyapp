@@ -15,7 +15,7 @@ import datetime
 import os
 import fs.datefs.convert_to_date_wo_intr_sep_posorder as cnv
 import fs.datefs.introspect_dates as intr
-import fs.economicfs.bcb.bcb_financefunctions as finfs
+import fs.indices.bcb_br.bcb_financefunctions as finfs
 import commands.calc.multiplication_factor_calc as mfc  # .MonetCorrCalculator
 import settings as sett
 

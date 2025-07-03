@@ -2,7 +2,7 @@
 import sys
 import models.exrate.currency_exchange_rate_model as mmod
 import fs.db.conn_sa as confs
-import fs.economicfs.bcb.bcb_cotacao_fetcher_from_db_or_api as preapi
+import fs.indices.bcb_br.bcb_cotacao_fetcher_from_db_or_api as preapi
 import fs.datefs.years_date_functions as dtfs
 
 

@@ -20,7 +20,7 @@ from dateutil.relativedelta import relativedelta
 import fs.datefs.convert_to_date_wo_intr_sep_posorder as cnv
 import fs.datefs.refmonths_mod as rfm
 import fs.datefs.dategenerators as gendt
-import fs.economicfs.bcb.bcb_cotacao_fetcher_from_db_or_api as bcbf  # bcbfetch.BCBCotacaoFetcher
+import fs.indices.bcb_br.bcb_cotacao_fetcher_from_db_or_api as bcbf  # bcbfetch.BCBCotacaoFetcher
 
 
 def convert_dates(pdates):

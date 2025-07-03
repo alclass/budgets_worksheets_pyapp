@@ -8,7 +8,7 @@ import settings as sett
 """
 import argparse
 import datetime
-import fs.economicfs.bcb.bcb_cotacao_fetcher_from_db_or_api as fin
+import fs.indices.bcb_br.bcb_cotacao_fetcher_from_db_or_api as fin
 import fs.datefs.dategenerators as gendt
 import fs.datefs.read_write_datelist_files_fs as rwdt
 

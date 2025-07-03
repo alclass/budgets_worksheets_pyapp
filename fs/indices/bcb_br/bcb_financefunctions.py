@@ -14,7 +14,7 @@ import collections as coll
 import datetime
 import fs.datefs.years_date_functions as dtfs
 import fs.datefs.dategenerators as dtgen
-import fs.economicfs.bcb.bcb_api_finfunctions as apis
+import fs.indices.bcb_br.bcb_api_finfunctions as apis
 import fs.datefs.introspect_dates as intr
 
 

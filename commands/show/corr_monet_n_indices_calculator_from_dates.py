@@ -37,7 +37,7 @@ import datetime
 import settings as sett
 import sqlite3
 import fs.db.db_settings as dbs
-import fs.economicfs.bcb.bcb_cotacao_fetcher_from_db_or_api as bcbfetch  # bcbfetch.BCBCotacaoFetcher
+import fs.indices.bcb_br.bcb_cotacao_fetcher_from_db_or_api as bcbfetch  # bcbfetch.BCBCotacaoFetcher
 import fs.datefs.introspect_dates as idt  # idt.for make_date_or_none()
 import fs.datefs.refmonths_mod as rfm  # rfm.calc_refmonth_minus_n()
 import fs.datefs.read_write_datelist_files_fs as rwdt

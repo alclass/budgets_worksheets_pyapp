@@ -21,9 +21,9 @@ import xlsxwriter
 # import fs.datefs.years_date_functions as yedtfs
 import fs.datefs.convert_to_date_wo_intr_sep_posorder as dtfs
 import fs.datefs.argparse as ap
-import fs.economicfs.bcb.bcb_api_finfunctions as apis
+import fs.indices.bcb_br.bcb_api_finfunctions as apis
 import fs.numberfs.tableaufunctions as tblfs
-import fs.economicfs.bcb.bcb_cotacao_fetcher_from_db_or_api as bcbfetch  # bcbfetch.BCBCotacaoFetcher
+import fs.indices.bcb_br.bcb_cotacao_fetcher_from_db_or_api as bcbfetch  # bcbfetch.BCBCotacaoFetcher
 import fs.datefs.read_write_datelist_files_fs as rwfs
 import local_settings as ls
 
