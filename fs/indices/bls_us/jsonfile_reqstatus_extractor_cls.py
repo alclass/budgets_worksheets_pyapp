@@ -14,20 +14,28 @@ This module contains class JsonRequestStatusesReader that aims to find the "requ
 import os
 import json
 import re
-
 import settings as sett
+from commands.fetch.bls_us.read_cpis_from_db import DEFAULT_SERIESID
+from commands.fetch.bls_us.read_cpis_from_db import KNOWN_SERIESID
 
 
 class JsonRequestStatusesReader:
 
-  prettyprint_filename_tointerpol = r"{year} CUUR0000SA0 prettyprint.json"
-  prettyprint_filename_repattern = r"^(\d{4}) CUUR0000SA0 prettyprint.json"
+  prettyprint_filename_tointerpol = r"{year} {seriesid} prettyprint.json"
+  prettyprint_filename_repattern = r"^(\d{4}) ([A-Z0-9]+?) prettyprint.json"
   prettyprint_filename_recmpld = re.compile(prettyprint_filename_repattern)
   REQUEST_SUCCEEDED = 'REQUEST_SUCCEEDED'
 
-  def __init__(self):
-    self.n_file = 0
-    # self.process()
+  def __init__(self, seriesid=None):
+    self.n_files = 0
+    self.seriesid = seriesid
+    self.treat_attrs()
+
+  def treat_attrs(self):
+    if self.seriesid is None:
+      self.seriesid = DEFAULT_SERIESID
+    if self.seriesid not in KNOWN_SERIESID:
+      self.seriesid = DEFAULT_SERIESID
 
   @property
   def bls_datafolderpath(self):
@@ -41,7 +49,7 @@ class JsonRequestStatusesReader:
     Example
     2011 CUUR0000SA0 prettyprint.json
     """
-    json_fn_for_year = self.prettyprint_filename_tointerpol.format(year=year)
+    json_fn_for_year = self.prettyprint_filename_tointerpol.format(year=year, seriesid=self.seriesid)
     return json_fn_for_year
 
   def get_jsonfilepath_on_year(self, year):
@@ -84,8 +92,8 @@ class JsonRequestStatusesReader:
   def show_statuscode_from_json_by_year(self, year):
     statuscode = self.extract_statuscode_from_json_by_year(year)
     if statuscode is not None:
-      self.n_file += 1
-      scrmsg = f"{self.n_file} | {year} => statuscode {statuscode}"
+      self.n_files += 1
+      scrmsg = f"{self.n_files} | {year} => statuscode {statuscode}"
       print(scrmsg)
     else:
       scrmsg = f"{year} => do not have a statuscode"
@@ -95,22 +103,23 @@ class JsonRequestStatusesReader:
       scrmsg = f"\texists = {bool_exists} | file = [{fipath}]"
       print(scrmsg)
 
-  def get_all_years_in_bls_datafolder(self):
+  def get_all_years_for_the_seriesid_in_datafolder(self):
     filenames = os.listdir(self.bls_datafolderpath)
     years = []
     for fn in filenames:
       match = self.prettyprint_filename_recmpld.search(fn)
       year = None if match is None else match.group(1)
+      seriesid = None if match is None else match.group(2)
+      if seriesid is None or seriesid != self.seriesid:
+        continue
       try:
-        if year:
-          years.append(int(year))
+        years.append(year)
       except ValueError:
         continue
-    years.sort()
     return years
 
   def verify_statuscode_in_bls_datafolder(self):
-    years = self.get_all_years_in_bls_datafolder()
+    years = self.get_all_years_for_the_seriesid_in_datafolder()
     scrmsg = f"""verify_statuscode_in_bls_datafolder()
     Number of year-data-files in datafolder: {len(years)}"""
     print(scrmsg)

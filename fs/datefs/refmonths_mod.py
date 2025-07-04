@@ -57,6 +57,14 @@ def calc_refmonth_minus_n(pdate, n):
   return calc_refmonth_plus_n(pdate, n)
 
 
+def make_refmonthdate_for_year_n_month(year, nmonth):
+  try:
+    return datetime.date(year=year, month=nmonth, day=1)
+  except ValueError:
+    pass
+  return None
+
+
 def make_refmonthdate_or_current(refmonthdate=None):
   refmonthdate = make_refmonthdate_or_none(refmonthdate)
   if isinstance(refmonthdate, datetime.date):

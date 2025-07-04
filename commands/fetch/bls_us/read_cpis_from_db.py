@@ -18,6 +18,7 @@ import fs.db.db_settings as dbs
 cur_seriesid = 'CUUR0000SA0'
 sur_seriesid = 'SUUR0000SA0'
 DEFAULT_SERIESID = 'CUUR0000SA0'
+KNOWN_SERIESID = ['CUUR0000SA0', 'SUUR0000SA0']
 available_cpi_seriesid_list = [cur_seriesid, sur_seriesid]
 NTCpiMonth = collections.namedtuple('NTCpiMonth', field_names=['cpi_us', 'refmonthdate'])
 

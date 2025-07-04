@@ -41,7 +41,7 @@ import fs.indices.bcb_br.bcb_cotacao_fetcher_from_db_or_api as bcbfetch  # bcbfe
 import fs.datefs.introspect_dates as idt  # idt.for make_date_or_none()
 import fs.datefs.refmonths_mod as rfm  # rfm.calc_refmonth_minus_n()
 import fs.datefs.read_write_datelist_files_fs as rwdt
-import commands.fetch.cpi_us.read_cpis_from_db as ftcpi  # ftcpi.get_cpi_baselineindex_for_refmonth_m2_in_db
+import commands.fetch.bls_us.read_cpis_from_db as ftcpi  # ftcpi.get_cpi_baselineindex_for_refmonth_m2_in_db
 from prettytable import PrettyTable
 DEFAULT_DATESFILENAME = 'datesfile.dat'
 DEFAULT_CURRENCY_PAIR = ('BRL', 'USD')

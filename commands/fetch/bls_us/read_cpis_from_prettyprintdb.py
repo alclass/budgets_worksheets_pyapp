@@ -18,6 +18,8 @@ import fs.db.db_settings as dbs
 from models.budgets.pb.tmp1 import recomp
 from models.finindices.cpis import cpis_cls
 import settings as sett
+from commands.fetch.bls_us.read_cpis_from_db import DEFAULT_SERIESID
+from commands.fetch.bls_us.read_cpis_from_db import KNOWN_SERIESID
 # import fs.datefs.introspect_dates as intr  # .convert_strdate_to_date_or_none_w_sep_n_order
 tablename = 'idxind_monthly_indices'
 prettyprint_file_pattern = r'^(\d{4}\-\d{4}\s{1}.+?\.prettyprint\.dat)$'
@@ -29,12 +31,12 @@ class CPIPrettyPrintReader:
   # "{year_fr}-{year_to} {seriesid}.prettyprint.dat"
   prettyprint_file_pattern = prettyprint_file_pattern
   cmpld_prettyprint_file_pattern = cmpld_prettyprint_file_pattern
-  prettyprint_file_tointerpot = "{year} {seriesid} prettyprint.txt"
+  prettyprint_file_tointerpol = "{year} {seriesid} prettyprint.txt"
   bls_foldername = 'bls_cpi_data'
 
-  def __init__(self, p_datafolder_abspath=None):
+  def __init__(self, seriesid=None, p_datafolder_abspath=None):
     self.found_datafilenames = []
-    self.seriesid = 'CUUR0000SA0'
+    self.seriesid = seriesid
     self.datafolder_abspath = p_datafolder_abspath
     self.treat_attrs()
     self.cpis = []
@@ -42,6 +44,8 @@ class CPIPrettyPrintReader:
     self.process()
 
   def treat_attrs(self):
+    if self.seriesid is None or self.seriesid not in KNOWN_SERIESID:
+      self.seriesid = DEFAULT_SERIESID
     if self.datafolder_abspath is None:
       self.datafolder_abspath = sett.get_datafolder_abspath()
     if self.datafolder_abspath is None or not os.path.isdir(self.datafolder_abspath):
@@ -119,7 +123,7 @@ class CPIPrettyPrintReader:
     return self.read_text_datafilepath(prettyprint_filepath)
 
   def read_text_datafile_by_year(self, year):
-    filename = self.prettyprint_file_tointerpot.format(seriesid=self.seriesid, year=year)
+    filename = self.prettyprint_file_tointerpol.format(seriesid=self.seriesid, year=year)
     return self.read_text_datafilename(filename)
 
   def get_cpis_dict(self, year):

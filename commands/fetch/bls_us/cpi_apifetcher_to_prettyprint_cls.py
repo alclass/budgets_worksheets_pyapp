@@ -44,7 +44,7 @@ import datetime
 import json
 import os
 # import sys
-import commands.fetch.cpi_us.cpi_rest_api_fetcher_fs as ftchfs
+import commands.fetch.bls_us.cpi_rest_api_fetcher_fs as ftchfs
 import fs.indices.bls_us.jsonfile_reqstatus_extractor_cls as statusex
 import fs.os.sufix_incrementor as osfs
 import settings as sett
