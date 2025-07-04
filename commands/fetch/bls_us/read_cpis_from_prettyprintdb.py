@@ -11,16 +11,16 @@ The data the script extracts is like the following pretty-print text table:
 | CUUR0000SA0 | 2025 |  M01   | 317.671 |           |
 +-------------+------+--------+---------+-----------+
 """
-import datetime
+# import datetime
 import os
 import re
-import fs.db.db_settings as dbs
-from models.budgets.pb.tmp1 import recomp
+# import fs.db.db_settings as dbs
+# from models.budgets.pb.tmp1 import recomp
 from models.finindices.cpis import cpis_cls
 import settings as sett
 from commands.fetch.bls_us.read_cpis_from_db import DEFAULT_SERIESID
 from commands.fetch.bls_us.read_cpis_from_db import KNOWN_SERIESID
-# import fs.datefs.introspect_dates as intr  # .convert_strdate_to_date_or_none_w_sep_n_order
+# import fs.datefs.introspect_dates as intr # .convert_strdate_to_date_or_none_w_sep_n_order
 tablename = 'idxind_monthly_indices'
 prettyprint_file_pattern = r'^(\d{4}\-\d{4}\s{1}.+?\.prettyprint\.dat)$'
 cmpld_prettyprint_file_pattern = re.compile(prettyprint_file_pattern)
@@ -71,7 +71,7 @@ class CPIPrettyPrintReader:
   def read_line_into_cpidatum(self, line):
     """
     if not isinstance(self.cpidatum, cpis_cls.CPIDatum):
-      errmsg = f"cpidatum must have come up as type CPIDatum. Please, verify data and retry."
+      errmsg = f cpidatum must have come up as type CPIDatum, please verify data and retry.
       raise ValueError(errmsg)
     """
     pp = line.split('|')
@@ -101,7 +101,7 @@ class CPIPrettyPrintReader:
             # it has already been stored
             return
           refmonthdate_2nd_dim[cpidatum.refmonthdate] = cpidatum
-          # added in the 2th level: refmonthdate
+          # added in the 2nd level: refmonthdate
           return
         else:
           refmonthdate_2nd_dim = {cpidatum.refmonthdate: cpidatum}
@@ -113,6 +113,8 @@ class CPIPrettyPrintReader:
   def read_text_datafilepath(self, prettyprint_filepath):
     """
     """
+    if not os.path.isfile(prettyprint_filepath):
+      return None
     fd = open(prettyprint_filepath, 'r')
     for line in fd.readlines():
       line = line.strip(' \t\r\n')

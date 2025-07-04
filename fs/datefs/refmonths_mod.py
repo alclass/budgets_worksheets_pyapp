@@ -5,6 +5,7 @@ fs/datefs/refmonths_mod.py
 
 import fs.datefs.introspect_dates as intr
 """
+import calendar
 import datetime
 from dateutil.relativedelta import relativedelta
 import fs.datefs.convert_to_date_wo_intr_sep_posorder as cnv
@@ -139,6 +140,32 @@ def make_refmonthdate_or_none(refmonthdate=None):
   return None
 
 
+def get_last_day_in_month(pdate):
+  if pdate is None:
+    return None
+  try:
+    year = pdate.year
+    month = pdate.month
+    last_day_in_month = calendar.monthrange(year, month)[1]
+    return last_day_in_month
+  except AttributeError:
+    pass
+  return None
+
+
+def spawn_inidate_n_fimdate_fr_refmonth(refmonthdate):
+  if refmonthdate is None:
+    return None, None
+  inidate = refmonthdate  # notice datetime.date's are immutable
+  last_day_in_month = get_last_day_in_month(refmonthdate)
+  try:
+    fimdate = datetime.date(year=inidate.year, month=inidate.month, day=last_day_in_month)
+    return inidate, fimdate
+  except AttributeError:
+    pass
+  return None, None
+
+
 def adhoc_test():
   """
   """
@@ -149,6 +176,9 @@ def adhoc_test():
   returned_refmonthdate = make_refmonth_or_none(pdate)
   print('expected_refmonthdate (done with ClassWithYearMonthDay)', expected_refmonthdate)
   print('returned_refmonthdate', returned_refmonthdate)
+  inidt, fimdt = spawn_inidate_n_fimdate_fr_refmonth(expected_refmonthdate)
+  scrmsg = f"spawn_inidate_n_fimdate_fr_refmonth({expected_refmonthdate}) -> {inidt} | {fimdt}"
+  print(scrmsg)
 
 
 def process():

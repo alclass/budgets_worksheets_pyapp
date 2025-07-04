@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-fs/economicfs/bcb_cotacao_fetcher_from_db_or_api.py
+fs/indices/bcb_br/bcb_cotacao_fetcher_from_db_or_api.py
 
   This module contains class:
     => fs.economicfs.preapis_finfunctions.BCBCotacaoFetcher
@@ -8,11 +8,12 @@ fs/economicfs/bcb_cotacao_fetcher_from_db_or_api.py
     that helps 'navigate' through weekend days and hollidays together with
     finding cotacao at its target date.
   Obs: the target date is the input date itself
-       or a previous one that has cotacao data.
+       or, if this not a trade date, a previous one that has 'cotacao data'.
   Example:
     if a day is Sunday and Friday is not a holliday, target_date will
     be input date minus 2 (Friday is 2 days less than Sunday).
 """
+import argparse
 import datetime
 from dateutil.relativedelta import relativedelta
 import calendar
@@ -20,6 +21,7 @@ import logging
 import os
 import random
 import fs.datefs.convert_to_date_wo_intr_sep_posorder as cnv
+import fs.datefs.refmonths_mod as rfm
 # import fs.datefs.introspect_dates as intr
 import fs.datefs.dategenerators as gendt
 import fs.db.db_settings as dbs
@@ -34,6 +36,24 @@ logging.basicConfig(filename=modlevelogfp, filemode='w', format='%(name)s %(leve
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)  # DEBUG means it and all others levels will be logged
 DATES_STACK_SIZE = 5
+parser = argparse.ArgumentParser()
+parser.add_argument(
+  '-id', '--inidate', type=str, nargs=1,
+  help="ini date in format yyyy-mm-dd for input to the script",
+)
+parser.add_argument(
+  '-fd', '--fimdate', metavar='date', type=str, nargs=1,
+  help="fim date in format yyyy-mm-dd for input to the script",
+)
+parser.add_argument(
+  '-t', '--today', action="store_true",
+  help="today's date in format yyyy-mm-dd for input to the script",
+)
+parser.add_argument(
+  '-rmd', '--refmonthdate', metavar='refmonthdate', type=str, nargs=1,
+  help="a refmonthdate in format yyyy-mm for input to the script",
+)
+args = parser.parse_args()
 
 
 def is_date_a_weekend_day(pdate):
@@ -231,14 +251,6 @@ class BCBCotacaoFetcher:
 
 
 def adhoctest():
-  pdate = datetime.date.today()
-  dates_stack = create_dates_stack_for_n_last_days(pdate)
-  popped_date = dates_stack.pop()
-  print('Popped', popped_date)
-  print(dates_stack)
-
-
-def process():
   """
   # adhoc_test_ptab()
   pdate = '2022-03-03'
@@ -247,12 +259,46 @@ def process():
   pass
   pdate = '2023-10-29'
   """
+  pdate = datetime.date.today()
+  dates_stack = create_dates_stack_for_n_last_days(pdate)
+  popped_date = dates_stack.pop()
+  print('Popped', popped_date)
+  print(dates_stack)
+
+
+def get_args():
+  inidate = args.inidate
+  inidate = cnv.make_date_or_none(inidate)
+  fimdate = args.fimdate
+  fimdate = cnv.make_date_or_none(fimdate)
+  refmonthdate = args.refmonthdate
+  refmonthdate = rfm.make_refmonthdate_or_none(refmonthdate)
+  return inidate, fimdate, refmonthdate
+
+
+def roll_ini_fim_dates(inidate, fimdate):
+  """
   today = datetime.date.today()
   upperdate = today - relativedelta(days=12)
   lowerdate = upperdate - relativedelta(days=1)
   for pdate in gendt.gen_dailydates_or_empty_bw_ini_fim_opt_order(lowerdate, upperdate):
     prefetcher = BCBCotacaoFetcher(pdate)
     print(prefetcher)
+  """
+  for pdate in gendt.gen_dailydates_or_empty_bw_ini_fim_opt_order(inidate, fimdate):
+    prefetcher = BCBCotacaoFetcher(pdate)
+    print(prefetcher)
+
+
+def process():
+  inidate, fimdate, refmonthdate = get_args()
+  if refmonthdate:
+    inidate, fimdate = rfm.spawn_inidate_n_fimdate_fr_refmonth()
+  if fimdate is None:
+    fimdate = datetime.date.today()
+  if inidate is None or inidate >= fimdate:
+    inidate = fimdate - relativedelta(days=10)
+  return roll_ini_fim_dates(inidate, fimdate)
 
 
 if __name__ == "__main__":

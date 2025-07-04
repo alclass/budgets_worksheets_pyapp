@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-commands/fetch/cpi_us/get_cpi_lookingup_prettyprints.py
+commands/fetch/bls_us/get_cpi_lookingup_prettyprints.py
   gets CPI acc_index (singular or plural) with seriesid and month from prettyprint files stored in datafolder
 
 The indices can also be gotten from a sqlite-db and also from the BLS API open version 1.
@@ -31,12 +31,10 @@ class FromPrettyPrintCPIYearlyGetter:
   def __init__(self, seriesid=None, year=None):
     self.seriesid = seriesid
     self.year = year
-    self.refmonthdate_fr = None
-    self.refmonthdate_to = None
     self.curr_year = datetime.date.today().year
     self.current_refmonthdate = rmfs.make_refmonthdate_or_current()
     self.ppreader = prettyfreader.CPIPrettyPrintReader()
-    self.refmonths_n_cpis_dict = {}
+    self._refmonths_n_cpis_dict = None
     self.treat_attrs()
 
   def treat_attrs(self):
@@ -44,18 +42,38 @@ class FromPrettyPrintCPIYearlyGetter:
       self.seriesid = DEFAULT_SERIESID
     if self.year is None:
       self.year = self.curr_year - 1
-    self.refmonthdate_fr = rmfs.make_refmonthdate_for_year_n_month(self.year, 1)
-    self.refmonthdate_to = rmfs.make_refmonthdate_for_year_n_month(self.year, 12)
 
-  def get_cpis_dict(self):
+  def read_n_set_refmonth_n_cpis_dict(self):
     reader_o = prettyfreader.CPIPrettyPrintReader(seriesid=self.seriesid)
     pdict = reader_o.get_cpis_dict(self.year)
-    # the first key is seriesid, the second key is the wanted one, i.e. refmonthdate
-    dict2d = pdict[self.seriesid]
-    for pdate in dict2d:
-      print(pdate, dict2d[pdate])
-      self.refmonths_n_cpis_dict.update({pdate: dict2d[pdate]})
-    return dict2d
+    # the first key is seriesid, the second key is the wanted one, i.e., refmonthdate
+    try:
+      self._refmonths_n_cpis_dict = pdict[self.seriesid]
+    except KeyError:
+      # this may mean:
+      # 1 - that the year's prettyprint file is not available
+      # 2 - that maybe file is available but data is absent or malformed
+      # consider dict is empty
+      self._refmonths_n_cpis_dict = {}
+
+  @property
+  def refmonths_n_cpis_dict(self):
+    """
+    Dynamic attribute that keeps _refmonth_n_cpis_dict
+    It's a lazy-read i.e., it's read upon first get
+    """
+    if self._refmonths_n_cpis_dict is None:
+      self.read_n_set_refmonth_n_cpis_dict()
+      if self._refmonths_n_cpis_dict is None:
+        return {}
+    return self._refmonths_n_cpis_dict
+
+  def get_cpi_for_refmonth(self, p_refmonth):
+    try:
+      return self.refmonths_n_cpis_dict[p_refmonth]
+    except (AttributeError, KeyError):
+      pass
+    return None
 
   def get_acc_cpi_for_refmonthdate(self, p_refmonthdate):
     refmonthdate = rmfs.make_refmonthdate_or_current(p_refmonthdate)
@@ -67,33 +85,71 @@ class FromPrettyPrintCPIYearlyGetter:
     return None
 
   def process(self):
-    _ = self.get_cpis_dict()
+    _ = self.refmonths_n_cpis_dict()
 
-  def show_the_years_monthly_cpis(self):
-    print("="*40)
-    scrmsg = f"Monthly CPI series {self.seriesid} for year {self.year}"
-    print(scrmsg)
-    print("="*40)
+  def report_empty_dataset(self):
+    outstr = "="*40 + '\n'
+    outstr += f"Monthly CPI series {self.seriesid} for year {self.year}\n"
+    outstr += "Data set is empty. Chances are:\n"
+    outstr += f"\t1 - prettyprint file for year {self.year} is missing.\n"
+    outstr += f"\t2 - prettyprint file, if exists, is empty.\n"
+    outstr += "="*40 + '\n'
+    return outstr
+
+
+  def mount_report_w_year_monthly_cpis(self):
+    if len(self.refmonths_n_cpis_dict) == 0:
+      return self.report_empty_dataset()
+    outstr = "="*40 + '\n'
+    outstr += f"Monthly CPI series {self.seriesid} for year {self.year}\n"
+    outstr += "="*40 + '\n'
     asc_refmonths_n_cpis_dict = sorted(self.refmonths_n_cpis_dict)
-    for refmonthdate in asc_refmonths_n_cpis_dict:
+    compound_yearly_index = 1
+    previous_month_idx = 0  # TODO this should be the increase from Dec to Jan
+    first_acc_index = 0
+    for i, refmonthdate in enumerate(asc_refmonths_n_cpis_dict):
       try:
         datum = self.refmonths_n_cpis_dict[refmonthdate]
         year = refmonthdate.year
         month = refmonthdate.month
-        scrmsg = f"{year}-{month:02} -> {datum.acc_index}"
-        print(scrmsg)
+
+        acc_index = datum.acc_index
+        if i == 0:
+          first_acc_index = acc_index
+        increase_in_month = acc_index - previous_month_idx
+        if increase_in_month != 0 and previous_month_idx != 0:
+          increase_fraction = increase_in_month / previous_month_idx
+        else:
+          increase_fraction = 0
+        compound_yearly_index *= (1 + increase_fraction)
+        scrmsg = (f"{year}-{month:02} -> idx={acc_index} "
+                  f"| incr={increase_fraction:5.3f}\n")
+        outstr += scrmsg
+        previous_month_idx = acc_index
       except (AttributeError, KeyError):
         pass
+    recomposed = first_acc_index * compound_yearly_index
+    line = "="*40 + '\n'
+    outstr += line
+    scrmsg = (f"11 months increase base1 idx -> {compound_yearly_index:5.3f} "
+              f"| recomposed last idx={recomposed:7.3f} | first idx = {first_acc_index:7.3f}\n")
+    outstr += scrmsg
+    return outstr
 
   def __str__(self):
-      outstr = f"""Getter:
-      """
+      outstr = "="*40 + "\n"
+      outstr += f"{self.__class__.__name__}:\n"
+      outstr += self.mount_report_w_year_monthly_cpis()
       return outstr
 
 
 class CPIYears:
 
   def __init__(self, refmonthdate_fr, refmonthdate_to, seriesid):
+    """
+    self.refmonthdate_fr = rmfs.make_refmonthdate_for_year_n_month(self.year, 1)
+    self.refmonthdate_to = rmfs.make_refmonthdate_for_year_n_month(self.year, 12)
+    """
     self.refmonthdate_fr = refmonthdate_fr
     self.refmonthdate_to = refmonthdate_to
     self.seriesid = seriesid
@@ -107,13 +163,13 @@ class CPIYears:
   def year_to(self):
     return self.refmonthdate_to.year
 
-  def get_thru_year_range(self):
+  def read_yearly_cpi_data(self):
     for i_year in range(self.year_fr, self.year_to+1):
       self.yearlycpi = FromPrettyPrintCPIYearlyGetter(seriesid=self.seriesid, year=i_year)
-      _ = self.yearlycpi.get_cpis_dict()
+      _ = self.yearlycpi.refmonth_n_cpis_dict()
 
   def process(self):
-    self.get_thru_year_range()
+    self.read_yearly_cpi_data()
 
 
 def adhoctest():
@@ -144,7 +200,7 @@ def adhoctest():
   ans = verifier.get_acc_cpi_for_refmonthdate(refmonthstr)
   scrmsg = f"verifier.get_cpi_for_refmonthdate({refmonthstr}) -> {ans}"
   print(scrmsg)
-  verifier.show_the_years_monthly_cpis()
+  verifier.mount_report_w_year_monthly_cpis()
 
 
 def get_args():
@@ -155,10 +211,12 @@ def get_args():
 
 def process():
   seriesid, year = get_args()
-  getter = FromPrettyPrintCPIYearlyGetter(seriesid=seriesid, year=year)
-  getter.show_the_years_monthly_cpis()
+  yearcpis = FromPrettyPrintCPIYearlyGetter(seriesid=seriesid, year=year)
+  print(yearcpis)
 
 
 if __name__ == '__main__':
-  process()
+  """
   adhoctest()
+  """
+  process()
