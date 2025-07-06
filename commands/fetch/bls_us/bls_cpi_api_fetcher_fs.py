@@ -21,13 +21,14 @@ The JSON Payload is filled as:
 """
 import copy
 import datetime
+import json
 import os.path
 import time
 import settings as cfg
 import commands.fetch.bls_us.cpi_rest_api_fetcher_fs as ftchfs  # .fetch_json_response_w_restapi_reqdictdata
 
 
-class USBLS_API_SeriesDataFetcher:
+class BLSAPISeriesDataFetcher:
   """
   This class uses the API option for multiple series,
     but with only one (if more are needed, the client user
@@ -65,17 +66,6 @@ class USBLS_API_SeriesDataFetcher:
       raise ValueError(error_msg)
 
   @property
-  def payload_as_json(self):
-    """
-    The JSON Payload is filled as:
-      {
-        "seriesid":["Series1",..., "SeriesN"],
-         "startyear":"yearX",
-         "endyear":"yearY"
-      }
-    """
-
-  @property
   def seriesid_in_a_list(self):
     return [self.seriesid]
 
@@ -89,18 +79,16 @@ class USBLS_API_SeriesDataFetcher:
     return cpi_restapi_datadict_payload
 
   @property
-  def restapi_reqdatadict(self):
-    if self._restapi_reqdatadict is not None:
-      return self._restapi_reqdatadict
-    self._restapi_reqdatadict = copy.copy(self.cpi_restapi_datadict_modelparam)
-    self._restapi_reqdatadict['startyear'] = str(self.year_fr)
-    self._restapi_reqdatadict['endyear'] = str(self.year_to)
-    # there is already a default seriesid list in the restapi_reqdatadict
-    # only change it if it's been given from __init__()
-    if self.seriesidlist is not None:
-      self.seriesidlist = list(self.seriesidlist)
-      self._restapi_reqdatadict['seriesid'] = self.seriesidlist
-    return self._restapi_reqdatadict
+  def payload_as_json(self):
+    """
+    The JSON Payload is filled as:
+      {
+        "seriesid":["Series1",..., "SeriesN"],
+         "startyear":"yearX",
+         "endyear":"yearY"
+      }
+    """
+    return json.dumps(self.payload_as_dict)
 
   def __str__(self):
     seriesidlist = self.seriesidlist or self.default_seriesidlist
@@ -113,12 +101,12 @@ class USBLS_API_SeriesDataFetcher:
     return outstr
 
 
-class CPIFetcher:
+class YearRangeCPIFetcher:
 
   DEFAULT_JSON_OUTFILENAME = 'bls_cpi.json'
 
   def __init__(self, from_year=None, to_year=None, seriesidlist=None):
-    self.jsonreq = USBLS_API_SeriesDataFetcher(from_year, to_year, seriesidlist)
+    self.jsonreq = BLSAPISeriesDataFetcher(from_year, to_year, seriesidlist)
     self.processing_duration = None
     self.response_json_data = None
     self.seriesidlist = seriesidlist
@@ -136,10 +124,6 @@ class CPIFetcher:
   @property
   def today(self):
     return self.jsonreq.today
-
-  @property
-  def restapi_reqdatadict(self):
-    return self.jsonreq.restapi_reqdatadict
 
   @property
   def json_outfilename(self):
@@ -170,14 +154,8 @@ class CPIFetcher:
     # property was changed, let's change it via 'private' json_outfilename
     self.json_outfilename = os.path.split(json_output_filepath)[-1]
 
-  def fetch_rest_api_json_response(self):
-    self.response_json_data = ftchfs.fetch_json_response_w_restapi_reqdictdata(self.restapi_reqdatadict)
-    self.write_json_api_request_as_file()
-    self.dump_n_save_res_per_series()
-
   def process(self):
     start = time.time()
-    self.fetch_rest_api_json_response()
     end = time.time()
     self.processing_duration = end - start
 
@@ -199,7 +177,7 @@ def adhoctest():
 
 
 def process():
-  cpifetcher = CPIFetcher()
+  cpifetcher = YearRangeCPIFetcher()
   cpifetcher.process()
   print('Stats', cpifetcher)
 
@@ -209,3 +187,37 @@ if __name__ == '__main__':
   adhoctest()
   """
   process()
+
+
+
+
+class OldBLSAPISeriesDataFetcher:
+
+  def fetch_rest_api_json_response(self):
+    self.response_json_data = ftchfs.fetch_json_response_w_restapi_reqdictdata(self.restapi_reqdatadict)
+    self.write_json_api_request_as_file()
+    self.dump_n_save_res_per_series()
+
+  @property
+  def restapi_reqdatadict(self):
+    return self.jsonreq.restapi_reqdatadict
+
+  @property
+  def restapi_reqdatadict(self):
+    if self._restapi_reqdatadict is not None:
+      return self._restapi_reqdatadict
+    self._restapi_reqdatadict = copy.copy(self.cpi_restapi_datadict_modelparam)
+    self._restapi_reqdatadict['startyear'] = str(self.year_fr)
+    self._restapi_reqdatadict['endyear'] = str(self.year_to)
+    # there is already a default seriesid list in the restapi_reqdatadict
+    # only change it if it's been given from __init__()
+    if self.seriesidlist is not None:
+      self.seriesidlist = list(self.seriesidlist)
+      self._restapi_reqdatadict['seriesid'] = self.seriesidlist
+    return self._restapi_reqdatadict
+
+  def process(self):
+    start = time.time()
+    self.fetch_rest_api_json_response()
+    end = time.time()
+    self.processing_duration = end - start

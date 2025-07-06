@@ -6,7 +6,7 @@ dbfetchcpis.py
 import datetime
 import sqlite3
 import settings as sett
-import models.finindices.cpis as cps
+import models.finindices.bls_us as cps
 
 
 def get_connection():

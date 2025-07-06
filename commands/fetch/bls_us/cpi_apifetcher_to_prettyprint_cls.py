@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """
-commands/fetch/cpi_us/cpi_apifetcher_to_prettyprint_cls.py
-  contains class Fetcher which is a client of the functions in
-    commands/fetch/cpi_us/cpi_apifetcher_to_prettyprint_cls.py
+commands/fetch/bls_us/cpi_apifetcher_to_prettyprint_cls.py
+  contains class Fetcher which is a client of the functions in cpi_apifetcher_to_prettyprint_fs.py
 
 Acronyms:
   BLS => Burreau of Labor Statistics (USA's)
@@ -28,7 +27,7 @@ The script cpi_apifetcher_to_prettyprint_cls.py
     as in the example below:
 ---------------------
 Fetching CPI for various years:
-  for i in {2010..2018}; do commands/fetch/cpi_us/cpi_apifetcher_to_prettyprint_cls.py --year $i; done
+  for i in {2010..2018}; do commands/fetch/bls_us/cpi_apifetcher_to_prettyprint_cls.py --year $i; done
 ---------------------
 
 Based on:

@@ -7,8 +7,8 @@ import datetime
 import sqlite3
 # import fs.db.conn_sa as consa
 import settings as sett
-import models.finindices.cpis as cpis
-DEFAULT_SERIESID = cpis.DEFAULT_SERIESID
+import models.finindices.bls_us as cpis
+DEFAULT_SERIESID = bls_us.DEFAULT_SERIESID
 
 
 def read_yearrange_from_db(yearini, yearfim, serieschar=None):
@@ -17,7 +17,7 @@ def read_yearrange_from_db(yearini, yearfim, serieschar=None):
   rows = session.execute(sql, tuplevalues)
   session.close()
   """
-  seriesid = cpis.find_seriesid_by_serieschar(serieschar)
+  seriesid = bls_us.find_seriesid_by_serieschar(serieschar)
   sql = """SELECT * from cpi_indices
     WHERE
       seriesid= ? and
@@ -34,9 +34,9 @@ def read_yearrange_from_db(yearini, yearfim, serieschar=None):
   conn.row_factory = sqlite3.Row  # for returning rows as dict
   cursor = conn.cursor()
   fetchobj = cursor.execute(sql, tuplevalues)
-  data = cpis.CPIData()
+  data = bls_us.CPIData()
   for dictrow in fetchobj:
-    cpi = cpis.CPIDatum.instantiate_from_dict(dictrow)
+    cpi = bls_us.CPIDatum.instantiate_from_dict(dictrow)
     data.append(cpi)
   print(data)
 

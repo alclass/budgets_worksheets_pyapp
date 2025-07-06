@@ -14,15 +14,16 @@ The data the script extracts is like the following pretty-print text table:
 # import datetime
 import os
 import re
+# from fs.indices.bls_us.report_reqstatus_in_jsondatafiles_cls import DEFAULT_BLS_DATA_FOLDERNAME
 # import fs.db.db_settings as dbs
 # from models.budgets.pb.tmp1 import recomp
-from models.finindices.cpis import cpis_cls
+from models.finindices.bls_us import cpis_cls
 import settings as sett
 from commands.fetch.bls_us.read_cpis_from_db import DEFAULT_SERIESID
 from commands.fetch.bls_us.read_cpis_from_db import KNOWN_SERIESID
-# import fs.datefs.introspect_dates as intr # .convert_strdate_to_date_or_none_w_sep_n_order
+import fs.datefs.refmonths_mod as rmd
 tablename = 'idxind_monthly_indices'
-prettyprint_file_pattern = r'^(\d{4}\-\d{4}\s{1}.+?\.prettyprint\.dat)$'
+prettyprint_file_pattern = r'^(\d{4}\s{1}[a-zA-Z0-9]+?\s{1}prettyprint\.txt)$'
 cmpld_prettyprint_file_pattern = re.compile(prettyprint_file_pattern)
 
 
@@ -37,10 +38,9 @@ class CPIPrettyPrintReader:
   def __init__(self, seriesid=None, p_datafolder_abspath=None):
     self.found_datafilenames = []
     self.seriesid = seriesid
-    self.datafolder_abspath = p_datafolder_abspath
+    self.datafolder_abspath = p_datafolder_abspath  # this is the root data folder, the BLS one is a dynamic attribute
     self.treat_attrs()
-    self.cpis = []
-    self.cpis_dict = {}  # this is a 2-D dict, one for seriesid, the other for refmonth
+    self.refmonths_n_cpis_dict = {}  # this is a 2-D dict, one for seriesid, the other for refmonth
     self.process()
 
   def treat_attrs(self):
@@ -53,10 +53,14 @@ class CPIPrettyPrintReader:
       raise OSError(errmsg)
 
   @property
+  def cpis(self):
+    return self.refmonths_n_cpis_dict.values()
+
+  @property
   def bls_folderpath(self):
     return os.path.join(self.datafolder_abspath, self.bls_foldername)
 
-  def get_ppfilepath_from_filename(self, filename):
+  def get_ppfilepath_from_filename(self, filename: str) -> os.path:
     return os.path.join(self.bls_folderpath, filename)
 
   def get_ppfilepath_by_filename(self, year):
@@ -68,7 +72,7 @@ class CPIPrettyPrintReader:
       scrmsg = f"cpidatum = {cpi}"
       print(scrmsg)
 
-  def read_line_into_cpidatum(self, line):
+  def read_line_into_cpidatum(self, line: str) -> None:
     """
     if not isinstance(self.cpidatum, cpis_cls.CPIDatum):
       errmsg = f cpidatum must have come up as type CPIDatum, please verify data and retry.
@@ -83,42 +87,35 @@ class CPIPrettyPrintReader:
         seriesid = pp[0]
         year = int(pp[1])
         mmonth = pp[2]
+        refmonthdate = rmd.get_refmonthdate_fr_mmonth_n_year_or_none(mmonth, year)
+        if refmonthdate is None:
+          return
         cpi_index = pp[3]
         footnotes = pp[4]
         cpidatum = cpis_cls.CPIDatum(
           seriesid=seriesid,
           year=year,
-          refmonthdate=mmonth,
+          refmonthdate=refmonthdate,
           acc_index=cpi_index,
           footnootes=footnotes
         )
         # scrmsg = f"Reading line cpidatum = {cpidatum}"
         # print(scrmsg)
-        self.cpis.append(cpidatum)
-        if seriesid in self.cpis_dict:
-          refmonthdate_2nd_dim = self.cpis_dict[seriesid]
-          if cpidatum.refmonthdate in refmonthdate_2nd_dim:
-            # it has already been stored
-            return
-          refmonthdate_2nd_dim[cpidatum.refmonthdate] = cpidatum
-          # added in the 2nd level: refmonthdate
-          return
-        else:
-          refmonthdate_2nd_dim = {cpidatum.refmonthdate: cpidatum}
-          self.cpis_dict[seriesid] = refmonthdate_2nd_dim
-          return
+        self.refmonths_n_cpis_dict.update({refmonthdate: cpidatum})
       except (IndexError, ValueError):
         pass
 
-  def read_text_datafilepath(self, prettyprint_filepath):
+  def read_text_datafilepath(self, pp_filepath: os.path) -> None:
     """
     """
-    if not os.path.isfile(prettyprint_filepath):
+    if not os.path.isfile(pp_filepath):
       return None
-    fd = open(prettyprint_filepath, 'r')
-    for line in fd.readlines():
+    fd = open(pp_filepath, "r")
+    line = fd.readline()
+    while line:
       line = line.strip(' \t\r\n')
       self.read_line_into_cpidatum(line)
+      line = fd.readline()
 
   def read_text_datafilename(self, prettyprint_filename):
     prettyprint_filepath = self.get_ppfilepath_from_filename(prettyprint_filename)
@@ -130,7 +127,7 @@ class CPIPrettyPrintReader:
 
   def get_cpis_dict(self, year):
     self.read_text_datafile_by_year(year)
-    return self.cpis_dict
+    return self.refmonths_n_cpis_dict
 
   def read_prettyprint_files(self):
     for i, prettyprint_filename in enumerate(self.found_datafilenames):
@@ -140,7 +137,7 @@ class CPIPrettyPrintReader:
       self.read_text_datafilename(prettyprint_filename)
 
   def find_prettyprint_files(self):
-    filenames = os.listdir(self.datafolder_abspath)
+    filenames = os.listdir(self.bls_folderpath)
     # print('filenames:', filenames)
     self.found_datafilenames = []
     for filename in filenames:
@@ -159,21 +156,28 @@ class CPIPrettyPrintReader:
     For cpi_us display, the 2-D dict is sorted (to a tmp-dict) on the "two dimensions" each at a time
     """
     count = 0
-    cpis_dict = dict(sorted(self.cpis_dict.items()))
-    for seriesid in cpis_dict:
-      refmonthdate_2nd_dim = self.cpis_dict[seriesid]
-      refmonthdate_2d = dict(sorted(refmonthdate_2nd_dim.items()))
-      for refmonthdate in refmonthdate_2d:
-        count += 1
-        scrmsg = f"{count} seriesid {seriesid} | refmonthdate {refmonthdate}"
-        print(scrmsg)
-        cpidatum = refmonthdate_2nd_dim[refmonthdate]
-        print(cpidatum)
+    # cpis_dict = sorted(self.refmonths_n_cpis_dict)
+    cpis_dict = self.refmonths_n_cpis_dict
+    for refmonthdate in cpis_dict:
+      count += 1
+      scrmsg = f"{count} seriesid {self.seriesid} | refmonthdate {refmonthdate}"
+      print(scrmsg)
+      cpidatum = cpis_dict[refmonthdate]
+      print(cpidatum)
 
   def process(self):
+    scrmsg = 'Step 1 find_prettyprint_files()'
+    print(scrmsg)
     self.find_prettyprint_files()
+    print(self.found_datafilenames)
+    scrmsg = 'Step 2 read_prettyprint_files()'
+    print(scrmsg)
     self.read_prettyprint_files()
-    # self.show_cpis_found()
+    scrmsg = 'Step 3 show_cpis_found()'
+    print(scrmsg)
+    self.show_cpis_found()
+    scrmsg = 'Step 5 print_cpis()'
+    print(scrmsg)
     self.print_cpis()
 
 
@@ -189,13 +193,16 @@ def adhoctest():
   https://pythonistaplanet.com/python-regex-exercises/
   https://realpython.com/regex-python/
   https://www.rexegg.com/regex-boundaries.php
-
   """
-  pass
+  fn = '2024 CUUR0000SA0 prettyprint.txt'
+  match = cmpld_prettyprint_file_pattern.search(fn)
+  res = None if match is None else match.group(1)
+  scrmsg = f"from [{fn}] match => [{res}]"
+  print(scrmsg)
 
 
 if __name__ == '__main__':
   """
-  adhoctest()
   """
+  adhoctest()
   process()

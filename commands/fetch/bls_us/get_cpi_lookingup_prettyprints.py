@@ -96,7 +96,6 @@ class FromPrettyPrintCPIYearlyGetter:
     outstr += "="*40 + '\n'
     return outstr
 
-
   def mount_report_w_year_monthly_cpis(self):
     if len(self.refmonths_n_cpis_dict) == 0:
       return self.report_empty_dataset()

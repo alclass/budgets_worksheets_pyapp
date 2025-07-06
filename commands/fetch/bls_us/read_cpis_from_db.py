@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-commands/fetch/read_cpis_from_db.py
+commands/fetch/bls_us/read_cpis_from_db.py
   fetches BLS CPI data from local db
 Acronyms:
   BLS => Burreau of Labor Statistics (USA's)
@@ -9,6 +9,9 @@ Acronyms:
 """
 import collections
 import datetime
+# from typing import AnyStr
+from typing import Any
+import json
 import pandas as pd
 from dateutil.relativedelta import relativedelta
 import settings as sett
@@ -21,6 +24,7 @@ DEFAULT_SERIESID = 'CUUR0000SA0'
 KNOWN_SERIESID = ['CUUR0000SA0', 'SUUR0000SA0']
 available_cpi_seriesid_list = [cur_seriesid, sur_seriesid]
 NTCpiMonth = collections.namedtuple('NTCpiMonth', field_names=['cpi_us', 'refmonthdate'])
+sqlite3.register_adapter(dict, lambda d: json.dumps(d).encode())
 
 
 def adapt_date_iso(val: datetime.date):
@@ -43,15 +47,18 @@ def adapt_datetime_epoch(val: datetime.datetime):
   return int(val.timestamp())
 
 
-def convert_date(val: str):
-  """Convert ISO 8601 date to datetime.date object."""
-  return datetime.date.fromisoformat(val)
+def convert_date(val):
+  """
+  previously
+  return bytes(datetime.date.fromisoformat(val))
+  """
+  return datetime.date.fromisoformat(val.decode())
 
 
 # https://docs.python.org/3/library/sqlite3.html
 # (with examples) https://github.com/python/cpython/issues/99392
 sqlite3.register_adapter(datetime.date, adapt_date_iso)
-sqlite3.register_converter("date", convert_date)
+sqlite3.register_converter("datetime.date", convert_date)
 
 
 def get_min_or_max_available_refmonthdate_in_cpi_db(lowest=True, p_seriesid=None):
@@ -109,7 +116,7 @@ def convert_cpi_month_tuplerows_to_namedtuplerows(allrows):
   outrows = []
   for rowtuple in allrows:
     cpi, refmonthdate = rowtuple
-    ntrow = NTCpiMonth(cpi=cpi, refmonthdate=refmonthdate)
+    ntrow = NTCpiMonth(cpi_us=cpi, refmonthdate=refmonthdate)
     outrows.append(ntrow)
   return outrows
 
@@ -155,7 +162,7 @@ def get_cpi_baselineindex_for_refmonth_in_db(refmonthdate, p_seriesid=None):
 def get_last_available_cpi_n_refmonth_fromdb_by_series(p_seriesid=None):
   """
   searches for the cpi_us on the most recent refmonthdate
-  returns both the index and the its corresponding most recent refmonthdate
+  returns both the index and its corresponding most recent refmonthdate
   """
   conn = sett.get_sqlite_connection()
   cursor = conn.cursor()
@@ -184,7 +191,7 @@ def trans_cpis_refmonths_from_tuplelist_to_ntlist(tuplelist):
   output_ntlist = []
   for cpi_n_refmonth in tuplelist:
     cpi, refmonthdate = cpi_n_refmonth
-    nt = NTCpiMonth(cpi=cpi, refmonthdate=refmonthdate)
+    nt = NTCpiMonth(cpi_us=cpi, refmonthdate=refmonthdate)
     output_ntlist.append(nt)
   return output_ntlist
 
@@ -323,13 +330,13 @@ def adhoctest3():
   """
   refmonthdate = '2024-12-01'
   """
-  refmonthdate = '2025-02-01'
+  refmonthdate = '2024-01-01'
   res = get_cpi_baselineindex_for_refmonth_in_db(refmonthdate)
   scrmsg = f'get_cpi_baselineindex_for_refmonth_in_db({refmonthdate}) => {res}'
   print(scrmsg)
   today = datetime.date.today()
   refmonthdate = datetime.date(year=today.year, month=today.month, day=1)
-  ret = get_cpi_baselineindex_for_refmonth_m2_in_db(refmonthdate)
+  res = get_cpi_baselineindex_for_refmonth_m2_in_db(refmonthdate)
   scrmsg = f'get_cpi_baselineindex_for_refmonth_in_db({refmonthdate}) => {res}'
   print(scrmsg)
 

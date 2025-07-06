@@ -58,8 +58,39 @@ def calc_refmonth_minus_n(pdate, n):
   return calc_refmonth_plus_n(pdate, n)
 
 
-def make_refmonthdate_for_year_n_month(year, nmonth):
+def get_nmonthd_fr_mmonth_or_none(mmonth):
+  """
+  Transforms a mmonth (which is just a monthnumber preceded (prefixed) by "M") into a nmonth (the month's number)
+  """
+  if mmonth is None:
+    return None
   try:
+    smonth = mmonth.lower().lstrip('m')
+    nmonth = int(smonth)
+    return nmonth
+  except ValueError:
+    return None
+
+
+def get_refmonthdate_fr_mmonth_n_year_or_none(mmonth, year):
+  """
+  Transforms a mmonth (which is just a monthnumber preceded (prefixed) by "M") into a nmonth (the month's number)
+    and, complemented with year, returns a refmonthdate
+  """
+  if mmonth is None:
+    return None
+  nmonth = get_nmonthd_fr_mmonth_or_none(mmonth)
+  if nmonth is None:
+    return None
+  return make_refmonthdate_for_year_n_month(year, nmonth)
+
+
+def make_refmonthdate_for_year_n_month(year, nmonth):
+  if year is None or nmonth is None:
+    return None
+  try:
+    year = int(year)
+    nmonth = int(nmonth)
     return datetime.date(year=year, month=nmonth, day=1)
   except ValueError:
     pass
@@ -108,7 +139,48 @@ def make_refmonth_or_current(str_or_date_refmonth=None):
   return datetime.date(year=today.year, month=today.month, day=1)
 
 
-def get_monthslastday_date_via_addition(pdate):
+def get_monthslastday_via_calendar(pdate):
+  if pdate is None:
+    return None
+  try:
+    year = pdate.year
+    month = pdate.month
+    last_day_in_month = calendar.monthrange(year, month)[1]
+    return last_day_in_month
+  except AttributeError:
+    pass
+  return None
+
+
+def get_monthslastdate_via_calendar(pdate):
+  indate = cnv.make_date_or_none(pdate)
+  if indate is None:
+    return None
+  lastday = get_monthslastday_via_calendar(pdate)
+  if lastday is None:
+    return None
+  try:
+    if pdate.day == lastday:
+      return pdate
+    outdate = datetime.date(year=pdate.year, month=pdate.month, day=lastday)
+    return outdate
+  except AttributeError:
+    pass
+  return None
+
+
+def get_monthslastday_via_addition(pdate):
+  indate = get_monthslastdate_via_addition(pdate)
+  if indate is None:
+    return None
+  try:
+    return indate.day
+  except AttributeError:
+    pass
+  return None
+
+
+def get_monthslastdate_via_addition(pdate):
   indate = cnv.make_date_or_none(pdate)
   if indate is None:
     return None
@@ -140,24 +212,11 @@ def make_refmonthdate_or_none(refmonthdate=None):
   return None
 
 
-def get_last_day_in_month(pdate):
-  if pdate is None:
-    return None
-  try:
-    year = pdate.year
-    month = pdate.month
-    last_day_in_month = calendar.monthrange(year, month)[1]
-    return last_day_in_month
-  except AttributeError:
-    pass
-  return None
-
-
 def spawn_inidate_n_fimdate_fr_refmonth(refmonthdate):
   if refmonthdate is None:
     return None, None
   inidate = refmonthdate  # notice datetime.date's are immutable
-  last_day_in_month = get_last_day_in_month(refmonthdate)
+  last_day_in_month = get_monthslastday_via_calendar(refmonthdate)
   try:
     fimdate = datetime.date(year=inidate.year, month=inidate.month, day=last_day_in_month)
     return inidate, fimdate
@@ -178,6 +237,18 @@ def adhoc_test():
   print('returned_refmonthdate', returned_refmonthdate)
   inidt, fimdt = spawn_inidate_n_fimdate_fr_refmonth(expected_refmonthdate)
   scrmsg = f"spawn_inidate_n_fimdate_fr_refmonth({expected_refmonthdate}) -> {inidt} | {fimdt}"
+  print(scrmsg)
+  monthslastdate = get_monthslastdate_via_calendar(pdate)
+  scrmsg = f"get_monthslastdate_via_calendar({pdate}) -> {monthslastdate}"
+  print(scrmsg)
+  monthslastdate = get_monthslastdate_via_addition(pdate)
+  scrmsg = f"get_monthslastdate_via_addition({pdate}) -> {monthslastdate}"
+  print(scrmsg)
+  monthslastday = get_monthslastday_via_calendar(pdate)
+  scrmsg = f"get_monthslastday_via_calendar({pdate}) -> {monthslastday}"
+  print(scrmsg)
+  monthslastday = get_monthslastday_via_addition(pdate)
+  scrmsg = f"get_monthslastday_via_addition({pdate}) -> {monthslastday}"
   print(scrmsg)
 
 

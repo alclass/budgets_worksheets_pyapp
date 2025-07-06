@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-commands/fetch/verify_n_update_local_cpi_db.py
+commands/fetch/bls_us/verify_n_update_local_cpi_db.py
   verifies if a new month has already been elapsed for a new CPI_US API-fetch
   and, if so, executes the script that fetches the new data remotely and record them locally.
 """
@@ -57,7 +57,7 @@ class Verifier:
     self.dbfetch_mostrecent()
     self.verify_more_than_one_refmonth()
     if self.is_time_for_apifetch:
-      apifetcher = cftch.CPIFetcher(from_year=None, to_year=self.today.year)
+      apifetcher = cftch.YearRangeCPIFetcher(from_year=None, to_year=self.today.year)
       apifetcher.process()
       self.api_has_been_fetch = True
 

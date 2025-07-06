@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-insert_cpis_from_textfiles.py
+commands/db/bls_us/insert_cpis_from_textfiles.py
   inserts CPI data from textfiles to a database.
 
 At the time of this writing, database is Sqlite.
@@ -36,9 +36,13 @@ import os
 import sqlite3
 import settings as sett
 import fs.os.sufix_incrementor as osfs
+seriesid_list = []
 curseriesid = 'CUUR0000SA0'
+seriesid_list.append(curseriesid)
+DEFAULT_SERIESID = curseriesid
 surseriesid = 'SUUR0000SA0'
-seriesfile_dotext = '.dat'
+seriesid_list.append(curseriesid)
+seriesfile_dotext = '.txt'
 cur_ending = f'{curseriesid}.prettyprint{seriesfile_dotext}'
 sur_ending = f'{surseriesid}.prettyprint{seriesfile_dotext}'
 

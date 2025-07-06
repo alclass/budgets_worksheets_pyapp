@@ -17,6 +17,7 @@ import re
 import settings as sett
 from commands.fetch.bls_us.read_cpis_from_db import DEFAULT_SERIESID
 from commands.fetch.bls_us.read_cpis_from_db import KNOWN_SERIESID
+DEFAULT_BLS_DATA_FOLDERNAME = 'bls_cpi_data'
 
 
 class JsonRequestStatusesReader:
@@ -29,6 +30,7 @@ class JsonRequestStatusesReader:
   def __init__(self, seriesid=None):
     self.n_files = 0
     self.seriesid = seriesid
+    self.years = []
     self.treat_attrs()
 
   def treat_attrs(self):
@@ -40,14 +42,13 @@ class JsonRequestStatusesReader:
   @property
   def bls_datafolderpath(self):
     folderpath = sett.get_datafolder_abspath()
-    foldername = 'bls_cpi_data'
-    bls_folderpath = os.path.join(folderpath, foldername)
+    bls_folderpath = os.path.join(folderpath, DEFAULT_BLS_DATA_FOLDERNAME)
     return bls_folderpath
 
   def get_jsonfilename_for_year(self, year):
     """
     Example
-    2011 CUUR0000SA0 prettyprint.json
+      "2011 CUUR0000SA0 prettyprint.json"
     """
     json_fn_for_year = self.prettyprint_filename_tointerpol.format(year=year, seriesid=self.seriesid)
     return json_fn_for_year
@@ -90,7 +91,8 @@ class JsonRequestStatusesReader:
     return False
 
   def show_statuscode_from_json_by_year(self, year):
-    statuscode = self.extract_statuscode_from_json_by_year(year)
+    statuscode = self.extract_statuscode_from_json_by_year(year)\
+      if year in self.years else f'data for year {year} is missing'
     if statuscode is not None:
       self.n_files += 1
       scrmsg = f"{self.n_files} | {year} => statuscode {statuscode}"
@@ -103,9 +105,9 @@ class JsonRequestStatusesReader:
       scrmsg = f"\texists = {bool_exists} | file = [{fipath}]"
       print(scrmsg)
 
-  def get_all_years_for_the_seriesid_in_datafolder(self):
+  def get_all_years_for_the_seriesid_in_datafolder(self) -> list:
     filenames = os.listdir(self.bls_datafolderpath)
-    years = []
+    self.years = []
     for fn in filenames:
       match = self.prettyprint_filename_recmpld.search(fn)
       year = None if match is None else match.group(1)
@@ -113,17 +115,21 @@ class JsonRequestStatusesReader:
       if seriesid is None or seriesid != self.seriesid:
         continue
       try:
-        years.append(year)
+        int_year = int(year)
+        self.years.append(int_year)
       except ValueError:
         continue
-    return years
+    self.years.sort()
+    return self.years
 
   def verify_statuscode_in_bls_datafolder(self):
-    years = self.get_all_years_for_the_seriesid_in_datafolder()
+    _ = self.get_all_years_for_the_seriesid_in_datafolder()
     scrmsg = f"""verify_statuscode_in_bls_datafolder()
-    Number of year-data-files in datafolder: {len(years)}"""
+    Number of year-data-files in datafolder: {len(self.years)}"""
     print(scrmsg)
-    for year in years:
+    minyear = min(self.years)
+    maxyear = max(self.years)
+    for year in range(minyear, maxyear+1):
       self.show_statuscode_from_json_by_year(year)
 
   def process(self):
@@ -137,4 +143,3 @@ if __name__ == '__main__':
   """
   statex = JsonRequestStatusesReader()
   statex.process()
-

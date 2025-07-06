@@ -40,7 +40,7 @@ The last two records in IPCA seriesid 'PRECOS12_IPCA12':
 
 """
 import datetime
-import models.finindices.ipea.folders_n_files_ipea_data as ipeaff  # .get_ipca12_filepath
+import models.finindices.ipea_br.folders_n_files_ipea_data as ipeaff  # .get_ipca12_filepath
 IPEA_IPCA_URL = "http://ipeadata.gov.br/api/odata4/ValoresSerie(SERCODIGO='PRECOS12_IPCA12')"
 today = datetime.date.today()
 IPEA_MIDDLE_FOLDERNAME = 'findata/ipea'
