@@ -27,7 +27,11 @@ The script cpi_apifetcher_to_prettyprint_cls.py
     as in the example below:
 ---------------------
 Fetching CPI for various years:
-  for i in {2010..2018}; do commands/fetch/bls_us/cpi_apifetcher_to_prettyprint_cls.py --year $i; done
+  Example 1 (defaulting seriesid)
+    for i in {2010..2018}; do commands/fetch/bls_us/cpi_apifetcher_to_prettyprint_cls.py --year $i; sleep 3; done
+  Example 2 (inputting seriesid)
+    for i in {2010..2025}; do commands/fetch/bls_us/cpi_apifetcher_to_prettyprint_cls.py
+      --seriesid SUUR0000SA0 --year $i; sleep 5; done
 ---------------------
 
 Based on:
@@ -44,7 +48,7 @@ import json
 import os
 # import sys
 import commands.fetch.bls_us.cpi_rest_api_fetcher_fs as ftchfs
-import fs.indices.bls_us.jsonfile_reqstatus_extractor_cls as statusex
+import fs.indices.bls_us.report_reqstatus_in_jsondatafiles_cls as statusex
 import fs.os.sufix_incrementor as osfs
 import settings as sett
 BLS_URL = 'https://api.bls.gov/publicAPI/v1/timeseries/data/'

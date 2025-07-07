@@ -97,22 +97,46 @@ def make_refmonthdate_for_year_n_month(year, nmonth):
   return None
 
 
-def make_refmonthdate_or_current(refmonthdate=None):
-  refmonthdate = make_refmonthdate_or_none(refmonthdate)
-  if isinstance(refmonthdate, datetime.date):
-    return refmonthdate
+def make_current_refmonthdate() -> datetime.date:
   today = datetime.date.today()
   current_refmonthdate = datetime.date(year=today.year, month=today.month, day=1)
   return current_refmonthdate
 
 
-def make_refmonth_or_none(refmonth):
+def make_refmonthdate_or_current(refmonthdate: datetime.date | None) -> datetime.date | None:
+  refmonthdate = make_refmonthdate_or_none(refmonthdate)
+  if isinstance(refmonthdate, datetime.date):
+    return refmonthdate
+  return make_current_refmonthdate()
+
+
+def make_refmonth_or_m_minus_2(p_refmonthdate: datetime.date | None) -> datetime.date | None:
+  """
+  Gets refmonthdate from input or, if it becomes None, make a refmonthdate of the M-2 type
+
+  The M-2 type
+  ============
+    The M-2 type is a refmonthdate two months before the current refmonthdate
+  """
+  refmonthdate = make_refmonth_or_none(p_refmonthdate)
+  if refmonthdate is not None:
+    return refmonthdate
+  curr_refmonth = make_current_refmonthdate()
+  refmonth_m_minus_2 = curr_refmonth - relativedelta(months=2)
+  return refmonth_m_minus_2
+
+
+def make_refmonth_or_none(refmonth: datetime.date | None) -> datetime.date | None:
   """
   Notice: differently from make_date_or_none(), this function does not include the 'day' field in a date,
     though it returns a date with day=1
   """
   if refmonth is None:
     return None
+  if isinstance(refmonth, datetime.date):
+    if refmonth.day == 1:
+      return refmonth
+    return datetime.date(year=refmonth.year, month=refmonth.month, day=1)
   try:
     y = int(refmonth.year)
     m = int(refmonth.month)
@@ -139,7 +163,7 @@ def make_refmonth_or_current(str_or_date_refmonth=None):
   return datetime.date(year=today.year, month=today.month, day=1)
 
 
-def get_monthslastday_via_calendar(pdate):
+def get_monthslastday_via_calendar(pdate: datetime.date | None) -> int | None:
   if pdate is None:
     return None
   try:
@@ -152,7 +176,7 @@ def get_monthslastday_via_calendar(pdate):
   return None
 
 
-def get_monthslastdate_via_calendar(pdate):
+def get_monthslastdate_via_calendar(pdate: datetime.date | None) -> datetime.date | None:
   indate = cnv.make_date_or_none(pdate)
   if indate is None:
     return None
@@ -169,7 +193,7 @@ def get_monthslastdate_via_calendar(pdate):
   return None
 
 
-def get_monthslastday_via_addition(pdate):
+def get_monthslastday_via_addition(pdate: datetime.date | None) -> int | None:
   indate = get_monthslastdate_via_addition(pdate)
   if indate is None:
     return None
@@ -180,7 +204,7 @@ def get_monthslastday_via_addition(pdate):
   return None
 
 
-def get_monthslastdate_via_addition(pdate):
+def get_monthslastdate_via_addition(pdate: datetime.date | None) -> datetime.date | None:
   indate = cnv.make_date_or_none(pdate)
   if indate is None:
     return None
@@ -193,7 +217,7 @@ def get_monthslastdate_via_addition(pdate):
   return monthslastday_date
 
 
-def make_refmonthdate_or_none(refmonthdate=None):
+def make_refmonthdate_or_none(refmonthdate: datetime.date | None) -> datetime.date | None:
   if refmonthdate is None:
     return None
   if isinstance(refmonthdate, datetime.date):
@@ -212,10 +236,10 @@ def make_refmonthdate_or_none(refmonthdate=None):
   return None
 
 
-def spawn_inidate_n_fimdate_fr_refmonth(refmonthdate):
+def spawn_inidate_n_fimdate_fr_refmonth(refmonthdate: datetime.date | None) -> tuple:
   if refmonthdate is None:
     return None, None
-  inidate = refmonthdate  # notice datetime.date's are immutable
+  inidate = refmonthdate  # notice datetime.date 'variables' are immutable
   last_day_in_month = get_monthslastday_via_calendar(refmonthdate)
   try:
     fimdate = datetime.date(year=inidate.year, month=inidate.month, day=last_day_in_month)

@@ -31,20 +31,13 @@ Notes on the overall CPI data fetching strategy:
     aiming to find newly added monthy CPI indices.
 """
 import datetime
-import glob
-import os
 import sqlite3
 import settings as sett
-import fs.os.sufix_incrementor as osfs
-seriesid_list = []
-curseriesid = 'CUUR0000SA0'
-seriesid_list.append(curseriesid)
-DEFAULT_SERIESID = curseriesid
-surseriesid = 'SUUR0000SA0'
-seriesid_list.append(curseriesid)
-seriesfile_dotext = '.txt'
-cur_ending = f'{curseriesid}.prettyprint{seriesfile_dotext}'
-sur_ending = f'{surseriesid}.prettyprint{seriesfile_dotext}'
+import fs.datefs.refmonths_mod as rmd
+from models.finindices.bls_us.cpis_cls import SERIESID_LIST
+from models.finindices.bls_us.cpis_cls import DEFAULT_SERIESID
+import commands.fetch.bls_us.read_cpis_from_prettyprintdb as ppdb
+BLS_CPI_TABLENAME = 'bls_us_indices'
 
 
 def get_conn():
@@ -53,15 +46,16 @@ def get_conn():
 
 def create_table_if_not_exists():
   """
+  Creates dbtable, if it does not yet exist, in the db-file whose filepath is given by settings.py
   """
-  sql = """
-  CREATE TABLE IF NOT EXISTS cpi_indices (
+  sql = f"""
+  CREATE TABLE IF NOT EXISTS {BLS_CPI_TABLENAME} (
     seriesid varchar(12) NOT NULL,
     refmonthdate date NOT NULL,
-    baselineindex real NOT NULL,
+    acc_index real NOT NULL,
     created_at datetime,
     modified_at datetime,
-    PRIMARY KEY (seriesid, refdate)
+    PRIMARY KEY (seriesid, refmonthdate)
   )"""
   conn = get_conn()
   retval = conn.execute(sql)
@@ -72,110 +66,126 @@ def create_table_if_not_exists():
 
 class Insertor:
 
-  TABLENAME = 'cpi_indices'
+  TABLENAME = BLS_CPI_TABLENAME
 
-  def __init__(self, seriesid, year, month, baselineindex):
-    self.seriesid = seriesid.lstrip(' ').rstrip(' ')
-    self.year = int(year)
-    self.month = int(month)
-    self.baselineindex = float(baselineindex)
+  def __init__(self, seriesid, refmonthdate, acc_index):
+    self.seriesid = seriesid  # seriesid.lstrip(' ').rstrip(' ')
+    self.refmonthdate = refmonthdate
+    self.acc_index = acc_index
     self.created_at = datetime.datetime.now()
-    self.n_inserted = 0
+    self.dbfields_within_parentheses_str = '(seriesid, refmonthdate, acc_index, created_at, modified_at)'
+    self.bool_inserted = None
 
   @property
-  def refdate(self):
-    return datetime.date(year=self.year, month=self.month, day=1)
+  def treat_attrs(self):
+    """
+    Treats the instantiated input parameters
+    """
+    # treat seriesid
+    if self.seriesid is None or self.seriesid not in SERIESID_LIST:
+      self.seriesid = DEFAULT_SERIESID
+    # treat refmonthdate
+    self.refmonthdate = rmd.make_refmonth_or_m_minus_2(self.refmonthdate)
+    if issubclass(self.acc_index, float):
+      return
+    # treat acc_index
+    try:
+      self.acc_index = float(self.acc_index)
+    except ValueError as e:
+      errmsg = (f"acc_index {self.acc_index} is not a valid float."
+                f" Please, correct datum and retry.\n\t => {e}")
+      raise ValueError(errmsg)
 
   @property
-  def refmonthdate(self):
-    return self.refdate
+  def year(self):
+    return self.refmonthdate.year
+
+  @property
+  def month(self):
+    return self.refmonthdate.month
 
   @property
   def modified_at(self):
+    """
+    At this version, both created_at and modified_at are the same
+    """
     return self.created_at
 
   @property
-  def fields_with_parentheses(self):
-    return '(seriesid, refmonthdate, baselineindex, created_at, modified_at)'
-
-  @property
   def questionmarks(self):
-    qm = '?,' * 5
+    qm = '?,' * self.n_fields
     qm = '(' + qm[:-1] + ')'
     return qm
 
   @property
   def tuplevalues(self):
-    return self.seriesid, self.refdate, self.baselineindex, self.created_at, self.modified_at
+    return self.seriesid, self.refmonthdate, self.acc_index, self.created_at, self.modified_at
 
-  def insert(self):
+  @property
+  def n_fields(self):
+    return len(self.tuplevalues)
+
+  def insert(self, conn):
     create_table_if_not_exists()
     sql = """INSERT OR IGNORE into {tablename}
       {fields_with_parentheses} 
       VALUES {questionmarks};""".format(
       tablename=self.TABLENAME,
-      fields_with_parentheses=self.fields_with_parentheses,
+      fields_with_parentheses=self.dbfields_within_parentheses_str,
       questionmarks=self.questionmarks
     )
-    conn = get_conn()
+    # conn = get_conn()
     cursor = conn.cursor()
     retval = cursor.execute(sql, self.tuplevalues)
     if retval.rowcount == 1:
-      self.n_inserted += 1
-      print(self.n_inserted, 'inserted & committing')
-      conn.commit()
-    conn.close()
+      self.bool_inserted = True
+      scrmsg = f"bool_inserted={self.bool_inserted} @insert"
+      print(scrmsg)
+      # conn.commit()  # commit will occur at the list's end by calling object
+    else:
+      self.bool_inserted = False
+      scrmsg = f'retval.rowcount={retval.rowcount} not inserting'
+      print(scrmsg)
+    cursor.close()
 
   def __str__(self):
-    bool_ins = self.n_inserted > 0
-    outstr = f"Sqlite inserted={bool_ins} {self.year}/{self.month:02} => cpi_us="
-    outstr += f"{self.baselineindex} @ {self.seriesid}"
+    outstr = f"Sqlite inserted={self.bool_inserted} {self.year}/{self.month:02} => cpi_us="
+    outstr += f"accidx={self.acc_index} @ {self.seriesid}"
     return outstr
 
 
-def insert_cpis_from_file(filepath):
-  lines = open(filepath).readlines()
-  seq = 0
-  total_insert = 0
-  last_seriesid = None
-  for line in lines:
-    # print(line)
-    values = line.split('|')
-    values = filter(lambda e: e not in ['', '\n'], values)
-    values = list(filter(lambda e: not e.startswith('   '), values))
-    try:
-      seriesid = values[0]
-      yearstr = values[1]
-      yearstr = yearstr.strip(' ')
-      year = int(yearstr)
-      monthstr = values[2]
-      if monthstr.find('value') > -1:
-        continue
-      monthstr = monthstr.lstrip(' M').rstrip(' ')
-      month = int(monthstr)
-      bindex = values[3]
-      # print('month, year, bindex, seriesid', seriesid, year, month, bindex)
-      seq += 1
-      ins = Insertor(seriesid, year, month, bindex)
-      ins.insert()
-      print(seq, ins)
-      total_insert += ins.n_inserted
-      last_seriesid = seriesid
-    except (IndexError, ValueError):
-      pass
-  print('Total inserted', total_insert, 'seriesid', last_seriesid)
+class BatchInsertor:
 
+  def __init__(self):
+    self.ppreader = ppdb.CPIPrettyPrintReader()
+    self.n_eff_inserted = 0
+    print(self.ppreader)
+    self.conn = get_conn()
+    self.n_eff_inserted = 0
 
-def get_prettyprint_cpi_series_data_filepaths_in_folder():
-  datafolderpath = sett.get_apps_data_abspath()
-  ospaths = glob.glob(datafolderpath + '/*' + seriesfile_dotext)
-  # sorted() is required because map/filter/etc. consume the iterable making it empty for another time
-  fileentries = sorted(filter(lambda e: os.path.isfile(e), ospaths))
-  curfilepaths = sorted(filter(lambda e: e.endswith(cur_ending), fileentries))
-  surfilepaths = sorted(filter(lambda e: e.endswith(sur_ending), fileentries))
-  filepaths = curfilepaths + surfilepaths
-  osfs.print_filenames_from_filepaths(filepaths, datafolderpath)
-  return filepaths
+  def insert_cpi_data_fr_prettyprintfiles(self):
+    for i, cpidatum in enumerate(self.ppreader.gen_cpidatum_monthly_asc()):
+      n_to_insert = i + 1
+      ins = Insertor(
+        seriesid=cpidatum.seriesid, refmonthdate=cpidatum.refmonthdate, acc_index=cpidatum.acc_index
+      )
+      scrmsg = f"Going to db-insert {n_to_insert}/{self.n_eff_inserted} {cpidatum}"
+      print(scrmsg)
+      scrmsg = "-"*40
+      print(scrmsg)
+      ins.insert(self.conn)
+      if ins.bool_inserted:
+        self.n_eff_inserted += 1
+
+  def commit_at_the_end(self):
+    scrmsg = "commit_at_the_end"
+    print(scrmsg)
+    self.conn.commit()
+    self.conn.close()
+
+  def process(self):
+    self.insert_cpi_data_fr_prettyprintfiles()
+    self.commit_at_the_end()
 
 
 def adhoctest():
@@ -183,9 +193,8 @@ def adhoctest():
 
 
 def process():
-  filepaths = get_prettyprint_cpi_series_data_filepaths_in_folder()
-  for filepath in filepaths:
-    insert_cpis_from_file(filepath)
+  bi = BatchInsertor()
+  bi.process()
 
 
 if __name__ == '__main__':

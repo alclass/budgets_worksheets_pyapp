@@ -11,13 +11,18 @@ This module contains class JsonRequestStatusesReader that aims to find the "requ
 ---------------------
 
 """
+import argparse
 import os
 import json
 import re
 import settings as sett
-from commands.fetch.bls_us.read_cpis_from_db import DEFAULT_SERIESID
-from commands.fetch.bls_us.read_cpis_from_db import KNOWN_SERIESID
+from commands.fetch.bls_us.read_cpis_from_db_fs import DEFAULT_SERIESID
+from commands.fetch.bls_us.read_cpis_from_db_fs import KNOWN_SERIESID
 DEFAULT_BLS_DATA_FOLDERNAME = 'bls_cpi_data'
+parser = argparse.ArgumentParser(description="Download BLS CPI indices.")
+parser.add_argument("--seriesid", type=str, default="CUUR0000SA0",
+                    help="Series Id")
+args = parser.parse_args()
 
 
 class JsonRequestStatusesReader:
@@ -127,13 +132,30 @@ class JsonRequestStatusesReader:
     scrmsg = f"""verify_statuscode_in_bls_datafolder()
     Number of year-data-files in datafolder: {len(self.years)}"""
     print(scrmsg)
-    minyear = min(self.years)
-    maxyear = max(self.years)
-    for year in range(minyear, maxyear+1):
-      self.show_statuscode_from_json_by_year(year)
+    if len(self.years) == 0:
+      scrmsg = f'Database for seriesid {self.seriesid} is empty (nº of years = {len(self.years)}). Returning'
+      print(scrmsg)
+      return
+    try:
+      minyear = min(self.years)
+      maxyear = max(self.years)
+      for year in range(minyear, maxyear+1):
+        self.show_statuscode_from_json_by_year(year)
+    except ValueError:
+      scrmsg = 'Database may be empty.'
+      print(scrmsg)
 
   def process(self):
     self.verify_statuscode_in_bls_datafolder()
+
+
+def process():
+  """
+  Known seriesid are CUUR0000SA0 & SUUR0000SA0
+    (but there are others)
+  """
+  statex = JsonRequestStatusesReader(args.seriesid)
+  statex.process()
 
 
 if __name__ == '__main__':
@@ -141,5 +163,4 @@ if __name__ == '__main__':
   adhoctest()
   adhoctest2()
   """
-  statex = JsonRequestStatusesReader()
-  statex.process()
+  process()

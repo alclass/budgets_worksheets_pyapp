@@ -165,7 +165,7 @@ class CPIYears:
   def read_yearly_cpi_data(self):
     for i_year in range(self.year_fr, self.year_to+1):
       self.yearlycpi = FromPrettyPrintCPIYearlyGetter(seriesid=self.seriesid, year=i_year)
-      _ = self.yearlycpi.refmonth_n_cpis_dict()
+      _ = self.yearlycpi.refmonths_n_cpis_dict()
 
   def process(self):
     self.read_yearly_cpi_data()

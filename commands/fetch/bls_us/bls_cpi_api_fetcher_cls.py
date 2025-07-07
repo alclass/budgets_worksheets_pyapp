@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-commands/fetch/bls_cpi_api_fetcher_fs.py
+commands/fetch/bls_cpi_api_fetcher_cls.py
   fetches BLS CPI (Consumer Price Index) monthly index data
     for the known series available
     i.e., ['CUUR0000SA0', 'SUUR0000SA0']
@@ -15,11 +15,8 @@ The JSON Payload is filled as:
   {"seriesid":["Series1",..., "SeriesN"],
    "startyear":"yearX",
    "endyear":"yearY"
-}
-
 
 """
-import copy
 import datetime
 import json
 import os.path
@@ -91,12 +88,11 @@ class BLSAPISeriesDataFetcher:
     return json.dumps(self.payload_as_dict)
 
   def __str__(self):
-    seriesidlist = self.seriesidlist or self.default_seriesidlist
     outstr = f"""RestApiJsonRequestParamMaker:
     today = {self.today}
     from year = {self.year_fr}
     to year = {self.year_to}
-    series id list = {seriesidlist}
+    seriesid = {self.seriesid}
     """
     return outstr
 
@@ -153,6 +149,7 @@ class YearRangeCPIFetcher:
       return self.json_outfilepath
     # property was changed, let's change it via 'private' json_outfilename
     self.json_outfilename = os.path.split(json_output_filepath)[-1]
+    return None
 
   def process(self):
     start = time.time()
@@ -187,37 +184,3 @@ if __name__ == '__main__':
   adhoctest()
   """
   process()
-
-
-
-
-class OldBLSAPISeriesDataFetcher:
-
-  def fetch_rest_api_json_response(self):
-    self.response_json_data = ftchfs.fetch_json_response_w_restapi_reqdictdata(self.restapi_reqdatadict)
-    self.write_json_api_request_as_file()
-    self.dump_n_save_res_per_series()
-
-  @property
-  def restapi_reqdatadict(self):
-    return self.jsonreq.restapi_reqdatadict
-
-  @property
-  def restapi_reqdatadict(self):
-    if self._restapi_reqdatadict is not None:
-      return self._restapi_reqdatadict
-    self._restapi_reqdatadict = copy.copy(self.cpi_restapi_datadict_modelparam)
-    self._restapi_reqdatadict['startyear'] = str(self.year_fr)
-    self._restapi_reqdatadict['endyear'] = str(self.year_to)
-    # there is already a default seriesid list in the restapi_reqdatadict
-    # only change it if it's been given from __init__()
-    if self.seriesidlist is not None:
-      self.seriesidlist = list(self.seriesidlist)
-      self._restapi_reqdatadict['seriesid'] = self.seriesidlist
-    return self._restapi_reqdatadict
-
-  def process(self):
-    start = time.time()
-    self.fetch_rest_api_json_response()
-    end = time.time()
-    self.processing_duration = end - start

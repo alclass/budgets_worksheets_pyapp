@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """
-commands/fetch/bls_us/read_cpis_from_db.py
+commands/fetch/bls_us/read_cpis_from_db_fs.py
   fetches BLS CPI data from local db
+
 Acronyms:
   BLS => Burreau of Labor Statistics (USA's)
   CPI => Consumer Price Index (US-measured)
+
 # import fs.datefs.convert_to_date_wo_intr_sep_posorder as cnv
 """
 import collections

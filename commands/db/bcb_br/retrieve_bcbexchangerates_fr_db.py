@@ -1,0 +1,294 @@
+#!/usr/bin/env python3
+"""
+commands/db/bcb_br/retrieve_bcbexchangerates_fr_db.py
+  Retrieves BCB exchange rates stores in the local Sqlite-DB
+
+import fs.datefs.convert_to_date_wo_intr_sep_posorder as cnv
+import settings as sett
+"""
+import argparse
+import datetime
+from dateutil.relativedelta import relativedelta
+import fs.indices.bcb_br.bcb_cotacao_fetcher_from_db_or_api as fin
+import fs.datefs.convert_to_date_wo_intr_sep_posorder as dtfs
+import os
+import settings as sett
+TABLENAME = 'currencies_exchangerates'
+DEFAULT_DATEFILENAME = 'datesfile.txt'
+DEFAULT_CURRENCY_FROM = 'USD'
+DEFAULT_CURRENCY_TO = 'BRL'
+REGISTERED_CURRENCIES_3LETTER = [DEFAULT_CURRENCY_FROM, DEFAULT_CURRENCY_TO]
+# import fs.datefs.dategenerators as gendt
+# import fs.datefs.read_write_datelist_files_fs as rwdt
+
+
+def fetch_exchangerate_thru_api(pdate):
+  bcb = fin.BCBCotacaoFetcher(pdate)
+  bcb_api_nt = bcb.pop_dates_n_try_find_cotacao()
+  return bcb_api_nt
+
+
+def get_args_via_argparse():
+  """
+  https://realpython.com/command-line-interfaces-python-argparse/
+  One Example:
+    parser.add_argument("--veggies", nargs="+")
+    parser.add_argument("--fruits", nargs="*")
+      $ python cooking.py --veggies pepper tomato --fruits apple banana
+    parser.add_argument("--size", choices=["S", "M", "L", "XL"], default="M")
+    my_parser.add_argument("--weekday", type=int, choices=range(1, 8))
+  """
+  parser = argparse.ArgumentParser(description="Obtain Arguments")
+  parser.add_argument(
+    '-y', '--year', metavar='year', type=int, nargs=1,
+    help="the year for getting its daily exchange rate quotes",
+  )
+  parser.add_argument(
+    '-m', '--month', metavar='yearmonth', type=str, nargs=1,
+    help="the year dash month for getting its daily exchange rate quotes",
+  )
+  parser.add_argument(
+    '-d', '--day', metavar='yearmonthday', type=str, nargs=1,
+    help="the date for finding its daily exchange rate quotes",
+  )
+  parser.add_argument(
+    '-dl', '--datelist', metavar='datelist', type=str, nargs='+',
+    help="datelist for finding daily exchange rate quotes one by one",
+  )
+  parser.add_argument(
+    '-cy', '--current-year', action='store_true',
+    help="current year for finding daily exchange rate quotes",
+  )
+  parser.add_argument(
+    '-yr', '--yearrange', type=int, nargs=2,
+    help="year range (ini, fim) as the date range for finding daily exchange rate quotes",
+  )
+  parser.add_argument(
+    '-rdf', '--readdatefile', action='store_true',
+    help="marker/signal for inputting the dateadhoctests from "
+         "the conventioned datefile located in the app's data folder",
+  )
+  parser.add_argument(
+    '-cp', '--currencypair', type=str, nargs=1, default='brl/usd',
+    help="for specifying the currency pair ratio that corresponds to the output quotes (default 'brl/usd')",
+  )
+  args = parser.parse_args()
+  return args
+
+
+class BCBExchangeRatesRetriever:
+
+  TABLENAME = TABLENAME
+  DEFAULT_DATEFILENAME = DEFAULT_DATEFILENAME
+
+  def __init__(
+      self,
+      curr_fr=None, curr_to=None,
+      date_fr=None, date_to=None,
+      datafolderpath=None, datafilename=None, p_datafilepath=None
+    ):
+    self.curr_fr, self.curr_to = curr_fr, curr_to
+    self.date_fr, self.date_to = date_fr, date_to
+    self.datafolderpath, self.datafilename, self.p_datafilepath = datafolderpath, datafilename, p_datafilepath
+    self.datesreader = None
+    self.treat_attrs()
+    self.today = datetime.date.today()
+    self.seq = 0
+    self.bcbs = []
+    self.year = None
+    self.month = None
+    self.day = None
+    self.datelist = None
+    self.current_year = False
+    self.yearrange = None
+    self.readdatefile = False
+    self.currencypair = 'brl/usd'
+    self.buyprice = None
+    self.sellprice = None
+    self.con = None
+    self.date_n_tupleprices_dict = {}
+    self.treat_attrs()
+
+  def treat_attrs(self):
+    if self.curr_fr is None or self.curr_fr not in REGISTERED_CURRENCIES_3LETTER:
+      self.curr_fr = DEFAULT_CURRENCY_FROM
+    if self.curr_to is None or self.curr_to not in REGISTERED_CURRENCIES_3LETTER:
+      self.curr_to = DEFAULT_CURRENCY_TO
+    self.date_to = dtfs.make_date_or_today(self.date_to)
+    self.date_fr = dtfs.make_date_or_none(self.date_fr)
+    if self.date_fr is None:
+      self.date_fr = self.date_to - relativedelta(days=7)
+    if self.date_fr > self.date_to:
+      self.date_fr = self.date_to - relativedelta(days=7)
+    return self.treat_attr_paths()
+
+  def treat_attr_paths(self):
+    """
+    For the time being, datefilepath will be set as a convention (TODO recuperate its setting code)
+    """
+    # accept the double default (folderpath plus filename equals filepath)
+    pass
+
+  @property
+  def datefilefolderpath(self):
+    rootfolderpath = sett.get_datafolder_abspath()
+    return rootfolderpath
+
+  @property
+  def datefilename(self):
+    return self.DEFAULT_DATEFILENAME
+
+  @property
+  def datefilepath(self):
+    return os.path.join(self.datefilefolderpath, self.datefilename)
+
+  @property
+  def attrs(self):
+    _attrs = [
+      fie_n_val for fie_n_val in self.__dict__.items()
+      if not callable(fie_n_val[0])
+    ]
+    return _attrs
+
+  def get_conn(self):
+    self.con = sett.get_sqlite_connection()
+    return self.con
+
+  @property
+  def curr_num(self):
+    """
+    curr_num means the currency on the numerator in a fraction (num/den), this is curr_to
+    Example:
+      5,55 BRL/USD means the exchange of BRL (the curr_to) to USD (the curr_fr [fr=from]) is 5,55
+      The USD/BRL is just its inverse (i.e., 1/(BRL/USD))
+    """
+    return self.curr_to
+
+  @property
+  def curr_den(self):
+    """
+    curr_den means the currency on the denominator in a fraction (num/den), this is curr_fr [fr=from]
+    Example:
+      0,18 USD/BRL means the exchange of USD (the curr_to) to BRL (the curr_fr [fr=from]) is 0,18
+      The BRL/USD is just its inverse (i.e., 1/(BRL/USD))
+    """
+    return self.curr_fr
+
+  def make_sql_select(self):
+    sql = f"""
+    SELECT buypriceint, sellpriceint, refdate from {self.TABLENAME}
+      WHERE
+        curr_num = ? and curr_den = ? and
+        refdate >= ? and refdate <= ?
+      ORDER BY
+        refdate; 
+    """
+    return sql
+
+  def do_select(self):
+    """
+    Obs: the db-storing of the currency pair (from, to) is done by alphabetical precedence,
+      i.e., the currency 3-letter code that comes alphabetically before is stored in the curr_num
+      and then the curr_den
+    Because of that, the method should check if the inverse division (1/n) should take place
+    """
+    conn = self.get_conn()
+    cursor = conn.cursor()
+    sql = self.make_sql_select()
+    print(sql)
+    from_to_inverted_position = False
+    if self.curr_num < self.curr_to:
+      from_to_inverted_position = True  # the inverse division (1/n) should happen at the end
+      curr1 = self.curr_fr
+      curr2 = self.curr_to
+    else:
+      # invert position and flag it
+      curr1 = self.curr_to
+      curr2 = self.curr_fr
+    tuplevalues = (curr1, curr2, self.date_fr, self.date_to)
+    cursor.execute(sql, tuplevalues)
+    rows = cursor.fetchall()
+    for record in rows:
+      buyprice = float(record[0])/10000
+      sellprice = float(record[1])/10000
+      refdate = dtfs.make_date_or_none(record[2])
+      if from_to_inverted_position:
+        buyprice = 1/self.buyprice
+        sellprice = 1/self.sellprice
+      self.date_n_tupleprices_dict.update({refdate: (buyprice, sellprice)})
+
+  def get_buyprice_n_sellprice_tuple_on_date(self, pdate) -> tuple:
+    if pdate in self.date_n_tupleprices_dict.keys():
+      pricetuple = self.date_n_tupleprices_dict[pdate]
+      return pricetuple
+    return None, None
+
+  def process(self):
+    self.do_select()
+    print(self)
+
+  def from_to_daterange(self):
+    pdate = self.date_fr
+    while pdate <= self.date_to:
+      yield pdate
+      pdate = pdate + relativedelta(days=1)
+
+  @property
+  def n_found_recs(self) -> int:
+    try:
+      return len(self.date_n_tupleprices_dict.keys())
+    except AttributeError:
+      pass
+    return 0
+
+  def buy_sell_prices_quote_wholedaterange_str(self):
+    outstr = "Buy | Sell price quotes:\n"
+    for pdate in self.from_to_daterange():
+      buy, sell = self.get_buyprice_n_sellprice_tuple_on_date(pdate)
+      outstr += f"{pdate} -> buy={buy} | sell={sell}\n"
+    return outstr
+
+  @property
+  def curr_num_by_curr_den_str(self):
+    return f"{self.curr_to}/{self.curr_fr}"
+
+  def buy_sell_prices_quote_str(self):
+    outstr = f"seq |    Date    |    Buy     |  Sell {self.curr_num_by_curr_den_str}\n"
+    for i, pdate in enumerate(self.date_n_tupleprices_dict.keys()):
+      buy, sell = self.get_buyprice_n_sellprice_tuple_on_date(pdate)
+      seq = i + 1
+      outstr += f"\t{seq}   | {pdate} | buy={buy} | sell={sell}\n"
+    outstr = outstr.rstrip('\n')
+    return outstr
+
+  def __str__(self):
+    outstr = f"""Fetcher:
+    date_fr = {self.curr_fr}
+    date_to = {self.curr_to}
+    date_fr = {self.date_fr}
+    date_to = {self.date_to}
+    -----------------
+    {self.buy_sell_prices_quote_str()}
+    -----------------
+    total exchrates found = {self.n_found_recs}
+    """
+    return outstr
+
+
+def adhoctest():
+  pass
+
+
+def process():
+  retriever = BCBExchangeRatesRetriever(
+    date_fr='2017-10-1',
+    date_to='2017-10-31'
+  )
+  retriever.process()
+
+
+if __name__ == '__main__':
+  """
+  adhoctest2()
+  """
+  process()
