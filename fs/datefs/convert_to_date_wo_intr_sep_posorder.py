@@ -124,7 +124,7 @@ def make_date_or_none(pdate):
   return convert_str_or_attrsobj_to_date_or_none(pdate)
 
 
-def make_date_or_today(pdate):
+def make_date_or_today(pdate: str | datetime.date | None = None) -> datetime.date | None:
   """
     Calls the main function for converting to a date.
     If receives a None, returns 'today'.

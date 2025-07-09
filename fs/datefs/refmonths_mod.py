@@ -36,6 +36,15 @@ class ClassWithYearMonthDay:
     return None
 
 
+def is_date_in_refmonth(pdate, refmonthdate):
+  try:
+    if pdate.year == refmonthdate.year and pdate.month == refmonthdate.month:
+      return True
+  except AttributeError:
+    pass
+  return False
+
+
 def calc_refmonth_plus_n(pdate, n):
   pdate = cnv.make_date_or_none(pdate)
   if pdate is None:

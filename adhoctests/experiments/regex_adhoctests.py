@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """
+adhoctests/experiments/regex_adhoctests.py
 
+A Git side note:
+  Tp show which files entered in the last commit:
+    $git show --name-only HEAD
 """
 import re
 
