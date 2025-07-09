@@ -9,6 +9,7 @@ commands/fetch/bcb_br/buffer_bcb_apifetch_to_prettyprint.py
 import argparse
 import datetime
 import os.path
+import prettytable
 import re
 import fs.datefs.refmonths_mod as rmd
 import fs.datefs.convert_to_date_wo_intr_sep_posorder as dtfs
@@ -44,7 +45,7 @@ def make_yearmonth_n_currs_exchrate_filename_w_refmonth_n_currpair(refmonthdate,
   return make_yearmonth_currnum_currden_exchrate_filename(yearmonthstr, currnum_currden)
 
 
-class PrettyPrintMonthlyExchangeRatesWriter:
+class PrettyPrintMonthlyExchangeRatesReaderWriter:
   """
   This class retrieves and writes monthly exchange rates for a pair of currencies
 
@@ -77,6 +78,9 @@ class PrettyPrintMonthlyExchangeRatesWriter:
     self.refmonthdate = refmonthdate
     self.datafolder = datafolder
     self.folderpath = None
+    self.pp_seq_dt_buyp_sellp_str = prettytable.PrettyTable(
+        ['seq', 'date', 'buyprice', 'sellprice']
+      )
     self.curr_num = curr_3letter_pair[0]
     self.curr_den = curr_3letter_pair[1]
     self.filename = None
@@ -166,6 +170,12 @@ class PrettyPrintMonthlyExchangeRatesWriter:
       pass
     return None
 
+  def add_daysprice_to_month(self, exrate: ercls.ExchangeRate):
+    try:
+      self.dates_quotes_dict.update{exrate.exchratedate: exrate}
+    except AttributeError:
+      pass
+
   def receive_daily_quoterec(self, pdate, quoterec):
     try:
       self.dates_quotes_dict[pdate] = quoterec
@@ -203,6 +213,26 @@ class PrettyPrintMonthlyExchangeRatesWriter:
     sellquote = exrate_obj.sellprice
     line = f"{self.lineseq} | {pdate} | {buyprice} \t | {sellquote}\n"
     return line
+
+ def form_prettyprint_line(self):
+  """
+    Saves a "series" pretty-print dump formed in function dump_n_save_json_response_per_each_series_inside_data() above
+
+  The pretty-print is like so:
+  +-------------+------+--------+---------+-----------+
+  |   seriesID  | year | period |  value  | footnotes |
+  +-------------+------+--------+---------+-----------+
+  | SUUR0000SA0 | 2020 |  M12   | 146.408 |           |
+  | SUUR0000SA0 | 2020 |  M11   | 146.242 |           |
+  (...)
+  self.output.write(pprint_dump.get_string())
+
+  """
+  self.pp_seq_dt_buyp_sellp_str.add_row(
+    [seriesid, year, period, value, footnotes[0:-1]]
+  )  # ends items (in each series) looping
+
+
 
   def write_file_w_text(self, text):
     """
@@ -262,7 +292,7 @@ def process():
   """
   """
   refmonthdate, curr_3letter_pair = get_args()
-  writer = PrettyPrintMonthlyExchangeRatesWriter(
+  writer = PrettyPrintMonthlyExchangeRatesReaderWriter(
     curr_3letter_pair=curr_3letter_pair,
     refmonthdate=refmonthdate
   )
