@@ -101,11 +101,8 @@ class BCBExchangeRatesRetriever:
     self.datelist = None
     self.current_year = False
     self.yearrange = None
-    self.readdatefile = False
-    self.currencypair = 'brl/usd'
-    self.buyprice = None
-    self.sellprice = None
-    self.con = None
+    self.has_read_datefile = False
+    self.conn = None
     self.date_n_tupleprices_dict = {}
     self.treat_attrs()
 
@@ -130,6 +127,18 @@ class BCBExchangeRatesRetriever:
     pass
 
   @property
+  def dates_in_run(self):
+    return self.date_n_tupleprices_dict.keys()
+
+  @property
+  def first_date_in_run(self):
+    return min(self.dates_in_run)
+
+  @property
+  def last_date_in_run(self):
+    return max(self.dates_in_run)
+
+  @property
   def datefilefolderpath(self):
     rootfolderpath = sett.get_datafolder_abspath()
     return rootfolderpath
@@ -151,8 +160,8 @@ class BCBExchangeRatesRetriever:
     return _attrs
 
   def get_conn(self):
-    self.con = sett.get_sqlite_connection()
-    return self.con
+    self.conn = sett.get_sqlite_connection()
+    return self.conn
 
   @property
   def curr_num(self):
@@ -174,7 +183,19 @@ class BCBExchangeRatesRetriever:
     """
     return self.curr_fr
 
-  def make_sql_select(self):
+  @property
+  def currency_pair(self) -> tuple[str, str]:
+    return self.curr_num, self.curr_to
+
+  @property
+  def curr_num_by_curr_den_str(self):
+    return f"{self.curr_to}/{self.curr_fr}"
+
+  @property
+  def curr_num_uline_curr_den_str(self):
+    return f"{self.curr_to}_{self.curr_fr}"
+
+  def make_sql_select(self) -> str:
     sql = f"""
     SELECT buypriceint, sellpriceint, refdate from {self.TABLENAME}
       WHERE
@@ -209,19 +230,49 @@ class BCBExchangeRatesRetriever:
     cursor.execute(sql, tuplevalues)
     rows = cursor.fetchall()
     for record in rows:
-      buyprice = float(record[0])/10000
-      sellprice = float(record[1])/10000
-      refdate = dtfs.make_date_or_none(record[2])
-      if from_to_inverted_position:
-        buyprice = 1/self.buyprice
-        sellprice = 1/self.sellprice
-      self.date_n_tupleprices_dict.update({refdate: (buyprice, sellprice)})
+      try:
+        buyprice = float(record[0])/10000
+        sellprice = float(record[1])/10000
+        refdate = dtfs.make_date_or_none(record[2])
+        if from_to_inverted_position:
+          buyprice = 1/buyprice
+          sellprice = 1/sellprice
+        self.date_n_tupleprices_dict.update({refdate: (buyprice, sellprice)})
+      except (TypeError, ValueError):
+        pass
 
   def get_buyprice_n_sellprice_tuple_on_date(self, pdate) -> tuple:
     if pdate in self.date_n_tupleprices_dict.keys():
       pricetuple = self.date_n_tupleprices_dict[pdate]
       return pricetuple
     return None, None
+
+  def get_date_n_tupleprices_dict_between_daterange(self, daterange: tuple[datetime.date, datetime.date]):
+    """
+    From https://realpython.com/sort-python-dictionary/
+      # Sort by key
+      dict(sorted(people.items()))
+        {1: 'Jill', 2: 'Jack', 3: 'Jim', 4: 'Jane'}
+
+      # Sort by value
+      dict(sorted(people.items(), key=lambda item: item[1]))
+        {2: 'Jack', 4: 'Jane', 1: 'Jill', 3: 'Jim'}
+
+    pdict = {k: pdict[k] for k in pdict if inidate <= k <= fimdate else None}
+    """
+    inidate, fimdate = daterange
+    inidate = dtfs.make_date_or_none(inidate)
+    if inidate is None:
+      inidate = self.first_date_in_run
+    fimdate = dtfs.make_date_or_none(fimdate)
+    if fimdate is None:
+      fimdate = self.last_date_in_run
+    # remind that date_tupleprices_dict.items() has elements with
+    # k[0] (the key) the date and k[1] (the value) the tuple (buyprice, sellprice)
+    pdict = filter(lambda k: inidate <= k[0] <= fimdate, self.date_n_tupleprices_dict.items())
+    pdict = dict(pdict)
+    pdict = dict(sorted(pdict.items()))
+    return pdict
 
   def process(self):
     self.do_select()
@@ -247,10 +298,6 @@ class BCBExchangeRatesRetriever:
       buy, sell = self.get_buyprice_n_sellprice_tuple_on_date(pdate)
       outstr += f"{pdate} -> buy={buy} | sell={sell}\n"
     return outstr
-
-  @property
-  def curr_num_by_curr_den_str(self):
-    return f"{self.curr_to}/{self.curr_fr}"
 
   def buy_sell_prices_quote_str(self):
     outstr = f"seq |    Date    |    Buy     |  Sell {self.curr_num_by_curr_den_str}\n"
@@ -280,11 +327,22 @@ def adhoctest():
 
 
 def process():
+  """
+    580   | 2023-12-04 | buy=4.9085 | sell=4.909
+    581   | 2023-12-05 | buy=4.9516 | sell=4.9522
+    582   | 2023-12-06 | buy=4.9025 | sell=4.9031
+    583   | 2023-12-07 | buy=4.8943 | sell=4.8949
+  """
   retriever = BCBExchangeRatesRetriever(
     date_fr='2017-10-1',
-    date_to='2017-10-31'
+    date_to='2024-10-31'
   )
   retriever.process()
+  daterange = inidate, fimdate = '2023-12-04', '2023-12-07'
+  print(daterange)
+  res = retriever.get_date_n_tupleprices_dict_between_daterange(daterange)
+  for it in res:
+    print(it, res[it])
 
 
 if __name__ == '__main__':

@@ -14,6 +14,7 @@ import re
 import fs.datefs.refmonths_mod as rmd
 import fs.datefs.convert_to_date_wo_intr_sep_posorder as dtfs
 import fs.indices.bcb_br.bcb_exchrate_cls as ercls  # for class ercls.ExchangeRate
+import commands.db.bcb_br.retrieve_bcbexchangerates_fr_db as bcbretr  # bcbretr.BCBExchangeRatesRetriever
 re_patt_exchangerate_datafilename =\
   r"^(?P<yearmonth>\d{4}\-\d{2})\s{1}(?P<currs_num_den_w_uline>[A-Z]{3}_[A-Z]{3}) exchange rates\.txt$"
 re_cmpld_exchangerate_datafilename = re.compile(re_patt_exchangerate_datafilename)
@@ -172,7 +173,7 @@ class PrettyPrintMonthlyExchangeRatesReaderWriter:
 
   def add_daysprice_to_month(self, exrate: ercls.ExchangeRate):
     try:
-      self.dates_quotes_dict.update{exrate.exchratedate: exrate}
+      self.dates_quotes_dict.update({exrate.exchratedate: exrate})
     except AttributeError:
       pass
 
@@ -207,52 +208,44 @@ class PrettyPrintMonthlyExchangeRatesReaderWriter:
   def str_currencies_num_den(self):
     return f"{self.curr_num}/{self.curr_den}"
 
-  def interpol_fileline(self, exrate_obj: ercls.ExchangeRate) -> str:
-    pdate = exrate_obj.exchratedate
-    buyprice = exrate_obj.buyprice
-    sellquote = exrate_obj.sellprice
-    line = f"{self.lineseq} | {pdate} | {buyprice} \t | {sellquote}\n"
-    return line
+  def form_prettyprint_line_w_fields(self, exchrate: ercls.ExchangeRate):
+    """
+      Saves a "series" pretty-print dump formed in function dump_n_save_json_response_per_each_series_inside_data() above
 
- def form_prettyprint_line(self):
-  """
-    Saves a "series" pretty-print dump formed in function dump_n_save_json_response_per_each_series_inside_data() above
+    The pretty-print is like so:
+    +-------------+------+--------+---------+-----------+
+    |   seriesID  | year | period |  value  | footnotes |
+    +-------------+------+--------+---------+-----------+
+    | SUUR0000SA0 | 2020 |  M12   | 146.408 |           |
+    | SUUR0000SA0 | 2020 |  M11   | 146.242 |           |
+    (...)
+    self.output.write(pprint_dump.get_string())
 
-  The pretty-print is like so:
-  +-------------+------+--------+---------+-----------+
-  |   seriesID  | year | period |  value  | footnotes |
-  +-------------+------+--------+---------+-----------+
-  | SUUR0000SA0 | 2020 |  M12   | 146.408 |           |
-  | SUUR0000SA0 | 2020 |  M11   | 146.242 |           |
-  (...)
-  self.output.write(pprint_dump.get_string())
+    """
+    linevalues_list = [self.lineseq, exchrate.exchratedate, exchrate.buyprice, exchrate.buyprice]
+    self.pp_seq_dt_buyp_sellp_str.add_row(linevalues_list)
 
-  """
-  self.pp_seq_dt_buyp_sellp_str.add_row(
-    [seriesid, year, period, value, footnotes[0:-1]]
-  )  # ends items (in each series) looping
-
-
-
-  def write_file_w_text(self, text):
+  def write_file_w_prettyprintdump(self, text):
     """
     TODO Recuperates file if it exists previously
     """
     fd = open(self.datafilepath, 'w')
     scrmsg = f"Writing file [{self.datafilepath}]"
     print(scrmsg)
-    fd.write(text)
+    fd.write(self.prettyprint_dump)
     fd.close()
 
   def finalize_writing_file(self):
+    """
+    Loops through all data putting line by line in the PrettyPrint object
+    """
     filetext = ''
     try:
       for i, pdate in enumerate(self.dates_quotes_dict):
         self.lineseq = i + 1
         exrate_obj = self.dates_quotes_dict[pdate]
-        line = self.interpol_fileline(exrate_obj)
-        filetext += line
-      return self.write_file_w_text(filetext)
+        self.form_prettyprint_line_w_fields(exrate_obj)
+      return self.write_file_w_prettyprintdump()
     except KeyError:
       pass
 
@@ -297,6 +290,12 @@ def process():
     refmonthdate=refmonthdate
   )
   writer.process()
+  retriever = bcbretr.BCBExchangeRatesRetriever(
+    date_fr='2023-01-01',
+    date_to='2025-01-01',
+  )
+  pdict = retriever.get_date_n_tupleprices_dict_between_daterange()
+  writer.input_w_dict_dates_n_tuple_buy_n_sell(pdict)
 
 
 if __name__ == "__main__":
