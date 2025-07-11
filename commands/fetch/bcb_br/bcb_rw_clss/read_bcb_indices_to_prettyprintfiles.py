@@ -1,22 +1,23 @@
 #!/usr/bin/env python3
 """
-commands/fetch/bcb_br/write_bcb_indices_to_prettyprintfiles.py
-  This script contains class PrettyPrintMonthlyExchangeRatesWriter
-    that writes monthly prettyprint data files with exchange rate data from BCB
+commands/fetch/bcb_br/bcb_rw_clss/read_bcb_indices_to_prettyprintfiles.py
+  This script writes monthly prettyprint data files with
+  exchange rate data from BCB
+  It contains class PrettyPrintMonthlyExchangeRatesReader
+    which is a subclass of base PrettyPrintMonthlyExchangeRatesRWBase
+    for reading the pretty-print data files
 
 """
 import argparse
 import datetime
-# import os.path
-# import prettytable
+import os.path
+import prettytable
 import re
-# import settings as sett
 import fs.datefs.refmonths_mod as rmd
-# import fs.datefs.convert_to_date_wo_intr_sep_posorder as dtfs
+import fs.datefs.convert_to_date_wo_intr_sep_posorder as dtfs
 import fs.indices.bcb_br.bcb_exchrate_cls as ercls  # for class ercls.ExchangeRate
+import commands.fetch.bcb_br.bcb_rw_clss.base_rw_bcb_indices_to_prettyprintfiles as baserw
 import commands.db.bcb_br.retrieve_bcbexchangerates_fr_db as bcbretr  # bcbretr.BCBExchangeRatesRetriever
-# baserw.PrettyPrintMonthlyExchangeRatesRWBase
-import commands.fetch.bcb_br.base_rw_bcb_indices_to_prettyprintfiles as baserw
 re_patt_exchangerate_datafilename =\
   r"^(?P<yearmonth>\d{4}\-\d{2})\s{1}(?P<currs_num_den_w_uline>[A-Z]{3}_[A-Z]{3}) exchange rates\.txt$"
 re_cmpld_exchangerate_datafilename = re.compile(re_patt_exchangerate_datafilename)
@@ -48,37 +49,7 @@ def make_yearmonth_n_currs_exchrate_filename_w_refmonth_n_currpair(refmonthdate,
   return make_yearmonth_currnum_currden_exchrate_filename(yearmonthstr, currnum_currden)
 
 
-class WithinMonthExchangeRatesDict:
-
-  def __init__(self, refmonthdate, curr_num, curr_den):
-    self.refmonthdate = refmonthdate
-    self.dates_n_exchrates_dict = {}
-    self.curr_num, self.curr_den = curr_num, curr_den
-
-  def put_exchdate_into_dict(self, exchrate: ercls.ExchangeRate, ignore_outside_month: bool = False):
-    erdate = exchrate.exchratedate
-    if not rmd.is_date_in_refmonth(erdate, self.refmonthdate):
-      if not ignore_outside_month:
-        errmsg = f"Datum's date {erdate} is outside of month (refmonth={self.refmonthdate})"
-        raise ValueError(errmsg)
-      else:
-        return False
-    self.dates_n_exchrates_dict[erdate] = exchrate
-    return True
-
-  def put_exchdate_into_dict_w_date_n_tuplebuysell(self, pdate: datetime.date, tuplebuysell: tuple):
-    buyprice, sellprice = tuplebuysell
-    exchrate = ercls.ExchangeRate(
-      pdate=pdate, curr_num=self.curr_num, curr_den=self.curr_den, buyprice=buyprice, sellprice=sellprice
-    )
-    self.put_exchdate_into_dict(exchrate)
-
-  def batch_put_exchdate_into_dict(self, dates_n_exchrates_dict, ignore_outside_month=False):
-    for pdate in dates_n_exchrates_dict:
-      self.put_exchdate_into_dict(dates_n_exchrates_dict[pdate], ignore_outside_month)
-
-
-class PrettyPrintMonthlyExchangeRatesWriter(baserw.PrettyPrintMonthlyExchangeRatesRWBase):
+class PrettyPrintMonthlyExchangeRatesReader(baserw.PrettyPrintMonthlyExchangeRatesRWBase):
   """
   This class retrieves and writes monthly exchange rates for a pair of currencies
 
@@ -96,6 +67,32 @@ class PrettyPrintMonthlyExchangeRatesWriter(baserw.PrettyPrintMonthlyExchangeRat
       (i.e., they are not the open-quote or close-quote,
       but the PTAC quote as it's defined and published by BCB)
   """
+
+  def read_file_into_dict(self):
+    filepath = self.yeardashmonth_pp_datafilepath
+    fd = open(filepath, 'r')
+    for line in fd.readlines():
+      try:
+        pp = line.split('|')
+        # seq = pp[0]
+        strdate = dtfs.make_date_or_none(pp[1])
+        buyprice = float(pp[2])
+        sellprice = float(pp[3])
+        exrate_obj = ercls.ExchangeRate(
+          pdate=strdate,
+          curr_num=self.curr_num,
+          curr_den=self.curr_den,
+          buyprice=buyprice,
+          sellprice=sellprice,
+        )
+        self.dates_quotes_dict.update({exrate_obj.exchratedate: exrate_obj})
+      except AttributeError:
+        pass
+
+  @property
+  def str_currencies_num_den(self):
+    return f"{self.curr_num}/{self.curr_den}"
+
   def form_prettyprint_line_w_fields(self, exchrate: ercls.ExchangeRate):
     """
       Saves a "series" pretty-print dump formed in function
@@ -118,8 +115,8 @@ class PrettyPrintMonthlyExchangeRatesWriter(baserw.PrettyPrintMonthlyExchangeRat
     """
     TODO Recuperates file if it exists previously
     """
-    fd = open(self.datafilepath, 'w')
-    scrmsg = f"Writing file [{self.datafilepath}]"
+    fd = open(self.yeardashmonth_pp_datafilepath, 'w')
+    scrmsg = f"Writing file [{self.yeardashmonth_pp_datafilepath}]"
     print(scrmsg)
     fd.write(self.prettyprint_dump)
     fd.close()
@@ -138,18 +135,11 @@ class PrettyPrintMonthlyExchangeRatesWriter(baserw.PrettyPrintMonthlyExchangeRat
       pass
 
   def process(self):
-    """
-    override process() writer-subclass
-    """
-    self.process()
     self.finalize_writing_file()
 
   def __str__(self):
-    """
-    override process() writer-subclass
-    """
-    outstr = f"""Writing {self.__class__.__name__}
-    {self.curr_num_slash_curr_den}
+    outstr = f"""{self.__class__.__name__}
+    {self.currnum_slash_currden}
     """
     return outstr
 
@@ -182,7 +172,7 @@ def process():
   """
   """
   refmonthdate, curr_3letter_pair = get_args()
-  writer = PrettyPrintMonthlyExchangeRatesWriter(
+  writer = PrettyPrintMonthlyExchangeRatesReader(
     curr_3letter_pair=curr_3letter_pair,
     refmonthdate=refmonthdate
   )
@@ -192,7 +182,7 @@ def process():
     date_to='2025-01-01',
   )
   pdict = retriever.get_date_n_tupleprices_dict_between_daterange()
-  writer.input_w_dict_dates_n_tuple_buy_n_sell(pdict)
+  writer.batch_add_or_upt_daysprices_w_dict_or_list(pdict)
   print(writer)
 
 

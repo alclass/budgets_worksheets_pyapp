@@ -36,7 +36,9 @@ class ClassWithYearMonthDay:
     return None
 
 
-def is_date_in_refmonth(pdate, refmonthdate):
+def is_date_in_refmonth(pdate: datetime.date | str, refmonthdate: datetime.date | str) -> bool:
+  pdate = cnv.make_date_or_none(pdate)
+  refmonthdate = make_refmonthdate_or_none(refmonthdate)
   try:
     if pdate.year == refmonthdate.year and pdate.month == refmonthdate.month:
       return True

@@ -1,10 +1,12 @@
 """
-BCBMonthlyPrettiyPrintFinder
+commands/fetch/bcb_br/monthly_prettyprint_exchrate_finder.py
+  Finds pretty-print exchange rate data files
+    in their conventioned folders
 """
 import os
 import re
 import settings as sett
-from fs.datefs.convert_to_date_wo_intr_sep_posorder import find_most_recent_name_n_its_prefix_date_in_strlist
+# from fs.datefs.convert_to_date_wo_intr_sep_posorder import find_most_recent_name_n_its_prefix_date_in_strlist
 from models.budgets.pb.join_via_pandas_excelfiles_as_sheets_in_one import folderpath
 import fs.datefs.refmonths_mod as rmd
 repatt_year_ending_str = r'.+(?P<year>\d{4})$'
