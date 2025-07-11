@@ -4,15 +4,16 @@ BCBMonthlyPrettiyPrintFinder
 import os
 import re
 import settings as sett
+from fs.datefs.convert_to_date_wo_intr_sep_posorder import find_most_recent_name_n_its_prefix_date_in_strlist
 from models.budgets.pb.join_via_pandas_excelfiles_as_sheets_in_one import folderpath
 import fs.datefs.refmonths_mod as rmd
 repatt_year_ending_str = r'.+(?P<year>\d{4})$'
 recmpl_repatt_year_ending_str = re.compile(repatt_year_ending_str)
 re_patt_exchangerate_datafilename =\
-  r"^(?P<yearmonth>\d{4}\-\d{2})\s{1}(?P<currs_num_den_w_uline>[A-Z]{3}_[A-Z]{3}) exchange rates\.txt$"
+  r"^(?P<year_dash_month>\d{4}\-\d{2})\s{1}(?P<currs_num_den_w_uline>[A-Z]{3}_[A-Z]{3}) exchange rates\.txt$"
 re_cmpld_exchangerate_datafilename = re.compile(re_patt_exchangerate_datafilename)
 tointerpol_exchangerate_datafilename = \
-  '{yearmonth} {currnum_currden} exchange rates.txt'
+  '{year_dash_month} {currnum_currden} exchange rates.txt'
 
 
 class BCBMonthlyPrettiyPrintFinder:
@@ -29,11 +30,18 @@ class BCBMonthlyPrettiyPrintFinder:
     self.years = None
     self.curr_fr = curr_fr
     self.curr_to = curr_to
+    self.has_run_find_monthly_files = None
+    self.refmonths = None
     self.treat_attrs()
 
   def treat_attrs(self):
     if self.datafolderpath is None or not os.path.isdir(folderpath):
       self.datafolderpath = sett.get_datafolder_abspath()
+
+  @property
+  def curr_fr_curr_to(self):
+    _curr_fr_curr_to = f"{self.curr_fr}_{self.curr_to}"
+    return _curr_fr_curr_to
 
   @property
   def bcb_datafolderpath(self):
@@ -43,13 +51,13 @@ class BCBMonthlyPrettiyPrintFinder:
 
   @property
   def year_min(self):
-    if self.years is None:
+    if self.years is None or len(self.years) == 0:
       return None
     return min(self.years)
 
   @property
   def year_max(self):
-    if self.years is None:
+    if self.years is None or len(self.years) == 0:
       return None
     return max(self.years)
 
@@ -64,24 +72,52 @@ class BCBMonthlyPrettiyPrintFinder:
 
   def find_monthly_files(self):
     """
-    r"^(?P<yearmonth>slashd{4}slash-slashd{2})
+    Finds all BCB exchange rates prettyprint files by listing directory entries
+
+    r"^(?P<year_dash_month>slashd{4}slash-slashd{2})
       slashs{1}(?P<currs_num_den_w_uline>[A-Z]{3}_[A-Z]{3}) exchange ratesslash.txt$"
     """
+    self.has_run_find_monthly_files = False
     for year in self.years:
       fopath = self.get_folderpath_for_year(year)
       entries = os.listdir(fopath)
       filenames = filter(re_cmpld_exchangerate_datafilename.match, entries)
       for fn in filenames:
-        year_dash_month = re_cmpld_exchangerate_datafilename.match().group('yearmonth')
+        year_dash_month = re_cmpld_exchangerate_datafilename.match(fn).group('year_dash_month')
         refmonthdate = rmd.make_refmonth_or_none(year_dash_month)
         self.refmonths.append(refmonthdate)
-      return
+    self.has_run_find_monthly_files = True
 
+  def recompose_monthly_filename_w_refmonthdate(self, pdate):
+    year = pdate.year
+    month = pdate.month
+    year_dash_month = f"{year}-{month}"
+    date_datafilename = tointerpol_exchangerate_datafilename.format(
+      year_dash_month=year_dash_month, currnum_currden=self.currnum_currden
+    )
+    print(date_datafilename)
+    return date_datafilename
 
+  def recompose_monthly_filename_w_refmonthpath(self, pdate):
+    fn = self.recompose_monthly_filename_w_refmonthdate(pdate)
+    fopath = self.get_folderpath_for_year(pdate.year)
+    return os.path.join(fopath, fn)
+
+  def recompose_monthly_files_by_refmonths(self):
+    if not self.has_run_find_monthly_files:
+      self.find_monthly_files()
+    for refmonthdate in self.refmonths:
+      self.recompose_monthly_filename_w_refmonthdate(refmonthdate)
 
   def find_year_folders(self):
     """
+    Finds year folders from BCB datafolderpath root level
 
+      These 'year' data folders are like:
+        (...)
+        <rootdatadir>/2023
+        <rootdatadir>/2024
+        (...)
     """
     fopath = self.bcb_datafolderpath
     entries = os.listdir(fopath)
@@ -112,7 +148,7 @@ class BCBMonthlyPrettiyPrintFinder:
 
 def adhoctest1():
   """
-  repatt_year_ending_str = r'(?<year>slashd{4})$'
+  repatt_year_ending_str = r(?<year>slashd{4})$
   recmpl_repatt_year_ending_str = re.compile(repatt_year_ending_str)
   """
   s = 'bla bla 2020'

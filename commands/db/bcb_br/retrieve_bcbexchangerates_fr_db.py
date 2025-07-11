@@ -247,7 +247,7 @@ class BCBExchangeRatesRetriever:
       return pricetuple
     return None, None
 
-  def get_date_n_tupleprices_dict_between_daterange(self, daterange: tuple[datetime.date, datetime.date]):
+  def get_date_n_tupleprices_dict_between_daterange(self, p_daterange: tuple = None):
     """
     From https://realpython.com/sort-python-dictionary/
       # Sort by key
@@ -260,6 +260,10 @@ class BCBExchangeRatesRetriever:
 
     pdict = {k: pdict[k] for k in pdict if inidate <= k <= fimdate else None}
     """
+    if p_daterange is None or len(p_daterange) == 0:
+      daterange = self.date_fr, self.date_to
+    else:
+      daterange = p_daterange
     inidate, fimdate = daterange
     inidate = dtfs.make_date_or_none(inidate)
     if inidate is None:
@@ -338,7 +342,8 @@ def process():
     date_to='2024-10-31'
   )
   retriever.process()
-  daterange = inidate, fimdate = '2023-12-04', '2023-12-07'
+  inidate, fimdate = '2023-12-04', '2023-12-07'
+  daterange = inidate, fimdate
   print(daterange)
   res = retriever.get_date_n_tupleprices_dict_between_daterange(daterange)
   for it in res:

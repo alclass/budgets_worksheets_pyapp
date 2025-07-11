@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """
-commands/fetch/bcb_br/buffer_bcb_apifetch_to_prettyprint.py
+commands/fetch/bcb_br/base_rw_bcb_indices_to_prettyprintfiles.py
   This script writes monthly prettyprint data files with
   exchange rate data from BCB
-
 
 """
 import argparse
@@ -11,8 +10,9 @@ import datetime
 import os.path
 import prettytable
 import re
+import settings as sett
 import fs.datefs.refmonths_mod as rmd
-import fs.datefs.convert_to_date_wo_intr_sep_posorder as dtfs
+# import fs.datefs.convert_to_date_wo_intr_sep_posorder as dtfs
 import fs.indices.bcb_br.bcb_exchrate_cls as ercls  # for class ercls.ExchangeRate
 import commands.db.bcb_br.retrieve_bcbexchangerates_fr_db as bcbretr  # bcbretr.BCBExchangeRatesRetriever
 re_patt_exchangerate_datafilename =\
@@ -46,7 +46,7 @@ def make_yearmonth_n_currs_exchrate_filename_w_refmonth_n_currpair(refmonthdate,
   return make_yearmonth_currnum_currden_exchrate_filename(yearmonthstr, currnum_currden)
 
 
-class PrettyPrintMonthlyExchangeRatesReaderWriter:
+class PrettyPrintMonthlyExchangeRatesRWBase:
   """
   This class retrieves and writes monthly exchange rates for a pair of currencies
 
@@ -66,19 +66,20 @@ class PrettyPrintMonthlyExchangeRatesReaderWriter:
   """
 
   txtdatafilename = "{yearmonth} {currs_num_den_w_uline} exchange rates.txt"
+  DEFAULT_DATA_FOLDERNAME = 'bcb_indices'
 
   def __init__(
       self,
       curr_3letter_pair: tuple[str, str],
       refmonthdate: datetime.date | str = None,
       dates_quotes_dict: dict[datetime.date: ercls.ExchangeRate] = None,
-      datafolder: os.path = None,
+      datafolderpath: os.path = None,
     ):
     self.is_refmonth_set = False
     self.lineseq = 0
     self.refmonthdate = refmonthdate
-    self.datafolder = datafolder
-    self.folderpath = None
+    self.datafolderpath = datafolderpath
+    self.prettyprint_dump = ''
     self.pp_seq_dt_buyp_sellp_str = prettytable.PrettyTable(
         ['seq', 'date', 'buyprice', 'sellprice']
       )
@@ -89,6 +90,9 @@ class PrettyPrintMonthlyExchangeRatesReaderWriter:
     self.treat_attrs()
 
   def treat_attrs(self):
+    if self.datafolderpath is None or not os.path.isdir(self.datafolderpath):
+      data_root_folderpath = sett.get_datafolder_abspath()
+      self.datafolderpath = os.path.join(data_root_folderpath, self.DEFAULT_DATA_FOLDERNAME)
     return self.treat_dates_quotes_dict()
 
   def treat_dates_quotes_dict(self):
@@ -131,7 +135,7 @@ class PrettyPrintMonthlyExchangeRatesReaderWriter:
   @property
   def yearfolderpath(self):
     yearfoldername = f"{self.year} exchange rates"
-    yearfolderpath = os.path.join(self.datafolder, yearfoldername)
+    yearfolderpath = os.path.join(self.datafolderpath, yearfoldername)
     os.makedirs(yearfolderpath, exist_ok=True)
     return yearfolderpath
 
@@ -145,6 +149,10 @@ class PrettyPrintMonthlyExchangeRatesReaderWriter:
 
   @property
   def currs_num_den_w_uline(self):
+    return f"{self.curr_num}_{self.curr_den}"
+
+  @property
+  def curr_num_slash_curr_den(self):
     return f"{self.curr_num}_{self.curr_den}"
 
   @property
@@ -183,77 +191,25 @@ class PrettyPrintMonthlyExchangeRatesReaderWriter:
     except KeyError:
       pass
 
-  def read_file_into_dict(self):
-    filepath = self.datafilepath
-    fd = open(filepath, 'r')
-    for line in fd.readlines():
-      try:
-        pp = line.split('|')
-        # seq = pp[0]
-        strdate = dtfs.make_date_or_none(pp[1])
-        buyprice = float(pp[2])
-        sellprice = float(pp[3])
-        exrate_obj = ercls.ExchangeRate(
-          pdate=strdate,
-          curr_num=self.curr_num,
-          curr_den=self.curr_den,
-          buyprice=buyprice,
-          sellprice=sellprice,
-        )
-        self.dates_quotes_dict.update({exrate_obj.exchratedate: exrate_obj})
-      except AttributeError:
-        pass
+  def input_w_dict_dates_n_tuple_buy_n_sell(self, pdict):
+    for pdate in pdict:
+      tuplebuysell = pdict[pdate]
+      buyprice, sellprice = tuplebuysell
+      exchrate = ercls.ExchangeRate(
+        pdate=pdate, curr_num=self.curr_num, curr_den=self.curr_den, buyprice=buyprice, sellprice=sellprice)
+      self.dates_quotes_dict.update({pdate: exchrate})
 
   @property
   def str_currencies_num_den(self):
     return f"{self.curr_num}/{self.curr_den}"
 
-  def form_prettyprint_line_w_fields(self, exchrate: ercls.ExchangeRate):
-    """
-      Saves a "series" pretty-print dump formed in function dump_n_save_json_response_per_each_series_inside_data() above
-
-    The pretty-print is like so:
-    +-------------+------+--------+---------+-----------+
-    |   seriesID  | year | period |  value  | footnotes |
-    +-------------+------+--------+---------+-----------+
-    | SUUR0000SA0 | 2020 |  M12   | 146.408 |           |
-    | SUUR0000SA0 | 2020 |  M11   | 146.242 |           |
-    (...)
-    self.output.write(pprint_dump.get_string())
-
-    """
-    linevalues_list = [self.lineseq, exchrate.exchratedate, exchrate.buyprice, exchrate.buyprice]
-    self.pp_seq_dt_buyp_sellp_str.add_row(linevalues_list)
-
-  def write_file_w_prettyprintdump(self, text):
-    """
-    TODO Recuperates file if it exists previously
-    """
-    fd = open(self.datafilepath, 'w')
-    scrmsg = f"Writing file [{self.datafilepath}]"
-    print(scrmsg)
-    fd.write(self.prettyprint_dump)
-    fd.close()
-
-  def finalize_writing_file(self):
-    """
-    Loops through all data putting line by line in the PrettyPrint object
-    """
-    filetext = ''
-    try:
-      for i, pdate in enumerate(self.dates_quotes_dict):
-        self.lineseq = i + 1
-        exrate_obj = self.dates_quotes_dict[pdate]
-        self.form_prettyprint_line_w_fields(exrate_obj)
-      return self.write_file_w_prettyprintdump()
-    except KeyError:
-      pass
-
   def process(self):
     self.finalize_writing_file()
 
   def __str__(self):
-    outstr = f"{self.__class__.__name__}"
+    outstr = f"""{self.__class__.__name__}
+    {self.curr_num_slash_curr_den}
+    """
     return outstr
 
 
@@ -285,7 +241,7 @@ def process():
   """
   """
   refmonthdate, curr_3letter_pair = get_args()
-  writer = PrettyPrintMonthlyExchangeRatesReaderWriter(
+  writer = PrettyPrintMonthlyExchangeRatesRWBase(
     curr_3letter_pair=curr_3letter_pair,
     refmonthdate=refmonthdate
   )
@@ -296,7 +252,9 @@ def process():
   )
   pdict = retriever.get_date_n_tupleprices_dict_between_daterange()
   writer.input_w_dict_dates_n_tuple_buy_n_sell(pdict)
+  print(writer)
 
 
 if __name__ == "__main__":
   adhoctest1()
+  process()
