@@ -1,28 +1,41 @@
 """
 fs/os/sufix_incrementor.py
-  contains OS-related functions
+  contains class SufixIncrementor which finds a filepath, starting from on a first name, that is available,
+    i.e., a file that does not exist in directory
 
-At the time of this writing, class SufixIncrementor contains functionality
-  to increment a numbered sufix in filename until a name is available, ie, until a non-existing path is formed.
+How Does It Do It?
+==================
+
+If a name is taken, class SufixIncrementor contains functionality
+  to increment a numbered sufix in filename until it is available,
+  i.e., until a non-existing path is formed.
 
 Example:
   if filename 'bls_cpi.json' is on folder, an incremented one (as 'bls_cpi-001.json')
   will be checked if available. If so, that one is returned, if not, with another increment,
-  'bls_cpi-002.json' will be checked. If so, that one is returned, if not, another increment will be tried.
+  'bls_cpi-002.json' will be checked. If so, that one is returned,
+  if not, another increment will be tried and so on until it reaches max_tries and then raises an exception.
 
-The example in a nutshell:
+The example mentioned above in a nutshell:
   step 1 => 'bls_cpi.json' exists on folder
   step 2 => 'bls_cpi-001.json' also exists on folder
   step 3 => 'bls_cpi-002.json' does not exist, so it's returned as an available name
 
-  However, there are only 1000 (or other 'hardwired' configured) available tries.
-    If all tries are attempted and no names available, an OSError will be raised.
-    TO-DO: a pre-executed routine, yet to be produced, may stop program run before
-      the exception mentioned above to tell the user about the unavailability mentioned.
+  However, there are only n max_tries ('hardwired' instead of 'configured' at this version)
+    available tries.  If all tries are attempted and no names available, an OSError will be raised.
+    TODO: a pre-executed routine, yet to be produced, may stop program run before
+      the exception mentioned above to tell the user about the unavailability mentioned
+      and perform a directory cleaning up.
 """
 from collections.abc import Iterable
 import os
 import settings as sett
+DEFAULT_FILENAME = 'datesfile.txt'
+
+
+def get_default_datafilepath():
+  fopath = sett.get_datafolder_abspath()
+  return os.path.join(fopath, DEFAULT_FILENAME)
 
 
 def extract_folderpath_from_filepath_or_none(filepath):
@@ -47,128 +60,148 @@ def print_filenames_from_filepaths(filepaths, folderpath=None):
 
 
 class SufixIncrementor:
+  """
+  This class implements a sufix integer incrementor so that a filename that already exists
+    in a directory is transformed to an "available", i.e., a filename not existing in directory
+  """
 
   MAX_TRIES = 999
   DEFAULT_ZFILL = 3
 
-  def __init__(self, filepath, zfill=None):
+  def __init__(self, p_filepath: os.path = None, zfill: int = None):
     """
-    Derivable unmutable attributes: foldername & dotext
-    Derivable mutable attributes: filename & name
+    Derivable immutable attributes: foldername & dot_ext
+    Derivable mutable attributes: name from filename, not its extension
     """
-    self.filepath = filepath
-    self.original_filepath = filepath
-    self.raise_if_basefolder_does_not_exist()
-    self.newfilepath = None
+    self._dot_ext = None  # should be init'd first and go immutable
+    self._folderpath = None
+    self.first_entered_filename = None
+    self.filename = None
+    self.treat_filepath_to_set_immutable_folderpath_n_dotext(p_filepath)
     self.ntries = 0
     self.nsufix = 0
     self.zfill = zfill or self.DEFAULT_ZFILL
-    self.is_filepath_available = False
+    self.bool_finder_has_run = False
+    self.treat_attrs()
 
-  def raise_if_basefolder_does_not_exist(self):
-    folderpath = extract_folderpath_from_filepath_or_none(self.filepath)
+  def treat_filepath_to_set_immutable_folderpath_n_dotext(self, p_filepath):
+    if p_filepath is None:
+      p_filepath = get_default_datafilepath()
+    folderpath, self.first_entered_filename = os.path.split(p_filepath)
     if folderpath is None or not os.path.isdir(folderpath):
-      error_msg = f'folderpath [{folderpath}] does not exist in SufixIncrementor.'
+      error_msg = f'Error: folderpath [{folderpath}] does not exist in class SufixIncrementor.'
       raise OSError(error_msg)
+    self.filename = self.first_entered_filename
+    self._folderpath = folderpath
+    self._dot_ext = os.path.splitext(self.filename)[1]
+
+  def treat_attrs(self):
+    pass
 
   @property
-  def folderpath(self):
-    return os.path.split(self.filepath)[0]
-
-  def set_filepath_via_filename(self, newfilename):
-    folderpath = self.folderpath
-    self.filepath = os.path.join(folderpath, newfilename)
+  def folderpath(self) -> os.path:
+    return self._folderpath
 
   @property
-  def filename(self):
-    return os.path.split(self.filepath)[-1]
+  def first_entered_filepath(self) -> os.path:
+    return os.path.join(self.folderpath, self.first_entered_filename)
 
-  def set_filepath_via_name(self, newname):
-    _, filename = os.path.split(self.filepath)
-    _, dotext = os.path.splitext(filename)
-    newfilename = newname + dotext
-    self.set_filepath_via_filename(newfilename)
+  @property
+  def filepath(self) -> os.path:
+    """
+    folderpath is immutable in the context of this class
+    filename is mutable
+
+    if self._folderpath is None or self.filename is None:
+      return None
+    """
+    return os.path.join(self._folderpath, self.filename)
 
   @property
   def name(self):
-    return os.path.splitext(self.filename)[0]
+    if self.filename is None:
+      return None
+    name, _ = os.path.splitext(self.filename)
+    return name
 
   @property
-  def dotext(self):
-    return os.path.splitext(self.filename)[-1]
+  def dot_ext(self):
+    """
+    if self._dot_ext is not None:
+      return self._dot_ext
+    _, self._dot_ext = os.path.splitext(self.filename)
+    """
+    return self._dot_ext
 
-  def does_incremented_sufix_file_exist(self):
-    if not os.path.isfile(self.filepath):
-      self.newfilepath = self.filepath
-      return False
-    return True
-
-  def case1_file_has_no_hyphen(self):
+  def change_name_case1_or_case3_when_file_has_no_numbered_sufix(self):
     self.nsufix = 1
-    newname = self.name + '-' + str(self.nsufix).zfill(self.zfill)
-    self.set_filepath_via_name(newname)
-    if self.does_incremented_sufix_file_exist():
-      return self.add_an_increment_sufix_to_file_w_filepath()
-    else:
-      return
+    str_sufix = str(self.nsufix).zfill(self.zfill)
+    newname = f"{self.name}-{str_sufix}"
+    self.filename = f"{newname}{self.dot_ext}"
 
-  def case2_file_has_a_numbered_sufix(self, pp):
-    newname = '-'.join(pp[:-1]) + '-' + str(self.nsufix).zfill(self.zfill)
-    self.set_filepath_via_name(newname)
-    if self.does_incremented_sufix_file_exist():
-      return self.add_an_increment_sufix_to_file_w_filepath()
-    else:
-      return
+  def change_name_case2_when_file_has_a_numbered_sufix(self, namepieces, i_sufix):
+    i_sufix += 1
+    self.nsufix = i_sufix
+    name_up_to_sufix = '-'.join(namepieces[:-1])
+    str_sufix = str(i_sufix).zfill(self.zfill)
+    newname = f"{name_up_to_sufix}-{str_sufix}"
+    self.filename = f"{newname}{self.dot_ext}"
 
-  def case3_file_needs_a_dashed_numbersufix(self):
-    self.nsufix = 1
-    sufix = '-' + str(self.nsufix).zfill(self.zfill)
-    newname = self.name + sufix
-    self.set_filepath_via_name(newname)
-    if self.does_incremented_sufix_file_exist():
-      return self.add_an_increment_sufix_to_file_w_filepath()
-    else:
-      return
-
-  def add_an_increment_sufix_to_file_w_filepath(self):
+  def raise_oserror_maxtries_is_reached(self):
     self.ntries += 1
     if self.ntries > self.MAX_TRIES:
-      error_msg = f'Too many tries ({self.ntries}) in attempting to find an availablie numbered sufix filename.'
+      error_msg = f'Error: Too many tries ({self.ntries}) in attempting to find an availablie numbered sufix filename.'
       error_msg += f'\t Last filename({self.filename}) tried.'
-      error_msg += f'\t Base folder is ({self.folderpath}).'
+      error_msg += f'\t Base folder is ({self.folderpath}). Please, move/emove/delete excess files and retry.'
       raise OSError(error_msg)
-    if self.name.find('-') < 0:
-      return self.case1_file_has_no_hyphen()
-    pp = self.name.split('-')
-    try:
-      isufix = int(pp[-1])
-      self.nsufix = isufix + 1
-      return self.case2_file_has_a_numbered_sufix(pp)
-    except ValueError:
-      # sufix is not a number, one a sufix pending '-' which leads to case 3
-      pass
-    return self.case3_file_needs_a_dashed_numbersufix()
 
-  def find_next_sufix_filepath_or_itself(self):
-    if not os.path.isfile(self.filepath):
-      # no need for processing, filepath is available not being present in folder
-      self.is_filepath_available = True
-      return self.filepath
-    self.is_filepath_available = False
-    self.add_an_increment_sufix_to_file_w_filepath()
-    if self.newfilepath is None:
-      error_msg = f'System could not find an available sufixed number filename after {self.ntries} tries in folder:'
-      error_msg += f'\t {self.folderpath}'
-      error_msg += f'\t Original filename {self.filename}'
-      raise OSError(error_msg)
-    return self.newfilepath
+  def increment_one_to_names_sufix_n_return(self):
+    self.raise_oserror_maxtries_is_reached()
+    if self.name.find('-') < 0:
+      return self.change_name_case1_or_case3_when_file_has_no_numbered_sufix()
+    namepieces = self.name.split('-')
+    try:
+      i_sufix = int(namepieces[-1])
+      return self.change_name_case2_when_file_has_a_numbered_sufix(namepieces, i_sufix)
+    except ValueError:
+      # as sufix not being a number, it leads to case 3
+      pass
+    return self.change_name_case1_or_case3_when_file_has_no_numbered_sufix()
+
+  def get_next_available_filepath_from_objsparams(self):
+    """
+    Returns the next available filepath starting from the filename and directory given this class
+    This method is the PUBLIC-to-the-client one in this class
+    """
+    if not self.bool_finder_has_run:
+      self.process()
+    return self.filepath
+
+  def get_next_available_filename_from_objsparams(self):
+    if not self.bool_finder_has_run:
+      self.process()
+    return self.filename
+
+  def find_next_available_filepath_from_objsparams(self, rerun=False):
+    """
+    Finds (and does not return - @see method get_next_available_filepath_from_objsparams() for that)
+    the next available filepath starting from the filename and directory given this class
+    This method is the PUBLIC-to-the-client one in this class
+    """
+    if self.bool_finder_has_run and not rerun:
+      return
+    while os.path.isfile(self.filepath):
+      # to avoid an infinite loop, max_tries will guard from it and raise an exception if max_tries is reached
+      self.increment_one_to_names_sufix_n_return()
+    self.bool_finder_has_run = True
 
   def process(self):
-    return self.find_next_sufix_filepath_or_itself()
+    self.find_next_available_filepath_from_objsparams()
+    print(self)
 
   def __str__(self):
-    outstr = f"""SufixIncrementor:
-    original_filepath = {self.original_filepath}
+    outstr = f"""{self.__class__.__name__}:
+    first_entered_filepath = {self.first_entered_filepath}
     filepath = {self.filepath}
     filename = {self.filename}
     nsufix = {self.nsufix}
@@ -179,19 +212,13 @@ class SufixIncrementor:
     return outstr
 
 
-def get_filepath_if_available_or_increment_numbersufix(filepath):
-  incrementor = SufixIncrementor(filepath)
-  filepath = incrementor.find_next_sufix_filepath_or_itself()
-  print(incrementor)
-  return filepath
-
-
 def adhoctest():
-  filename = 'SUUR0000SA0-001.dat'
-  filepath = sett.get_datafile_abspath_in_app(filename)
-  print('filepath', filepath)
-  newfilepath = get_filepath_if_available_or_increment_numbersufix(filepath)
-  print('newfilepath', newfilepath)
+  si = SufixIncrementor()
+  si.process()
+  fipath = si.get_next_available_filepath_from_objsparams()
+  print('fipath', fipath)
+  finame = si.get_next_available_filename_from_objsparams()
+  print('fipath', finame)
 
 
 def process():

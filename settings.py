@@ -22,14 +22,9 @@ CURR_BRL = 'BRL'
 DATESDATA_FILENAME_DEFAULT = 'datesfile.dat'
 DATA_FOLDERNAME = 'dados'  # may be overridden by its counterpart in local_settings.py
 SQLITE_FILENAME_DEFAULT = 'exchange_n_indices.sqlite'
-# NONDEFAULT_DATA_FOLDERPATH = None  # may be changed in local_settings.py; if None, default will be used
-# CEPABERTO_API_TOKEN = None
-# try:
-# except (ImportError, NameError, TypeError):
-#   pass
 
 
-def get_sqlite_connection(sqlitefilename=None):
+def get_sqlite_connection(sqlitefilename: str | None = None):
   if sqlitefilename is None:
     sqlitefilename = SQLITE_FILENAME_DEFAULT
   filepath = get_datafile_abspath_in_app(sqlitefilename)
@@ -74,7 +69,7 @@ def get_sqlite_appsdata_filepath():
 
 def get_datafile_abspath_in_app(data_filename=None):
   if data_filename is None:
-    return None
+    return SQLITE_FILENAME_DEFAULT
   return os.path.join(get_apps_data_abspath(), data_filename)
 
 
