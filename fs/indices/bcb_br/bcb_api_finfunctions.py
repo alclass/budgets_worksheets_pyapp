@@ -146,8 +146,10 @@ def call_api_bcb_cotacao_dolar_on_date(pdate, connection_error_raised=0):
     ie "mm/dd/yyyy" date format (got None).  This convertion is necessary to call the
       BCB REST API for fetching BRL/USD exchange rate date."""
     raise ValueError(error_msg)
+  scrmsg = "-"*40
+  print(scrmsg)
   url = url_base + url_quer_interpol % {'mmddyyyy': mmddyyyy}
-  # print('calling', url)
+  print(scrmsg)
   try:
     res = requests.get(url)
   except requests.exceptions.ConnectionError:
@@ -170,6 +172,10 @@ def call_api_bcb_cotacao_dolar_on_date(pdate, connection_error_raised=0):
       exchanger=None
     )
     return res_bcb_api
+  scrmsg = "API call returned"
+  print(scrmsg)
+  scrmsg = "-"*40
+  print(scrmsg)
   resdict = json.loads(res.text)
   try:
     valuedict = resdict['value'][0]

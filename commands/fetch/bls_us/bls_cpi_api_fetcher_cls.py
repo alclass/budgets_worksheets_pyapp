@@ -5,6 +5,9 @@ commands/fetch/bls_cpi_api_fetcher_cls.py
     for the known series available
     i.e., ['CUUR0000SA0', 'SUUR0000SA0']
 
+BLS CPI CUUR0000SA0 webpage:
+  https://data.bls.gov/timeseries/CUUR0000SA0
+
 This script uses version 1 of the public API:
 https://www.bls.gov/developers/api_signature.htm#years
 

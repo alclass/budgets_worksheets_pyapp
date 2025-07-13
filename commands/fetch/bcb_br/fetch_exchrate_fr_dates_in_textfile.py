@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 commands/fetch/bcb_br/fetch_exchangerate_with_datefile.py
+
 jetbrains://pycharm/navigate/reference?project=local_settings.py&path=commands%2Ffetch%2Fbcb%2Ffetch_exchangerate_with_datefile.py
 
 """
@@ -13,7 +14,7 @@ REGISTERED_CURRENCIES_3LETTER = [BRL_3LETTER_CURR, USD_3LETTER_CURR]
 DEFAULT_DATES_FILENAME = 'dates.txt'
 
 
-class BCBExchangeRateFetcherFromDatesFile:
+class BCBExchangeRatesFromDatesFileFetcher:
   """
   This class organizes fetching Exchange Rates on dates stored in a text file
   """
@@ -70,7 +71,7 @@ class BCBExchangeRateFetcherFromDatesFile:
 
 
 def process():
-  erdf = BCBExchangeRateFetcherFromDatesFile()
+  erdf = BCBExchangeRatesFromDatesFileFetcher()
   erdf.process()
 
 

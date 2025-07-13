@@ -222,7 +222,8 @@ def form_new_datesfilepath_w_folderpath_n_filename(p_filename=None, p_folderpath
       Please, remove it or, programatically, set parameter followsuffix."""
       raise OSError(error_msg)
     else:
-      filepath = sfx_incr.get_filepath_if_available_or_increment_numbersufix(filepath)
+      fn_incrementor = sfx_incr.SufixIncrementor(filepath)
+      filepath = fn_incrementor.get_next_available_filepath_from_objsparams()
   return filepath
 
 

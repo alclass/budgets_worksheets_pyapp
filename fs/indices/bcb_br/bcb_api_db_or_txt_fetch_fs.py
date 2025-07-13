@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-fs/economicfs/bcb_fetchfunctions.py
+fs/indices/bcb_br/bcb_fetchfunctions.py
 
 import fs.datefs.introspect_dates as intr  # .convert_strdate_to_date_or_none_w_sep_n_posorder
 """

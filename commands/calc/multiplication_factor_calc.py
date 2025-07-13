@@ -68,7 +68,7 @@ import pandas as pd
 from dateutil.relativedelta import relativedelta
 import fs.datefs.convert_to_date_wo_intr_sep_posorder as cnv
 import fs.indices.bcb_br.bcb_cotacao_fetcher_from_db_or_api as ftchr  # ftchr.BCBCotacaoFetcher
-import commands.fetch.bls_us.read_cpis_from_db as cpi  # cpi_us.get_cpi_baselineindex_for_refmonth_in_db
+import commands.fetch.bls_us.read_cpis_from_db_fs as cpi  # cpi_us.get_cpi_baselineindex_for_refmonth_in_db
 DATAFRAME_COLUMNS = ['dt_i', 'cpi_i', 'exr_i', 'dt_f', 'cpi_f', 'exr_f', 'mult', 'mul1']
 DECIMAL_PLACES_FOR_EQ = 4
 
@@ -381,8 +381,8 @@ class MonetCorrCalculator:
 def adhoctest():
   """
   """
-  dateini = '2023-01-01'
-  datefim = '2023-10-11'
+  dateini = '2025-01-01'
+  datefim = '2025-07-11'
   calc = MonetCorrCalculator(dateini, datefim)
   print(calc)
   print(calc.df.to_string())

@@ -23,14 +23,18 @@ The example mentioned above in a nutshell:
 
   However, there are only n max_tries ('hardwired' instead of 'configured' at this version)
     available tries.  If all tries are attempted and no names available, an OSError will be raised.
-    TODO: a pre-executed routine, yet to be produced, may stop program run before
-      the exception mentioned above to tell the user about the unavailability mentioned
-      and perform a directory cleaning up.
+    TODO: a pre-executed routine might stop program run before
+      the exception above mentioned so to tell the user about the name unavailability
+      and ask him or her to perform a directory cleaning up.
 """
+import re
 from collections.abc import Iterable
 import os
 import settings as sett
 DEFAULT_FILENAME = 'datesfile.txt'
+# in the regex belows file-extension is ruled by \.[A-Za-z0-9]{1-10}$ i.e., letters and numbers max 10-char
+repatt_sufix_ending_name_in_fn = r"^.+?[-](?P<nsufix>\d+)\.[A-Za-z0-9]{1,10}$"
+recmpl_sufix_ending_name_in_fn = re.compile(repatt_sufix_ending_name_in_fn)
 
 
 def get_default_datafilepath():
@@ -168,6 +172,11 @@ class SufixIncrementor:
       pass
     return self.change_name_case1_or_case3_when_file_has_no_numbered_sufix()
 
+  def get_the_last_index_from_objsparams(self):
+    if not self.bool_finder_has_run:
+      self.process()
+    pass
+
   def get_next_available_filepath_from_objsparams(self):
     """
     Returns the next available filepath starting from the filename and directory given this class
@@ -212,6 +221,23 @@ class SufixIncrementor:
     return outstr
 
 
+def adhoctest2():
+  names = []
+  fn = 'test-1.txt'
+  names.append(fn)
+  fn = 'test-080.dat'
+  names.append(fn)
+  fn = 'test-a1c.dasdsfasd'
+  names.append(fn)
+  fn = 'test-1010.db777'
+  names.append(fn)
+  for fn in names:
+    match = recmpl_sufix_ending_name_in_fn.match(fn)
+    nsufix = None if match is None else match.group('nsufix')
+    scrmsg = f"fn={fn} -> nsufix={nsufix}"
+    print(scrmsg)
+
+
 def adhoctest():
   si = SufixIncrementor()
   si.process()
@@ -229,4 +255,5 @@ if __name__ == '__main__':
   """
   process()
   """
-  adhoctest()
+  # adhoctest()
+  adhoctest2()
