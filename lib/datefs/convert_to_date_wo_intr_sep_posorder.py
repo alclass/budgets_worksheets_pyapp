@@ -154,6 +154,16 @@ def make_date_from_str_or_none(strdate):
   return convert_str_or_attrsobj_to_date_or_none(strdate)
 
 
+def trans_convertabledates_to_datelist(datelist: list[datetime.date] | None) -> list[datetime.date]:
+  odates = []
+  if datelist is None:
+    return []
+  for pdate in datelist:
+    odate = make_date_or_none(pdate)
+    odates.append(odate)
+  return odates
+
+
 def swap_dates_if_first_is_greater_than_second(date1, date2):
   date1 = make_date_or_none(date1)
   if date1 is None:

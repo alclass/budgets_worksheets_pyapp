@@ -64,7 +64,7 @@ import settings as sett
 import time
 import lib.datefs.convert_to_date_wo_intr_sep_posorder as cnv
 import lib.datefs.introspect_dates as intr
-from art.bcb_br.fetch.fetch_exchrate_fr_dates_in_textfile import REGISTERED_CURRENCIES_3LETTER
+from art.bcb_br.fetch.prettyprint.fetch_exchrate_fr_dates_in_textfile import REGISTERED_CURRENCIES_3LETTER
 import lib.indices.bcb_br.bcbparams as bcbparams
 # import fs.datefs.convert_to_datetime_wo_intr_sep_posorder as cvdt
 url_base = bcbparams.url_base
