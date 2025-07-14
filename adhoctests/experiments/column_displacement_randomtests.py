@@ -49,7 +49,7 @@ Solution: we don't have it yet, but if we can map,
         ie, it does map one by one and shift zeroes both ways (forward and backward).
 """
 import random
-import fs.numberfs.tableaufunctions as tblfs
+import lib.numberfs.tableaufunctions as tblfs
 
 rnumbers = []
 rletters = []
