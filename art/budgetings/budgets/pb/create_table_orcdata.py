@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS cpi_indices (
 """
 import datetime
 import sqlite3
-import art.budgets.pb.orc_datum_model as orcmdl
+import art.budgetings.budgets.pb.orc_datum_model as orcmdl
 import settings as sett
 tablename = 'orc_data'
 

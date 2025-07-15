@@ -27,7 +27,7 @@ import os.path
 import sqlite3
 import settings as sett
 """
-import art.budgets.pb.db_n_file_settings as dbs  # for dbs.get_orcdados_folderpath
+import art.budgetings.budgets.pb.db_n_file_settings as dbs  # for dbs.get_orcdados_folderpath
 
 
 def ppubase_sqlcreatetable_str(tablename=None):

@@ -5,8 +5,8 @@
 import copy
 import os
 """
-import art.budgets.pb.db_n_file_settings as dbs  # dbf.get_xlsx_ppubase_filepath
-import art.budgets.pb.insert_ppubase_from_xlsx_to_db as ins  # ins.Insertor
+import art.budgetings.budgets.pb.db_n_file_settings as dbs  # dbf.get_xlsx_ppubase_filepath
+import art.budgetings.budgets.pb.insert_ppubase_from_xlsx_to_db as ins  # ins.Insertor
 PPUBASE_COLUMNNAMES = dbs.PPUBASE_COLUMNNAMES
 
 

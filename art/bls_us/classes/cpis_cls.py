@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """
-models/finindices/cpis/cpis_cls.py
-  contains CPI-related functions and/or classes
+art/bls_us/classes/cpis_cls.py
+  Contains CPI-related functions, constants and/or classes
+
 """
 import datetime
 import lib.datefs.introspect_dates as intr
-SERIESID_LIST = ['CUUR0000SA0', 'SUUR0000SA0']
-DEFAULT_SERIESID = 'CUUR0000SA0'
+SERIESID_CUUR0000SA0 = 'CUUR0000SA0'
+SERIESID_SUUR0000SA0 = 'SUUR0000SA0'
+SERIESID_LIST = [SERIESID_CUUR0000SA0, SERIESID_SUUR0000SA0]
+DEFAULT_SERIESID = SERIESID_CUUR0000SA0
 
 
 def transform_mmonth_to_refmonthdate(mmonth, year):
@@ -20,9 +23,9 @@ def transform_mmonth_to_refmonthdate(mmonth, year):
 
 def find_seriesid_by_serieschar(serieschar):
   if serieschar == 'C':
-    return 'CUUR0000SA0'
+    return SERIESID_CUUR0000SA0
   elif serieschar == 'S':
-    return 'SUUR0000SA0'
+    return SERIESID_SUUR0000SA0
   else:
     return DEFAULT_SERIESID
 

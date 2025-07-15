@@ -4,6 +4,8 @@ venv/
 .idea/
 local_settings.py
 **/*.dat
+**/*.db
 **/*.htm
 **/*.html
 **/*.pyc
+**/*.sqlite

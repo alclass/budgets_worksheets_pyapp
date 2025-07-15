@@ -6,7 +6,7 @@ import copy
 import fs.datefs.introspect_dates as idt  # idt.for make_date_or_none()
 """
 import datetime
-import art.budgets.pb.price_data_as_dict as pdd  # pdd.gather_data
+import art.budgetings.budgets.pb.price_data_as_dict as pdd  # pdd.gather_data
 import commands.bcb_br.report.corr_monet_n_indices_calculator_from_dates as cmc  # cmc.CorrMonetWithinDatesCalculator
 
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-commands/db/bls_us/insert_cpis_from_textfiles.py
-  inserts CPI data from textfiles to a database.
+art/bls_us/store/insert_cpis_from_textfiles.py
+  Inserts CPI data from textfiles to a database.
 
 At the time of this writing, database is Sqlite.
 
@@ -35,7 +35,7 @@ import sqlite3
 import settings as sett
 import lib.datefs.refmonths_mod as rmd
 from art.bls_us.bls_clss.cpis_cls import SERIESID_LIST
-from art.bls_us.bls_clss.cpis_cls import DEFAULT_SERIESID
+from art.bls_us..bls_clss.cpis_cls import DEFAULT_SERIESID
 import commands.fetch.bls_us.read_cpis_from_prettyprintdb as ppdb
 BLS_CPI_TABLENAME = 'bls_us_indices'
 

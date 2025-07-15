@@ -5,7 +5,7 @@ models/budgets/pb/recreate_xls_from_df_from_db.py
 """
 import sqlite3
 import pandas as pd
-import art.budgets.pb.db_n_file_settings as dbs  # for dbs.get_orcdados_folderpath
+import art.budgetings.budgets.pb.db_n_file_settings as dbs  # for dbs.get_orcdados_folderpath
 
 
 class PPUBaseXlsWriter:

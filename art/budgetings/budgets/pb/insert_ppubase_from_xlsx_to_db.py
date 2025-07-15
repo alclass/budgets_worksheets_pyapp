@@ -7,8 +7,8 @@ import pandas as pd
 """
 import sqlite3
 import time
-import art.budgets.pb.create_tables_ppubase_n_pricebank as ct  # ct.get_orcdados_folderpath
-import art.budgets.pb.db_n_file_settings as dbs  # for dbs.get_orcdados_folderpath
+import art.budgetings.budgets.pb.create_tables_ppubase_n_pricebank as ct  # ct.get_orcdados_folderpath
+import art.budgetings.budgets.pb.db_n_file_settings as dbs  # for dbs.get_orcdados_folderpath
 ppubase_filename = dbs.PPUBASE_FILENAME
 PPUBASE_TABLENAME = dbs.PPUBASE_TABLENAME
 PRICEBANK_TABLENAME = dbs.PRICEBANK_TABLENAME

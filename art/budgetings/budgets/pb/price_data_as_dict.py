@@ -5,10 +5,10 @@ models/budgets/pb/price_data_as_dict.py
 """
 import copy
 import os
-from art.budgets.pb.prices_processor import PriceItem
-from art.budgets.pb.prices_processor import Prices
-from art.budgets.pb.prices_processor import show_qtd_of_prices_per_nm
-import art.budgets.pb.tests.check_n_of_nms_in_filenames as chknm  # chknm.get_unique_nms_from_filenames
+from art.budgetings.budgets.pb.prices_processor import PriceItem
+from art.budgetings.budgets.pb.prices_processor import Prices
+from art.budgetings.budgets.pb.prices_processor import show_qtd_of_prices_per_nm
+import art.budgetings.budgets.pb.tests.check_n_of_nms_in_filenames as chknm  # chknm.get_unique_nms_from_filenames
 
 
 def gather_data():

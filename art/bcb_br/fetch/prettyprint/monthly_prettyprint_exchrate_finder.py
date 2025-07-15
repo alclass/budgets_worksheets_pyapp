@@ -7,7 +7,7 @@ import os
 import re
 import settings as sett
 # from fs.datefs.convert_to_date_wo_intr_sep_posorder import find_most_recent_name_n_its_prefix_date_in_strlist
-from art.budgets.pb import folderpath
+from art.budgetings.budgets.pb import folderpath
 import lib.datefs.refmonths_mod as rmd
 repatt_year_ending_str = r'.+(?P<year>\d{4})$'
 recmpl_repatt_year_ending_str = re.compile(repatt_year_ending_str)

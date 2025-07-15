@@ -25,7 +25,7 @@ import json
 import os.path
 import time
 import settings as cfg
-import commands.fetch.bls_us.cpi_rest_api_fetcher_fs as ftchfs  # .fetch_json_response_w_restapi_reqdictdata
+import art.bls_us.fetch.remote.cpi_rest_api_fetcher_fs as ftchfs  # .fetch_json_response_w_restapi_reqdictdata
 
 
 class BLSAPISeriesDataFetcher:

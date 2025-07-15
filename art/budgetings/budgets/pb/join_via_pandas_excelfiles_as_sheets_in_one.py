@@ -8,7 +8,7 @@ import os.path
 
 import xlsxwriter
 import pandas as pd
-import art.budgets.pb.db_n_file_settings as dbs  # dbs.get_orcdados_batch_output_filepath_w_filename
+import art.budgetings.budgets.pb.db_n_file_settings as dbs  # dbs.get_orcdados_batch_output_filepath_w_filename
 folderpath = "/home/dados/Sw3/PrdPrjSw/BudgetsWorksheets_PrdPrjSw/dados/orçs_dados/batch_output"
 
 
