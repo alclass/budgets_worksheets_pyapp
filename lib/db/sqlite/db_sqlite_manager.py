@@ -1,7 +1,10 @@
 """
 lib/db/sqlite/db_sqlite_manager.py
+  Manages a Sqlite connection with opening a connection, cursor execution et al.
 
-Features
+This module is a slighly adjusted/changed version from DeepSeek on 2025-07-14
+
+Features:
   Connection Management:
     Automatic connection handling
     Context manager support (with statement)
@@ -28,13 +31,15 @@ Features
     Full type annotations for better IDE support
 """
 import sqlite3
-from typing import Optional, List, Dict, Any, Union, Tuple
+from typing import Optional, List, Union  # , Dict, Any, Tuple
 from pathlib import Path
 import logging
 
 
-class SQLiteDB:
+class SqliteHandler:
   """
+  lib.db.sqlite.db_sqlite_manager.SqliteHandler
+
   A wrapper class for SQLite3 database operations.
 
   Features:
@@ -59,8 +64,13 @@ class SQLiteDB:
           print(users)
   """
 
-  def __init__(self, db_path: Union[str, Path], timeout: float = 5.0, detect_types: int = 0,
-               isolation_level: Optional[str] = None):
+  def __init__(
+      self,
+      db_path: Union[str, Path],
+      timeout: float = 5.0,
+      detect_types: int = 0,
+      isolation_level: Optional[str] = None
+    ):
     """
     Initialize the database wrapper.
 
@@ -76,12 +86,11 @@ class SQLiteDB:
     self.isolation_level = isolation_level
     self._connection: Optional[sqlite3.Connection] = None
     self._in_transaction = False
-
     # Configure logging
     self.logger = logging.getLogger(__name__)
     self.logger.addHandler(logging.NullHandler())
 
-  def __enter__(self) -> 'SQLiteDB':
+  def __enter__(self) -> 'SqliteHandler':
     """Enter the context manager, opening a connection."""
     self.connect()
     return self
@@ -123,7 +132,11 @@ class SQLiteDB:
       finally:
         self._connection = None
 
-  def execute(self, query: str, params: Union[tuple, dict, None] = None) -> sqlite3.Cursor:
+  def execute(
+      self,
+      query: str,
+      params: Union[tuple, dict, None] = None
+    ) -> sqlite3.Cursor:
     """
     Execute a SQL query.
 
@@ -148,7 +161,11 @@ class SQLiteDB:
       self.logger.error(f'Error executing query "{query}": {e}')
       raise
 
-  def executemany(self, query: str, params_list: List[Union[tuple, dict]]) -> sqlite3.Cursor:
+  def executemany(
+      self,
+      query: str,
+      params_list: List[Union[tuple, dict]]
+    ) -> sqlite3.Cursor:
     """
     Execute a SQL query multiple times with different parameters.
 
@@ -191,7 +208,11 @@ class SQLiteDB:
       self.logger.error(f'Error executing script: {e}')
       raise
 
-  def fetch_one(self, query: str, params: Union[tuple, dict, None] = None) -> Optional[tuple]:
+  def fetch_one(
+      self,
+      query: str,
+      params: Union[tuple, dict, None] = None
+    ) -> Optional[tuple]:
     """
     Execute a query and return a single row.
 
@@ -205,7 +226,11 @@ class SQLiteDB:
     cursor = self.execute(query, params)
     return cursor.fetchone()
 
-  def fetch_all(self, query: str, params: Union[tuple, dict, None] = None) -> List[tuple]:
+  def fetch_all(
+      self,
+      query: str,
+      params: Union[tuple, dict, None] = None
+    ) -> List[tuple]:
     """
     Execute a query and return all rows.
 
@@ -219,7 +244,10 @@ class SQLiteDB:
     cursor = self.execute(query, params)
     return cursor.fetchall()
 
-  def fetch_as_dict(self, query: str, params: Union[tuple, dict, None] = None) -> List[dict]:
+  def fetch_as_dict(
+      self, query: str,
+      params: Union[tuple, dict, None] = None
+    ) -> List[dict]:
     """
     Execute a query and return all rows as dictionaries.
 
@@ -232,7 +260,6 @@ class SQLiteDB:
     """
     self._ensure_connection()
     self._connection.row_factory = sqlite3.Row
-
     try:
       cursor = self._connection.cursor()
       cursor.execute(query, params)

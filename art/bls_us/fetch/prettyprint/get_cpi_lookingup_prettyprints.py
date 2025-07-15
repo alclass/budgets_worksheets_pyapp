@@ -11,9 +11,11 @@ The script is useful when either the API is not available or the sqlite-db file 
 import argparse
 import datetime
 import lib.datefs.refmonths_mod as rmfs
-import commands.fetch.bls_us.read_cpis_from_prettyprintdb as prettyfreader
-from commands.fetch.bls_us.read_cpis_from_db import DEFAULT_SERIESID  # CUUR0000SA0
-from commands.fetch.bls_us.read_cpis_from_db import KNOWN_SERIESID  # CUUR0000SA0, SUUR0000SA0, others?
+import art.bls_us.fetch.prettyprint.read_cpis_from_prettyprintdb as prettyfreader
+import lib.db.sqlite.db_sqlite_manager as sqlim  # sqlim.SqliteHandler
+import art.bls_us.classes.cpis_clsmod as cpimod
+# from commands.fetch.bls_us.read_cpis_from_db import KNOWN_SERIESID  # CUUR0000SA0, SUUR0000SA0, others?
+DEFAULT_SERIESID = cpimod.SERIESID_CUUR0000SA0
 # Parse command-line arguments
 parser = argparse.ArgumentParser(description="Download BLS CPI indices.")
 parser.add_argument("--seriesid", type=str, default=DEFAULT_SERIESID,
@@ -38,7 +40,7 @@ class FromPrettyPrintCPIYearlyGetter:
     self.treat_attrs()
 
   def treat_attrs(self):
-    if self.seriesid is None or self.seriesid not in KNOWN_SERIESID:
+    if self.seriesid is None or self.seriesid not in cpimod.REGISTERED_SERIESIDS:
       self.seriesid = DEFAULT_SERIESID
     if self.year is None:
       self.year = self.curr_year - 1

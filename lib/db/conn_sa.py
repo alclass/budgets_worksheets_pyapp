@@ -50,7 +50,7 @@ def get_sa_session():
 
 
 def adhoc_test():
-  print('adhoc_test')
+  print('adhoctest3')
   session = get_sa_session_handler()
   print('Session', session)
 

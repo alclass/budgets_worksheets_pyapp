@@ -19,6 +19,7 @@ from dateutil.relativedelta import relativedelta
 import settings as sett
 import sqlite3
 import lib.datefs.refmonths_mod as rfm
+import lib.db.sqlite.db_sqlite_manager as sqlim  # sqlim.SqliteHandler
 import lib.db.db_settings as dbs
 cur_seriesid = 'CUUR0000SA0'
 sur_seriesid = 'SUUR0000SA0'
@@ -27,6 +28,31 @@ KNOWN_SERIESID = ['CUUR0000SA0', 'SUUR0000SA0']
 available_cpi_seriesid_list = [cur_seriesid, sur_seriesid]
 NTCpiMonth = collections.namedtuple('NTCpiMonth', field_names=['cpi_us', 'refmonthdate'])
 sqlite3.register_adapter(dict, lambda d: json.dumps(d).encode())
+
+
+class CpiDbReader:
+
+  tablename = 'bls_us_indices'
+
+  def __init__(self, date_fr, date_to):
+    pass
+
+
+  @property
+  def str_n_tuplevalues_select_bw_refmonths(self):
+    sql = f"""SELECT * FROM {self.tablename}
+    WHERE 
+     refmonthdate >= ? and  
+     refmonthdate <= ? ;  
+    """
+    tuplevalues = (self.refmonth_fr, self.refmonth_to)
+    sql_n_tuplevalues = sql, tuplevalues
+    return sql_n_tuplevalues
+
+  def read(self):
+    handler = sqlim.SqliteHandler()
+    sql, tuplevalues = self.str_n_tuplevalues_select_bw_refmonths()
+    handler.execute(sql, tuplevalues)
 
 
 def adapt_date_iso(val: datetime.date):

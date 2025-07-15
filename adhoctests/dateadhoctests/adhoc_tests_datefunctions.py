@@ -98,7 +98,7 @@ def adhoc_test5():
 
 
 def process():
-  fname_to_interpol = 'adhoc_test%d()'
+  fname_to_interpol = 'adhoctest3%d()'
   for i in range(1, 6):
     fname = fname_to_interpol %i
     print('-'*40)

@@ -153,7 +153,7 @@ def adhoc_test6():
   print('1 backward', cell_letters,'| mid =', mid_letters, '| next_cellref =>', next_cell_letters)
 
 def process():
-  functionname_interpol = 'adhoc_test%d()'
+  functionname_interpol = 'adhoctest3%d()'
   for i in range(7):
     functionname = functionname_interpol %i
     print('-'*40)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-art/bls_us/classes/cpis_cls.py
+art/bls_us/classes/cpis_clsmod.py
   Contains CPI-related functions, constants and/or classes
 
 """
@@ -8,7 +8,7 @@ import datetime
 import lib.datefs.introspect_dates as intr
 SERIESID_CUUR0000SA0 = 'CUUR0000SA0'
 SERIESID_SUUR0000SA0 = 'SUUR0000SA0'
-SERIESID_LIST = [SERIESID_CUUR0000SA0, SERIESID_SUUR0000SA0]
+REGISTERED_SERIESIDS = [SERIESID_CUUR0000SA0, SERIESID_SUUR0000SA0]
 DEFAULT_SERIESID = SERIESID_CUUR0000SA0
 
 
@@ -69,9 +69,9 @@ class CPIDatum:
             raise ValueError(errmsg)
           self.refmonthdate = refmonth
     # 3 refmonthdate
-    if self.seriesid is None or self.seriesid not in SERIESID_LIST:
+    if self.seriesid is None or self.seriesid not in REGISTERED_SERIESIDS:
       errmsg = (f"series {self.seriesid} was not passed to class CPIDatum"
-                f" belonging to list {SERIESID_LIST}. Please, correct data and retry.")
+                f" belonging to list {REGISTERED_SERIESIDS}. Please, correct data and retry.")
       raise ValueError(errmsg)
     # 4 acc_index
     try:
