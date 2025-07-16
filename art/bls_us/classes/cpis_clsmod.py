@@ -6,19 +6,11 @@ art/bls_us/classes/cpis_clsmod.py
 """
 import datetime
 import lib.datefs.introspect_dates as intr
+import lib.datefs.refmonths_mod as rmd
 SERIESID_CUUR0000SA0 = 'CUUR0000SA0'
 SERIESID_SUUR0000SA0 = 'SUUR0000SA0'
 REGISTERED_SERIESIDS = [SERIESID_CUUR0000SA0, SERIESID_SUUR0000SA0]
 DEFAULT_SERIESID = SERIESID_CUUR0000SA0
-
-
-def transform_mmonth_to_refmonthdate(mmonth, year):
-  try:
-    month_n = int(mmonth.lstrip('M').strip())
-    return datetime.date(year=year, month=month_n, day=1)
-  except ValueError:
-    pass
-  return None
 
 
 def find_seriesid_by_serieschar(serieschar):
@@ -63,7 +55,7 @@ class CPIDatum:
       if p_refmonthdate is None:
         # try a mmonth
         if self.refmonthdate.startswith('M'):
-          refmonth = transform_mmonth_to_refmonthdate(self.refmonthdate, self.year)
+          refmonth = rmd.transform_mmonth_to_refmonthdate(self.refmonthdate, self.year)
           if refmonth is None:
             errmsg = f"refmonthdate (None) was not passed to class CPIDatum. Please, correct data and retry."
             raise ValueError(errmsg)
@@ -104,8 +96,13 @@ class CPIDatum:
     seriesid = pdict['seriesid']
     year = pdict['year']
     mmonth = pdict['mmonth']
-    acc_index = pdict['mmonth']
+    refmonthdate = rmd.transform_mmonth_to_refmonthdate(mmonth, year)
+    acc_index = pdict['acc_index']
     datum = cls(
+      seriesid=seriesid,
+      year=year,
+      refmonthdate=refmonthdate,
+      acc_index=acc_index
     )
     for ifieldname in pdict:
       fieldname = ifieldname
@@ -118,7 +115,7 @@ class CPIDatum:
 
 
 class CPIData:
-  def __init__(self, cpis=None):
+  def __init__(self, cpis: list[CPIDatum] = None):
     self.cpis = cpis or []
 
   def append(self, cpidatum):
@@ -128,11 +125,11 @@ class CPIData:
     outstr = 'CPIData\n'
     for i, cpi in enumerate(self.cpis):
       seq = i + 1
-      outstr += '{seq:03} \t| {seriesid}  \t| {refmonthdate} \t| {baselineindex}\n'.format(
+      outstr += '{seq:03} \t| {seriesid}  \t| {refmonthdate} \t| {acc_index}\n'.format(
         seq=seq,
         seriesid=cpi.seriesid,
         refmonthdate=cpi.refmonthdate,
-        baselineindex=cpi.baselineindex,
+        acc_index=cpi.acc_index,
       )
     return outstr
 
@@ -140,11 +137,11 @@ class CPIData:
 def adhoctest():
   mmonth = 'M05'
   year = 2025
-  res = transform_mmonth_to_refmonthdate(mmonth, year)
+  res = rmd.transform_mmonth_to_refmonthdate(mmonth, year)
   print('res', res)
   mmonth = 'M12'
   year = 2025
-  res = transform_mmonth_to_refmonthdate(mmonth, year)
+  res = rmd.transform_mmonth_to_refmonthdate(mmonth, year)
   print('res', res)
 
 

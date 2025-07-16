@@ -1,24 +1,28 @@
 #!/usr/bin/env python3
 """
-commands/fetch/bls_us/read_cpis_from_db_fs.py
-  fetches BLS CPI data from local db
+art/bls_us/fetch/db/read_monthrange_cpis_from_db_cls.py
+  Fetches BLS CPI indices by month(s) from local db
 
 Acronyms:
   BLS => Burreau of Labor Statistics (USA's)
   CPI => Consumer Price Index (US-measured)
 
 # import fs.datefs.convert_to_date_wo_intr_sep_posorder as cnv
+parser.add_argument(
+  '-cp', '--currencypair', type=str, nargs=1, default='brl/usd',
+  help="for specifying the currency pair ratio that corresponds to the output quotes (default 'brl/usd')",
 """
+# from typing import Any, AnyStr
+import argparse
 import collections
 import datetime
-# from typing import AnyStr
-from typing import Any
 import json
+import math
 import pandas as pd
-from dateutil.relativedelta import relativedelta
-import settings as sett
 import sqlite3
-import lib.datefs.refmonths_mod as rfm
+import settings as sett
+from dateutil.relativedelta import relativedelta
+import lib.datefs.refmonths_mod as rmd
 import lib.db.sqlite.db_sqlite_manager as sqlim  # sqlim.SqliteHandler
 import lib.db.db_settings as dbs
 cur_seriesid = 'CUUR0000SA0'
@@ -28,15 +32,89 @@ KNOWN_SERIESID = ['CUUR0000SA0', 'SUUR0000SA0']
 available_cpi_seriesid_list = [cur_seriesid, sur_seriesid]
 NTCpiMonth = collections.namedtuple('NTCpiMonth', field_names=['cpi_us', 'refmonthdate'])
 sqlite3.register_adapter(dict, lambda d: json.dumps(d).encode())
+# argparse CLI arguments
+parser = argparse.ArgumentParser(description="Obtain Arguments")
+parser.add_argument(
+  '-i', '--refmonth_ini', metavar='refmonth_ini', type=str,
+  help="the beginning date in date range for finding daily exchange rate quotes",
+)
+parser.add_argument(
+  '-f', '--refmonth_fim', metavar='refmonth_fim', type=str,
+  help="the ending date in date range for finding daily exchange rate quotes",
+)
+parser.add_argument(
+  '-y', '--year', type=int, nargs=1,
+  help="year as the date range for finding daily exchange rate quotes",
+)
+parser.add_argument(
+  '-cy', '--currentyear', action='store_true',
+  help="days since the beginning of the current year as the date range for finding daily exchange rate quotes",
+)
+parser.add_argument(
+  '-yr', '--yearrange', type=int, nargs=2,
+  help="year range (ini, fim) as the date range for finding daily exchange rate quotes",
+)
+parser.add_argument(
+  '-rdf', '--readdatefile', action='store_true',
+  help="marker/signal for inputting the dateadhoctests from the conventioned datefile located in the app's data folder",
+)
+parser.add_argument(
+  '-s', '--serieschar', choices=["C", "S"], default="C",
+  help="marker/signal for inputting the dateadhoctests from the conventioned datefile located in the app's data folder",
+)
+args = parser.parse_args()
 
 
-class CpiDbReader:
+class MonthRangeCpiDbReader:
 
   tablename = 'bls_us_indices'
 
-  def __init__(self, date_fr, date_to):
+  def __init__(self, refmonth_fr=None, refmonth_to=None):
+    self._refmonth_fr = refmonth_fr
+    self._refmonth_to = refmonth_to
+    self.n_monthly_indices = 0
+    self.first_acc_index = None
+    self.last_acc_index = None
+    self.sqlhld = sqlim.SqliteHandler()
+    self.treat_attrs()
+
+  def treat_attrs(self):
+    """
+    refmonth_fr and refmonth_to are treated in their 'property/setter' attribute-methods
+    """
     pass
 
+  @property
+  def total_months(self):
+    return rmd.calc_n_completemonths_between_dates(self.refmonth_to, self.refmonth_fr)
+
+  @property
+  def total_monthly_indices(self):
+    return self.n_monthly_indices
+
+  @property
+  def refmonth_fr(self):
+    if self._refmonth_fr is None:
+      self._refmonth_fr = self.refmonth_to - relativedelta(months=3)
+    return self._refmonth_fr
+
+  @refmonth_fr.setter
+  def refmonth_fr(self, p_refmonth=None):
+    p_refmonth = rmd.make_refmonth_or_none(p_refmonth)
+    if p_refmonth is None:
+      self._refmonth_fr = self.refmonth_to - relativedelta(months=3)
+    else:
+      self._refmonth_fr = p_refmonth
+
+  @property
+  def refmonth_to(self):
+    if self._refmonth_to is None:
+      self._refmonth_to = rmd.make_refmonth_or_current(self._refmonth_to)
+    return self._refmonth_to
+
+  @refmonth_to.setter
+  def refmonth_to(self, p_refmonth=None):
+    self._refmonth_to = rmd.make_refmonth_or_current(p_refmonth)
 
   @property
   def str_n_tuplevalues_select_bw_refmonths(self):
@@ -49,10 +127,62 @@ class CpiDbReader:
     sql_n_tuplevalues = sql, tuplevalues
     return sql_n_tuplevalues
 
-  def read(self):
-    handler = sqlim.SqliteHandler()
-    sql, tuplevalues = self.str_n_tuplevalues_select_bw_refmonths()
-    handler.execute(sql, tuplevalues)
+  @property
+  def multiplier_within_period_after_1st_month(self):
+    """
+    This variatioin counts after the first given month
+    """
+    if self.last_acc_index is not None and self.first_acc_index is not None:
+      mult = self.last_acc_index/self.first_acc_index
+      return mult
+    return None
+
+  def get_months_n_refmonths_as_dict_bt_refmonths(self):
+    """
+    pdict = self.sqlhld.fetch_as_dict(sql, tuplevalues)
+    for row in pdict:
+      print(row.acc_index)
+
+    """
+    sql, tuplevalues = self.str_n_tuplevalues_select_bw_refmonths
+    cursor = self.sqlhld.execute(sql, tuplevalues)
+    pdict = {}
+    acc_index = None
+    for i, row in enumerate(cursor.fetchall()):
+      refmonthdate = row['refmonthdate']
+      acc_index = row['acc_index']
+      self.n_monthly_indices += 1
+      if i == 0:
+        self.first_acc_index = acc_index
+      pdict.update({refmonthdate: acc_index})
+    self.last_acc_index = acc_index
+    return pdict
+
+  def print_months_n_refmonths_bt_refmonths(self):
+    pdict = self.get_months_n_refmonths_as_dict_bt_refmonths()
+    n_months = len(pdict)
+    n_places = 0
+    if n_months != 0:
+      n_places = math.floor(math.log10(n_months)) + 1
+    for i, refmonthdate in enumerate(pdict):
+      seq = i + 1
+      acc_index = pdict[refmonthdate]
+      seqstr = str(seq).zfill(n_places)
+      scrmsg = f"{seqstr} | {refmonthdate} | {acc_index}"
+      print(scrmsg)
+
+  def __str__(self):
+    outstr = f"""{self.__class__.__name__}
+    refmonth_fr = {self.refmonth_fr} 
+    refmonth_to = {self.refmonth_to} 
+    total_months = {self.total_months}
+    total_monthly_indices = {self.total_monthly_indices}
+    first_acc_index = {self.first_acc_index}
+    last_acc_index = {self.last_acc_index}
+    multiplier after 1st month = {self.multiplier_within_period_after_1st_month:6.5f} 
+    db_path = {self.sqlhld.db_path}
+    """
+    return outstr
 
 
 def adapt_date_iso(val: datetime.date):
@@ -105,7 +235,7 @@ def get_min_or_max_available_refmonthdate_in_cpi_db(lowest=True, p_seriesid=None
   cursor.execute(sql, tuplevalues)
   try:
     refmonthdate = cursor.fetchone()[0]
-    refmonthdate = rfm.make_refmonthdate_or_none(refmonthdate)
+    refmonthdate = rmd.make_refmonthdate_or_none(refmonthdate)
   except TypeError:
     refmonthdate = None
   # print('first_baselineindex', first_baselineindex)
@@ -154,7 +284,7 @@ def get_cpi_baselineindex_for_refmonth_m2_in_db(refmonthdate, seriesid=None):
   This function must be ENCAPSULATED in package-module fin
   The input pdate is transformed to an M-2 date ie month minus 2
   """
-  refmonthdate = rfm.make_refmonthdate_or_none(refmonthdate)
+  refmonthdate = rmd.make_refmonthdate_or_none(refmonthdate)
   if isinstance(refmonthdate, datetime.date):
     # make M-2 (adjust day=1 already happens above with make_refmonthdate_or_none())
     m2_refmonthdate = refmonthdate + relativedelta(months=-2)
@@ -164,7 +294,7 @@ def get_cpi_baselineindex_for_refmonth_m2_in_db(refmonthdate, seriesid=None):
 
 
 def get_cpi_baselineindex_for_refmonth_in_db(refmonthdate, p_seriesid=None):
-  refmonthdate = rfm.make_refmonthdate_or_none(refmonthdate)
+  refmonthdate = rmd.make_refmonthdate_or_none(refmonthdate)
   if not isinstance(refmonthdate, datetime.date):
     return None
   conn = sett.get_sqlite_connection()
@@ -369,8 +499,50 @@ def adhoctest3():
   print(scrmsg)
 
 
+def find_refmonth_ini_n_fim_lookingup_cliargs():
+  print(args)
+  try:
+    refmonth_ini = args.refmonth_ini
+    refmonth_fim = args.refmonth_fim
+    if refmonth_ini:
+      refmonth_ini = rmd.make_refmonth_or_none(refmonth_ini)
+      refmonth_fim = rmd.make_refmonth_or_none(refmonth_fim)
+      return refmonth_ini, refmonth_fim
+  except AttributeError:
+    pass
+  try:
+    year = int(args.year)
+    refmonth_ini, refmonth_fim = rmd.make_refmonth_ini_n_fim_w_year_forbid_future(year)
+    return refmonth_ini, refmonth_fim
+  except (AttributeError, TypeError):
+    pass
+  try:
+    if args.currentyear:
+      refmonth_ini, refmonth_fim = rmd.make_refmonth_ini_n_fim_w_year_forbid_future()
+      return refmonth_ini, refmonth_fim
+  except AttributeError:
+    pass
+  try:
+    if args.yearrange:
+      pp = args.yearrange.split(',')
+      year_ini = int(pp[0])
+      year_fim = int(pp[1])
+      refmonth_ini, refmonth_fim = rmd.make_refmonth_ini_n_fim_w_yearrange_forbid_future(year_ini, year_fim)
+      return refmonth_ini, refmonth_fim
+  except (AttributeError, IndexError, TypeError):
+    pass
+  # try:
+  # bool_readdatefile = args.readdatefile
+  return None, None
+
+
 def process():
-  pass
+  refmonth_ini, refmonth_fim = find_refmonth_ini_n_fim_lookingup_cliargs()
+  scrmsg = f"refmonth_ini={refmonth_ini} | refmonth_fim={refmonth_fim}"
+  print(scrmsg)
+  cpi_r = MonthRangeCpiDbReader(refmonth_ini, refmonth_fim)
+  cpi_r.print_months_n_refmonths_bt_refmonths()
+  print(cpi_r)
 
 
 if __name__ == '__main__':
@@ -378,5 +550,6 @@ if __name__ == '__main__':
   process()
   adhoctest1()
   adhoctest2()
-  """
   adhoctest3()
+  """
+  process()

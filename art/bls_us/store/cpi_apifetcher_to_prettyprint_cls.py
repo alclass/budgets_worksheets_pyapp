@@ -293,7 +293,7 @@ class Fetcher:
     if self.bool_jsonfile_is_already_present_in_folder:
       print(scrmsg)
       n_step += 1
-      action_str = 'json stored file exists, read it.'
+      action_str = 'json stored file exists, get_months_n_refmonths_as_dict_bt_refmonths it.'
       scrmsg = f'Step {n_step} - {action_str}.'
       print(scrmsg)
       self.read_json_from_json_stored_file()
@@ -323,7 +323,7 @@ class Fetcher:
     print(scrmsg)
     self.fetch_json_response_w_restapi_reqjsondata()
     n_step += 1
-    action_str = 'save fetched json or json-read to its prettyprint datafile'
+    action_str = 'save fetched json or json-get_months_n_refmonths_as_dict_bt_refmonths to its prettyprint datafile'
     scrmsg = f'Step {n_step} - {action_str}.'
     print(scrmsg)
     # has to check request status code again

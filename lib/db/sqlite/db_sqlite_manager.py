@@ -34,6 +34,7 @@ import sqlite3
 from typing import Optional, List, Union  # , Dict, Any, Tuple
 from pathlib import Path
 import logging
+import settings as sett
 
 
 class SqliteHandler:
@@ -66,7 +67,7 @@ class SqliteHandler:
 
   def __init__(
       self,
-      db_path: Union[str, Path],
+      db_path: Union[str, Path] = None,
       timeout: float = 5.0,
       detect_types: int = 0,
       isolation_level: Optional[str] = None
@@ -80,6 +81,8 @@ class SqliteHandler:
         detect_types: Custom type detection (see sqlite3 docs)
         isolation_level: None for autocommit mode, or one of "DEFERRED", "IMMEDIATE", "EXCLUSIVE"
     """
+    if db_path is None:
+      db_path = sett.get_sqlite_appsdata_filepath()
     self.db_path = Path(db_path)
     self.timeout = timeout
     self.detect_types = detect_types
@@ -114,6 +117,8 @@ class SqliteHandler:
       # Enable foreign key constraints by default
       self.execute('PRAGMA foreign_keys = ON')
       self.logger.info(f'Connected to database at {self.db_path}')
+      # makes cursor be indexed as a dict with fieldnames as keys
+      self._connection.row_factory = sqlite3.Row
     except sqlite3.Error as e:
       self.logger.error(f'Failed to connect to database: {e}')
       raise

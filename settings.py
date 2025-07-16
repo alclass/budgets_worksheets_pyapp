@@ -25,6 +25,10 @@ SQLITE_FILENAME_DEFAULT = 'exchange_n_indices.sqlite'
 
 
 def get_sqlite_connection(sqlitefilename: str | None = None):
+  """"
+  For the sqlite data filepath:
+    get_sqlite_appsdata_filepath()
+  """
   if sqlitefilename is None:
     sqlitefilename = SQLITE_FILENAME_DEFAULT
   filepath = get_datafile_abspath_in_app(sqlitefilename)

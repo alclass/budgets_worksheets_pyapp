@@ -2,11 +2,11 @@
 """
 art/bcb_br/gra_gui_etc/make_graphics_datafolder_n_dld_if_needed.py
 
+import pandas as pd
+import matplotlib.pyplot as plt
 """
 import os.path
-import pandas as pd
 import settings as sett
-import matplotlib.pyplot as plt
 import requests
 GRAPHICS_DATAFOLDERNAME = 'gra_gui_etc'
 

@@ -7,6 +7,7 @@ import fs.datefs.introspect_dates as intr
 """
 import calendar
 import datetime
+from typing import Union
 from dateutil.relativedelta import relativedelta
 import lib.datefs.convert_to_date_wo_intr_sep_posorder as cnv
 
@@ -67,6 +68,26 @@ def calc_refmonth_minus_n(pdate, n):
     return pdate
   n = -n
   return calc_refmonth_plus_n(pdate, n)
+
+
+def calc_n_completemonths_between_dates(
+    start_date: Union[str, datetime.date], end_date: Union[str, datetime.date]
+  ) -> int | None:
+  start_date = cnv.make_date_or_none(start_date)
+  if start_date is None:
+    return None
+  end_date = cnv.make_date_or_none(end_date)
+  if end_date is None:
+    return None
+  if start_date > end_date:
+    tmpdate = end_date
+    end_date = start_date
+    start_date = tmpdate
+  # Calculate the difference
+  delta = relativedelta(end_date, start_date)
+  # Get total months
+  total_months = delta.months + (delta.years * 12)
+  return total_months
 
 
 def get_nmonthd_fr_mmonth_or_none(mmonth):
@@ -174,6 +195,77 @@ def make_refmonth_or_current(str_or_date_refmonth=None):
   return datetime.date(year=today.year, month=today.month, day=1)
 
 
+def make_refmonth_ini_n_fim_w_year_forbid_future(year=None):
+  today = datetime.date.today()
+  if year is None:
+    year = today.year
+  if year > today.year:
+    return None, None
+  refmonth_ini = make_refmonthdate_for_year_n_month(year, 1)
+  if year >= today.year:
+    month_to = today.month if today.month < 12 else 12
+  else:
+    month_to = 12
+  refmonth_fim = make_refmonthdate_for_year_n_month(year, month_to)
+  return refmonth_ini, refmonth_fim
+
+
+def make_refmonth_ini_n_fim_w_year(year=None):
+  today = datetime.date.today()
+  if year is None:
+    year = today.year
+  refmonth_ini = make_refmonthdate_for_year_n_month(year, 1)
+  refmonth_fim = make_refmonthdate_for_year_n_month(year, 12)
+  return refmonth_ini, refmonth_fim
+
+
+def make_refmonth_ini_n_fim_w_yearrange_forbid_future(yearini, yearfim=None):
+  today = datetime.date.today()
+  if yearini is None:
+    return None, None
+  if yearfim is None:
+    yearfim = today.year
+  try:
+    yearini = int(yearini)
+    if yearini > today.year:
+      return None, None
+    yearini = yearini if yearini <= today.year else today.year
+  except ValueError:
+    pass
+  try:
+    yearfim = int(yearfim)
+    yearfim = yearfim if yearfim <= today.year else today.year
+    # swap if yearini > yearfim
+    if yearini > yearfim:
+      tmpyear = yearini
+      yearini = yearfim
+      yearfim = tmpyear
+  except ValueError:
+    pass
+  refmonth_ini, refmonth_fim_yearini = make_refmonth_ini_n_fim_w_year_forbid_future(yearini)
+  _, refmonth_fim = make_refmonth_ini_n_fim_w_year_forbid_future(yearfim)
+  if refmonth_fim is None:
+    refmonth_fim = refmonth_fim_yearini
+  return refmonth_ini, refmonth_fim
+
+
+def transform_month_n_year_to_refmonthdate(month, year):
+  try:
+    return datetime.date(year=year, month=month, day=1)
+  except ValueError:
+    pass
+  return None
+
+
+def transform_mmonth_to_refmonthdate(mmonth, year):
+  try:
+    month_n = int(mmonth.lstrip('M').strip())
+    return transform_month_n_year_to_refmonthdate(month_n, year)
+  except (AttributeError, ValueError):
+    pass
+  return None
+
+
 def get_monthslastday_via_calendar(pdate: datetime.date | None) -> int | None:
   if pdate is None:
     return None
@@ -260,7 +352,7 @@ def spawn_inidate_n_fimdate_fr_refmonth(refmonthdate: datetime.date | None) -> t
   return None, None
 
 
-def adhoc_test():
+def adhoctest1():
   """
   """
   y, m, d = 2012, 2, 3
@@ -287,6 +379,36 @@ def adhoc_test():
   print(scrmsg)
 
 
+def adhoctest2():
+  yearini, yearfim = 2020, 2024
+  refmonth_ini, refmonth_fim = make_refmonth_ini_n_fim_w_yearrange_forbid_future(yearini, yearfim)
+  scrmsg = f"yearini={yearini} | yearfim={yearfim} | refmonth_ini={refmonth_ini} | refmonth_fim={refmonth_fim}"
+  print(scrmsg)
+  yearini, yearfim = 2020, 2028
+  refmonth_ini, refmonth_fim = make_refmonth_ini_n_fim_w_yearrange_forbid_future(yearini, yearfim)
+  scrmsg = f"yearini={yearini} | yearfim={yearfim} | refmonth_ini={refmonth_ini} | refmonth_fim={refmonth_fim}"
+  print(scrmsg)
+  yearini, yearfim = 2027, 2029
+  refmonth_ini, refmonth_fim = make_refmonth_ini_n_fim_w_yearrange_forbid_future(yearini, yearfim)
+  scrmsg = f"yearini={yearini} | yearfim={yearfim} | refmonth_ini={refmonth_ini} | refmonth_fim={refmonth_fim}"
+  print(scrmsg)
+  yearini, yearfim = 2025, 2034
+  refmonth_ini, refmonth_fim = make_refmonth_ini_n_fim_w_yearrange_forbid_future(yearini, yearfim)
+  scrmsg = f"yearini={yearini} | yearfim={yearfim} | refmonth_ini={refmonth_ini} | refmonth_fim={refmonth_fim}"
+  print(scrmsg)
+
+
+def adhoctest3():
+  """
+  how to calculate number of months between two dates in Python?
+  """
+  pdate1 = cnv.make_date_or_none('2020-02-1')
+  pdate2 = cnv.make_date_or_none('2021-10-31')
+  n_months_in_bw = calc_n_completemonths_between_dates(pdate1, pdate2)
+  scrmsg = f"{pdate2} - {pdate1} = n_months_in_bw={n_months_in_bw}"
+  print(scrmsg)
+
+
 def process():
   """
 
@@ -298,4 +420,4 @@ if __name__ == "__main__":
   """
   process()
   """
-  adhoc_test()
+  adhoctest3()
