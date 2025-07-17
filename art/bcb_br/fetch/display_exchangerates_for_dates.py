@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-show_exchangerates_for_dates.py
+art/bcb_br/fetch/display_exchangerates_for_dates.py
 
-This script reads dateadhoctests (either input from terminal or from a datefile in the app's data folder)
+This script reads dates (either input from terminal or from a datefile in the app's data folder)
   and fetches its corresponding exchange rate quotes.
 For the time being, it only finds and prints BRL (reais) /USD (dollars) exchange rate quotes.
   It's planned other combinations (one currency to another currency) to be implemented in the future.
@@ -33,7 +33,7 @@ import calendar
 import datetime
 # import datetime
 import sys
-import commands.bcb_br.report.corr_monet_n_indices_calculator_from_dates as composite
+import art.bcb_br.fetch.report.corr_monet_n_indices_calculator_from_dates as composite
 import lib.indices.bcb_br.bcb_cotacao_fetcher_from_db_or_api as fin
 import lib.datefs.dategenerators as gendt
 import lib.datefs.refmonths_mod as rmd

@@ -279,8 +279,8 @@ class CPIPrettyPrintReader:
     nº of years = {self.total_cpi_years}
     start year =  {self.first_cpi_year_in_db}
     end year =  {self.last_cpi_year_in_db}
-    first cpi/refmonth in db = {self.first_refm_n_cpi_in_db}
-    last cpi/refmonth in db = {self.last_refm_n_cpi_in_db}
+    first corr_monet/refmonth in db = {self.first_refm_n_cpi_in_db}
+    last corr_monet/refmonth in db = {self.last_refm_n_cpi_in_db}
     """
     return outstr
 

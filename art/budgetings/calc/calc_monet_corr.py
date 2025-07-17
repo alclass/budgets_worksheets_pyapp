@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-commands/calc/calc_monet_corr.py
-  contains class DatePriceRecordsMonetCorrCalculator
+art/budgetings/calc/calc_monet_corr.py
+  Contains class DatePriceRecordsMonetCorrCalculator
 
 The underlying system or app, up til now, has used
   one particular form of monetary correction. Let us
@@ -59,8 +59,9 @@ import lib.datefs.convert_to_date_wo_intr_sep_posorder as cnv
 import lib.datefs.introspect_dates as intr
 import lib.datefs.read_write_datelist_files_fs as rwdl
 import lib.datefs.argparse as ap  # ap.get_args
-import commands.calc.multiplication_factor_calc as mfcalc
-import commands.calc.cpi.adhoctests.datamass_for_multfactortable as prices_dmass  # .get_date_n_price_tuplelist
+import art.budgetings.calc.multiplication_factor_calc as mfcalc
+# .get_date_n_price_tuplelist
+import art.budgetings.calc.mone_corr_fs.adhoctests.datamass_for_multfactortable as prices_dmass
 
 
 def create_df_w_prices():

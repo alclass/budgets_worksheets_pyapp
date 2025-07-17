@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-fs/indices/bcb_br/params.py
+lib/indices/bcb_br/bcbparams.py
 
 """
 import collections as coll

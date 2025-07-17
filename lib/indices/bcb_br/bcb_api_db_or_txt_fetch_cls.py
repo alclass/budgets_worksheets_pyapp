@@ -208,7 +208,7 @@ def dbfetch_nt_bcb_exrate_or_none_w_date_n_currencypair(pdate, currency_pair=Non
   indate = cnv.make_date_or_none(pdate)
   if indate is None:
     return None
-  curr_num, curr_den = dbs.DEFAUT_CURRENCY_PAIR
+  curr_num, curr_den = dbs.DEFAULT_CURRENCY_PAIR
   if currency_pair is not None:
     curr_num, curr_den = currency_pair
   res_bcb_api1 = None

@@ -25,9 +25,9 @@ import lib.datefs.refmonths_mod as rfm
 # import fs.datefs.introspect_dates as intr
 import lib.datefs.dategenerators as gendt
 import lib.db.db_settings as dbs
-import lib.indices.bcb_br.bcb_api_finfunctions as apis
-import lib.indices.bcb_br.bcb_fetchfunctions as fetchfs  # fetchfs.add_exchanger_to_res_bcb_api_namedtuple()
 import settings as sett
+import lib.indices.bcb_br.bcbparams as bcbparams
+namedtuple_bcb_api1 = bcbparams.namedtuple_bcb_api1
 _, modlevelogfn = os.path.split(__file__)
 modlevelogfn_extless = os.path.splitext(modlevelogfn)[0]
 modlevelogfn = str(datetime.date.today()) + '_' + str(modlevelogfn_extless) + '.log'
@@ -157,7 +157,7 @@ class BCBCotacaoFetcher:
     self.process()
 
   def treat_currency_pair(self, currency_pair):
-    self.curr_num, self.curr_den = dbs.DEFAUT_CURRENCY_PAIR
+    self.curr_num, self.curr_den = dbs.DEFAULT_CURRENCY_PAIR
     if currency_pair is not None:
       self.curr_num, self.curr_den = currency_pair
 
