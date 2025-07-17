@@ -1,5 +1,6 @@
 """
-This wrapper provides a clean, Pythonic interface to SQLite while handling all the low-level details of connection management and error handling.
+This wrapper provides a clean, Pythonic interface to SQLite while handling
+  all the low-level details of connection management and error handling.
 
 """
 import lib.db.sqlite.db_sqlite_manager as sqlm  # sqlm.SQLiteDB

@@ -21,6 +21,8 @@ Also:
       through datetime. date's constructor.
 """
 import datetime
+from typing import Union  # Optional, List, Dict, Any, Tuple
+from dateutil.relativedelta import relativedelta
 
 
 def convert_str_or_attrsobj_to_date_or_none(str_or_obj):
@@ -86,15 +88,71 @@ def is_date_weekend(pdate):
   return False
 
 
-def find_most_recent_name_n_its_prefix_date_in_strlist(strlist):
+def get_tuplelist_splitting_prefixdate_n_name_fr_lines(strlist):
+  """
+  Gets a tuple list from dates and names extracted from each line (in lines or strlist)
+
+  Example:
+    Suppose the lines below as input:
+      (omitting quotes)
+      2010-11-07 Luiz Lewis
+      2013-11-07 Alex Escobar
+      2030-11-07 Ann Rose
+      1999-11-07 Mary Ann
+    output would be: [
+      (datetime.date(2010, 11, 07), 'Luiz Lewis'),
+      (datetime.date(2013, 11, 07), 'Alex Escobar'),
+      (datetime.date(2030, 11, 07), 'Ann Rose'),
+      (datetime.date(1999, 11, 07), 'Mary Ann'),
+    ]
+  """
   if strlist is None or len(strlist) == 0:
     return None, None
-  tuplelist = [(e, make_date_or_none(e[:10])) for e in strlist if len(e)>9]
-  tuplelist = sorted([te for te in tuplelist if te[1] is not None])
+  strlist = map(lambda s: s.strip(' \t\r\n'), strlist)
+  tuplelist = [(make_date_or_none(s[:10]), s[11:]) for s in strlist if len(s) > 10]
+  tuplelist = [te for te in tuplelist if te[0] is not None]
+  return tuplelist
+
+
+def get_first_tuple_elem_splitting_prefixdate_n_name_fr_lines(strlist, sort_asc=False, sort_desc=False):
+  """
+  Gets a top tuple element from dates and names extracted from each line (in lines or strlist)
+
+  Example:
+    Suppose the lines belows:
+      2010-11-07 Luiz Lewis
+      2013-11-07 Alex Escobar
+      2030-11-07 Ann Rose
+      1999-11-07 Mary Ann
+
+  The results, return for newest and oldest and not sorted, are:
+    notsorted = (datetime.date(2010, 11, 7), 'Luiz Lewis')
+    newest = (datetime.date(2030, 11, 7), 'Ann Rose')
+    oldest = (datetime.date(1999, 11, 7), 'Mary Ann')
+  """
+  tuplelist = get_tuplelist_splitting_prefixdate_n_name_fr_lines(strlist)
   if len(tuplelist) == 0:
     return None, None
-  most_recent_name, pdate = tuplelist[0]
-  return most_recent_name, pdate
+  if sort_asc:
+    tuplelist = sorted(tuplelist, key=lambda k: k[0])
+  elif sort_desc:
+    tuplelist = sorted(tuplelist, key=lambda k: k[0], reverse=True)
+  top_name, pdate = tuplelist[0]
+  return top_name, pdate
+
+
+def find_oldest_name_n_its_prefix_date_in_strlist(strlist):
+  """
+  @see docstr for get_first_tuple_elem_splitting_prefixdate_n_name_fr_lines()
+  """
+  return get_first_tuple_elem_splitting_prefixdate_n_name_fr_lines(strlist, sort_asc=True)
+
+
+def find_newest_name_n_its_prefix_date_in_strlist(strlist):
+  """
+  @see docstr for get_first_tuple_elem_splitting_prefixdate_n_name_fr_lines()
+  """
+  return get_first_tuple_elem_splitting_prefixdate_n_name_fr_lines(strlist, sort_desc=True)
 
 
 def make_date_or_none_wo_separators(pdate):
@@ -154,6 +212,37 @@ def make_date_from_str_or_none(strdate):
   return convert_str_or_attrsobj_to_date_or_none(strdate)
 
 
+def get_delta_diff_between_dates(
+    start_date: Union[str, datetime.date], end_date: Union[str, datetime.date]
+  ) -> relativedelta | None:
+  start_date = make_date_or_none(start_date)
+  if start_date is None:
+    return None
+  end_date = make_date_or_none(end_date)
+  if end_date is None:
+    return None
+  if start_date > end_date:
+    tmpdate = end_date
+    end_date = start_date
+    start_date = tmpdate
+  # Calculate the difference
+  delta = relativedelta(end_date, start_date)
+  return delta
+
+
+def calc_n_completedays_between_dates(
+    start_date: Union[str, datetime.date], end_date: Union[str, datetime.date]
+  ) -> int | None:
+  # Get total months
+  delta = get_delta_diff_between_dates(start_date, end_date)
+  try:
+    total_months = delta.months + (delta.years * 12)
+    return total_months
+  except AttributeError:
+    pass
+  return None
+
+
 def trans_convertabledates_to_datelist(datelist: list[datetime.date] | None) -> list[datetime.date]:
   odates = []
   if datelist is None:
@@ -207,6 +296,23 @@ def adhoc_test2():
   print(scrmsg)
 
 
+def adhoctest3():
+  text = """
+  2010-11-07 Luiz Lewis
+  2013-11-07 Alex Escobar
+  2030-11-07 Ann Rose
+  1999-11-07 Mary Ann
+  """
+  print(text)
+  strlines = text.split('\n')
+  notsorted = get_first_tuple_elem_splitting_prefixdate_n_name_fr_lines(strlines)
+  print(f"notsorted = {notsorted}")
+  newest = find_newest_name_n_its_prefix_date_in_strlist(strlines)
+  print(f"newest = {newest}")
+  oldest = find_oldest_name_n_its_prefix_date_in_strlist(strlines)
+  print(f"oldest = {oldest}")
+
+
 def process():
   """
 
@@ -217,5 +323,6 @@ def process():
 if __name__ == "__main__":
   """
   process()
-  """
   adhoc_test2()
+  """
+  adhoctest3()

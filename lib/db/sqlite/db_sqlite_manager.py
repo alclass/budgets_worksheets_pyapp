@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 lib/db/sqlite/db_sqlite_manager.py
   Manages a Sqlite connection with opening a connection, cursor execution et al.

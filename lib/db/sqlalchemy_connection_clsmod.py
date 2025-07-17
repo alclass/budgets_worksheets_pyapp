@@ -22,36 +22,44 @@ databasename = config.DATABASE_DICT[this_db]['DATABASENAME']
 
 engine_line = this_db + '://' + user + ':' + password + '@' + address + '/' + databasename
 """
+import os.path
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import settings as sett
 
 
-def get_sa_engine():
-  sqlite_filepath = sett.get_exchange_rate_sqlite_filepath()
-  engine_line = 'sqlite:///' + sqlite_filepath
-  if engine_line.startswith('mysql'):
-    engine_line = engine_line + '?charset=utf8mb4'
-  sqlalchemy_engine = create_engine(engine_line)
-  return sqlalchemy_engine
+class SqlAlchemyConnector:
 
+  def __init__(self, datafilepath=None):
+    self.sqlitedatafilepath = datafilepath
+    self.treat_attrs()
 
-def get_sa_session_handler():
-  sqlite_filepath = sett.get_exchange_rate_sqlite_filepath()
-  # print (engine_line)
-  session = sessionmaker(bind=get_sa_engine())
-  return session
+  def treat_attrs(self):
+    if self.sqlitedatafilepath is None or not os.path.isfile(self.sqlitedatafilepath):
+      self.sqlitedatafilepath = sett.get_exchange_rate_sqlite_filepath()
 
+  def get_sa_engine(self):
+    engine_line = 'sqlite:///' + self.sqlitedatafilepath
+    if engine_line.startswith('mysql'):
+      engine_line = engine_line + '?charset=utf8mb4'
+    sqlalchemy_engine = create_engine(engine_line)
+    return sqlalchemy_engine
 
-def get_sa_session():
-  sessionhandler = get_sa_session_handler()
-  session = sessionhandler()
-  return session
+  def get_sa_session_handler(self):
+    session = sessionmaker(bind=self.get_sa_engine())
+    return session
+
+  def get_sa_session(self):
+    sessionhandler = self.get_sa_session_handler()
+    session = sessionhandler()
+    return session
 
 
 def adhoc_test():
+  conn_o = SqlAlchemyConnector()
   print('adhoctest3')
-  session = get_sa_session_handler()
+  session = conn_o.get_sa_session_handler()
   print('Session', session)
 
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-fs/indices/bcb_br/bcb_api_db_or_txt_fetch_cls.py
+lib/indices/bcb_br/bcb_api_db_or_txt_fetch_sqlalch_fs.py
+  Contains functions for fetching exchange rates from DB
 
 import fs.datefs.introspect_dates as intr  # .convert_strdate_to_date_or_none_w_sep_n_posorder
 """
@@ -11,12 +12,12 @@ import logging
 import os
 from dateutil.relativedelta import relativedelta
 import settings as sett
-import lib.indices.bcb_br.bcb_remote_api_fin_fs as apis
+import lib.indices.bcb_br.bcb_remote_api_fin_cls as apicls
 import lib.datefs.convert_to_date_wo_intr_sep_posorder as dtfs
 # import fs.db.db_settings as dbs
 # import fs.datefs.convert_to_datetime_wo_intr_sep_posorder as cvdt
 # import models.exrate.currency_exchange_rate_model as exmod
-# import fs.textfs.logfunctions as logfs  # logfs.log_error_namedtuple
+import lib.textfs.logfunctions as logfs  # logfs.log_error_namedtuple
 datetyp = datetime.date
 _, modlevelogfn = os.path.split(__file__)
 modlevelogfn = str(datetime.date.today()) + '_' + modlevelogfn[:-3] + '.log'
@@ -44,7 +45,14 @@ def fetch_cotacao_thru_the_api_for_its_not_in_db(indate):
 
 
 def find_db_cotacao_w_date_currnum_currden_session(pdate, curr_num, curr_den, session):
-  db_rec = session.query(exmod.ExchangeRateDate). \
+  """
+  Correct the SqlAlchemy class
+    at this moment apicls.BcbCotacaoDiaApiCallerExchangeRateDate
+      is not a SqlAlchemy class
+
+    look up where is the other one: exmod.ExchangeRateDate
+  """
+  db_rec = session.query(apicls.BcbCotacaoDiaApiCallerExchangeRateDate). \
       filter(exmod.ExchangeRateDate.refdate == pdate). \
       filter(exmod.ExchangeRateDate.curr_num == curr_num). \
       filter(exmod.ExchangeRateDate.curr_den == curr_den). \
