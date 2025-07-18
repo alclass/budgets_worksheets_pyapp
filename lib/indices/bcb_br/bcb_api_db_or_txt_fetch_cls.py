@@ -14,7 +14,7 @@ import lib.indices.bcb_br.bcb_remote_api_fin_cls as apicls
 import lib.db.db_settings as dbs
 import lib.datefs.convert_to_date_wo_intr_sep_posorder as cnv
 import lib.datefs.convert_to_datetime_wo_intr_sep_posorder as cvdt
-import art.bcb_br.exrate.currency_exchange_rate_model as exmod
+# import art.bcb_br.exrate.currency_exchange_rate_model as exmod
 import lib.textfs.logfunctions as logfs  # logfs.log_error_namedtuple
 import lib.indices.bcb_br.bcb_api_db_or_txt_fetch_sqlalch_fs as fetchfs  # .find_db_cotacao_w_date_currnum_currden_session
 _, modlevelogfn = os.path.split(__file__)
@@ -97,27 +97,27 @@ class CascadeApiDbFileBcbCotacaoDiaFetcher:
 
 class BatchApiDbFileBcbCotacaoDiaFetcher:
 
-
-  def __init__(self):
+  def __init__(self, date_fr, date_to=None, datelist=None):
+    self.date_fr, self.date_to = date_fr, date_to
+    self.datelist = datelist
     self.treat_attrs()
-
 
   def treat_attrs(self):
     self.treat_dates()
 
-
   def treat_dates(self):
     """
-    Either currency_dates is set or dates_fr_to is, if both are then raise a ValueError exception
+    Either datelist is set or dates_fr,
+      if both are then raise a ValueError exception
     """
-    if self._currency_dates and self.dates_fr_to:
+    if self.datelist and self.date_fr:
       # oh, oh, it's an error
       errmsg = f"""Error: both parameters: 
-        a) currency_dates (a list of dates) and
-        b) dates_fr_to (coordinates date-from date-to)
+        a) datelist  and
+        b) date_fr (date from)
       were given, only one can. Please, change input parameters and retry.
 
-      currency_dates=[{self._currency_dates}]  | dates_fr_to={self.dates_fr_to}
+      datelist=[{self.datelist}]  | dates_fr={self.dates_fr}
       ------------------------------------------------------------------------- 
       """
       raise ValueError(errmsg)
@@ -132,11 +132,11 @@ class BatchApiDbFileBcbCotacaoDiaFetcher:
       ------------------------------------------------------------------------- 
       """
       raise ValueError(errmsg)
-    self.verify_dates_list()
+    self.verify_datelist()
     self.verify_dates_fr_to()
 
-  def verify_dates_list(self):
-    if self._currency_dates is None or len(self._currency_dates) == 0:
+  def verify_datelist(self):
+    if self.datelist is None or len(self.datelist) == 0:
       return
     types_fine = list(map(lambda e: isinstance(e, datetime.date), self._currency_dates))
     if False not in types_fine:
@@ -162,25 +162,55 @@ class BatchApiDbFileBcbCotacaoDiaFetcher:
       date_to = tmpdate
     self.dates_fr_to = (date_fr, date_to)
 
-  @property
-  def currency_dates(self):
-    if self._currency_dates:
-      return self._currency_dates
-    tmpdatelist = list(self.gen_dates_iter())
-    return tmpdatelist
-
-  def gen_dates_iter(self):
-    if self._currency_dates:
-      for pdate in self._currency_dates:
+  def gen_dates_desc(self):
+    if self.datelist:
+      datelist_asc = sorted(self.datelist, reverse=True)
+      for pdate in datelist_asc:
         yield pdate
       return
-    date_fr = self.dates_fr_to[0]
-    date_to = self.dates_fr_to[1]
-    pdate = copy.copy(date_fr)
-    while pdate <= date_to:
+    pdate = copy.copy(self.date_to)
+    while pdate >= self.date_fr:
+      yield pdate
+      pdate = pdate - relativedelta(days=1)
+
+  def gen_dates_asc(self):
+    if self.datelist:
+      datelist_asc = sorted(self.datelist)
+      for pdate in datelist_asc:
+        yield pdate
+      return
+    pdate = copy.copy(self.date_fr)
+    while pdate <= self.date_to:
       yield pdate
       pdate = pdate + relativedelta(days=1)
-    return
+
+  def gen_dates(self, asc=True):
+    if asc:
+      return self.gen_dates_asc()
+    return self.gen_dates_desc()
+
+  @property
+  def dates_asc(self):
+    if self.datelist:
+      datelist_asc = sorted(self.datelist)
+      return datelist_asc
+    _dates = list(self.gen_dates())
+    return _dates
+
+  def treat_dates_fr_to(self):
+    if self.datelist:
+      return
+    self.date_to = cnv.make_date_or_none(self.date_to)
+    if self.date_to is None:
+      # conventioned
+      self.date_to = self.date_fr + relativedelta(days=10)
+      today = datetime.date.today()
+      self.date_to = today if self.date_to > today else self.date_to
+    # swap if necessary to make date_fr past of date_to
+    if self.date_fr > self.date_to:
+      tmpdate = self.date_fr
+      self.date_fr = self.date_to
+      self.date_to = tmpdate
 
   def try_find_exchrates_in_db(self):
     tablename = 'abc'

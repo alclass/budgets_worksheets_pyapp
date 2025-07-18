@@ -80,7 +80,7 @@ def is_cotacao_in_holliday(namedtuple_cotacao):
   )
   """
   # an exception (TypeError if None, AttributeError if attribute inexists) may be raised from here
-  if not isinstance(namedtuple_cotacao, apis.namedtuple_bcb_api1):
+  if not isinstance(namedtuple_cotacao, namedtuple_bcb_api1):
     error_msg = 'Object namedtuple_cotacao [%s] is not type namedtuple_bcb_api1' % str(namedtuple_cotacao)
     raise TypeError(error_msg)
   if namedtuple_cotacao.cotacao_compra is None:
