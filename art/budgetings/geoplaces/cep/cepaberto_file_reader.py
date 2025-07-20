@@ -53,7 +53,7 @@ class CepDirTree:
 
   def __init__(self):
     self.n_inserted = 0
-    self.df = None  # pandas's dataframe, transient at every new csv file get_months_n_refmonths_as_dict_bt_refmonths
+    self.df = None  # pandas's dataframe, transient at every new csv file dbfetch_months_n_refmonths_as_dict_bt_refmonths
     self.siglas = cep_27_bra_est.split(' ')
     self.cepaberto_basefolderpath = cset.get_cepaberto_basefolderpath()
     self.tablename = self.CEP_TABLENAME

@@ -13,9 +13,13 @@ import settings as sett
 import lib.db.db_settings as dbs
 import lib.datefs.convert_to_date_wo_intr_sep_posorder as cnv
 import lib.datefs.convert_to_datetime_wo_intr_sep_posorder as cvdt
-import lib.db.conn_sa as consa
+# import lib.db.conn_sa as consa
 Base = declarative_base()
 EXRATE_TABLENAME = dbs.EXRATE_TABLENAME
+cur_seriesid = 'CUUR0000SA0'
+sur_seriesid = 'SUUR0000SA0'
+DEFAULT_SERIESID = 'CUUR0000SA0'
+KNOWN_SERIESID = ['CUUR0000SA0', 'SUUR0000SA0']
 
 
 class ExchangeRateDate(Base):

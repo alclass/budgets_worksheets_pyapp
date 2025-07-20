@@ -9,6 +9,8 @@ import calendar
 import datetime
 from typing import Union
 from dateutil.relativedelta import relativedelta
+from sqlalchemy.testing import exclude
+
 import lib.datefs.convert_to_date_wo_intr_sep_posorder as cnv
 
 
@@ -249,6 +251,31 @@ def make_refmonth_ini_n_fim_w_yearrange_forbid_future(yearini, yearfim=None):
   return refmonth_ini, refmonth_fim
 
 
+def trans_monthrange_into_dailydaterange_or_none(monthrangetuple):
+  try:
+    month_ini, month_fim = tuple(monthrangetuple)
+    month_ini = make_refmonth_or_none(month_ini)
+    month_fim = make_refmonth_or_none(month_fim)
+    if month_ini is None or month_fim is None:
+      return None, None
+    date_ini = month_ini
+    date_fim = get_monthslastdate_via_addition(month_fim)
+    return date_ini, date_fim
+  except (IndexError, TypeError, ValueError):
+    pass
+  return None, None
+
+
+def trans_monthrange_into_dailydaterange_or_current(monthrangetuple):
+  dateini, datefim = trans_monthrange_into_dailydaterange_or_none(monthrangetuple)
+  if dateini and datefim:
+    return dateini, datefim
+  today = datetime.date.today()
+  dateini = datetime.date(year=today.year, month=today.month, day=1)
+  datefim = get_monthslastdate_via_calendar(today)
+  return dateini, datefim
+
+
 def transform_month_n_year_to_refmonthdate(month, year):
   try:
     return datetime.date(year=year, month=month, day=1)
@@ -264,6 +291,17 @@ def transform_mmonth_to_refmonthdate(mmonth, year):
   except (AttributeError, ValueError):
     pass
   return None
+
+
+def trans_year_into_dailydaterange(year=None):
+  try:
+    year = int(year)
+  except (TypeError, ValueError):
+    today = datetime.date.today()
+    year = today.year
+  dateini = datetime.date(year=year, month=1, day=1)
+  datefim = datetime.date(year=year, month=12, day=31)
+  return dateini, datefim
 
 
 def get_monthslastday_via_calendar(pdate: datetime.date | None) -> int | None:

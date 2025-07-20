@@ -243,10 +243,10 @@ def dbfetch_nt_bcb_exrate_or_none_w_date_n_currencypair(pdate, currency_pair=Non
     curr_num, curr_den = currency_pair
   res_bcb_api1 = None
   session = exmod.consa.get_sa_session()
-  db_found_exch = session.query(exmod.ExchangeRateDate). \
-      filter(exmod.ExchangeRateDate.refdate == indate). \
-      filter(exmod.ExchangeRateDate.curr_num == curr_num). \
-      filter(exmod.ExchangeRateDate.curr_den == curr_den). \
+  db_found_exch = session.query(exmod.CurrencyPairExchangeRateOnDate). \
+      filter(exmod.CurrencyPairExchangeRateOnDate.refdate == indate). \
+      filter(exmod.CurrencyPairExchangeRateOnDate.curr_num == curr_num). \
+      filter(exmod.CurrencyPairExchangeRateOnDate.curr_den == curr_den). \
       first()
   if db_found_exch:
     log_msg = 'Quote was in db. Returning it: %s' % str(db_found_exch)
@@ -355,10 +355,10 @@ def fetch_cotacao_thru_the_api_for_its_not_in_db(indate):
 
 
 def find_db_cotacao_w_date_currnum_currden_session(pdate, curr_num, curr_den, session):
-  db_rec = session.query(exmod.ExchangeRateDate). \
-      filter(exmod.ExchangeRateDate.refdate == pdate). \
-      filter(exmod.ExchangeRateDate.curr_num == curr_num). \
-      filter(exmod.ExchangeRateDate.curr_den == curr_den). \
+  db_rec = session.query(exmod.CurrencyPairExchangeRateOnDate). \
+      filter(exmod.CurrencyPairExchangeRateOnDate.refdate == pdate). \
+      filter(exmod.CurrencyPairExchangeRateOnDate.curr_num == curr_num). \
+      filter(exmod.CurrencyPairExchangeRateOnDate.curr_den == curr_den). \
       first()
   if db_rec:
     scrmsg = f"rec date {pdate} has been found {db_rec}"
@@ -393,7 +393,7 @@ def put_cotacao_into_db_n_return_namedtuple(namedtuple_res_bcb_api1, pdate):
   db_rec = find_db_cotacao_w_date_currnum_currden_session(pdate, curr_num, curr_den, session)
   if db_rec:
     return update_db(namedtuple_res_bcb_api1, db_rec, session)
-  db_found_exch = exmod.ExchangeRateDate()
+  db_found_exch = exmod.CurrencyPairExchangeRateOnDate()
   session.add(db_found_exch)
   db_found_exch.curr_num = curr_num
   db_found_exch.curr_den = curr_den

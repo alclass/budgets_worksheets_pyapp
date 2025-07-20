@@ -16,12 +16,12 @@ class DateFileReaderWriter:
   This class organizes reading and writing of dates text files. The dates in these files are placed one at a line
     and are considered to be the first 'word' in the line
 
-  In a practical sense for this system, one of its use-case is to get_months_n_refmonths_as_dict_bt_refmonths a set of dates
+  In a practical sense for this system, one of its use-case is to dbfetch_months_n_refmonths_as_dict_bt_refmonths a set of dates
     which will be used for finding exchange rates for their dates
 
   As this class is a client for functions module:
     fs/datefs/read_write_datelist_files_fs.py
-      it can get_months_n_refmonths_as_dict_bt_refmonths dates in various formats varying sep (separator as '-'., '/' amd '.')
+      it can dbfetch_months_n_refmonths_as_dict_bt_refmonths dates in various formats varying sep (separator as '-'., '/' amd '.')
         and posorder as 'ymd', 'ydm', 'dmy' and 'mdy'  (y=year, m=month, d=day)
 
   As a class, some strategies were planed for it, the main ones are:

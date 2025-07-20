@@ -21,8 +21,10 @@ Also:
       through datetime. date's constructor.
 """
 import datetime
+import random
 from typing import Union  # Optional, List, Dict, Any, Tuple
 from dateutil.relativedelta import relativedelta
+DEFAULT_N_RANDOMDATES_TO_MAKE = 3
 
 
 def convert_str_or_attrsobj_to_date_or_none(str_or_obj):
@@ -233,14 +235,19 @@ def get_delta_diff_between_dates(
 def calc_n_completedays_between_dates(
     start_date: Union[str, datetime.date], end_date: Union[str, datetime.date]
   ) -> int | None:
-  # Get total months
-  delta = get_delta_diff_between_dates(start_date, end_date)
-  try:
-    total_months = delta.months + (delta.years * 12)
-    return total_months
-  except AttributeError:
-    pass
-  return None
+  """
+  Calculates the number of days elapsed between two dates
+  """
+  start_date = make_date_or_none(start_date)
+  end_date = make_date_or_none(end_date)
+  if start_date is None or end_date is None:
+    return None
+  if start_date > end_date:
+    tmpdate = start_date
+    start_date = end_date
+    end_date = tmpdate
+  diff = end_date - start_date
+  return diff.days
 
 
 def trans_convertabledates_to_datelist(datelist: list[datetime.date] | None) -> list[datetime.date]:
@@ -251,6 +258,68 @@ def trans_convertabledates_to_datelist(datelist: list[datetime.date] | None) -> 
     odate = make_date_or_none(pdate)
     odates.append(odate)
   return odates
+
+
+def trans_datelist_to_strdatelist(datelist, raises_if_any_not_date=False):
+  """
+  Transforms a date list into a string date list
+
+  Note: even when an element is not a datetime.date and raises_if_any_not_date = False,
+    this function also guarantees that the elements are transformable to dates
+    so that the end result will a list in which elements are in the form yyyy-mm-dd,
+    i.e., year dash month dash day
+  """
+  strdatelist = []
+  for pdate in datelist:
+    if not isinstance(pdate, datetime.date):
+      if raises_if_any_not_date:
+        errmsg = f'Error: An element (date={pdate}) is not a date in trans_datelist_to_strdatelist(). Halting.'
+        raise TypeError(errmsg)
+      else:
+        continue
+    pdate = make_date_or_none(pdate)
+    if pdate is None:
+      if raises_if_any_not_date:
+        errmsg = f'Error: An element (date={pdate}) is not a date in trans_datelist_to_strdatelist(). Halting.'
+        raise TypeError(errmsg)
+      else:
+        continue
+    strdate = str(pdate)
+    strdatelist.append(strdate)
+  return strdatelist
+
+
+def make_random_dates(p_n_randomdates_to_make=3, dateini=None, datefim=None):
+  """
+  5, '2025-05-09', '2025-07-09'
+  """
+  try:
+    n_randomdates_to_make = int(p_n_randomdates_to_make)
+  except TypeError:
+    n_randomdates_to_make = DEFAULT_N_RANDOMDATES_TO_MAKE
+  radius = n_randomdates_to_make * 3
+  today = datetime.date.today()
+  dateini = make_date_or_none(dateini)
+  if dateini is None:
+    dateini = today - relativedelta(days=radius)
+  datefim = make_date_or_none(datefim)
+  if datefim is None:
+    datefim = today
+  if dateini > datefim:
+    tmpdate = datefim
+    datefim = dateini
+    dateini = tmpdate
+  n_days_between = datefim - dateini
+  days_bucket_indices = list(range(n_days_between.days))
+  randomdates = []
+  while len(randomdates) < n_randomdates_to_make or len(days_bucket_indices) == 0:
+    yet_to_draw = len(days_bucket_indices)
+    index_drawn = random.randint(0, yet_to_draw-1)
+    del days_bucket_indices[index_drawn]
+    randomdate = dateini + relativedelta(days=index_drawn)
+    randomdates.append(randomdate)
+  randomdates.sort()
+  return randomdates
 
 
 def swap_dates_if_first_is_greater_than_second(date1, date2):
@@ -311,6 +380,11 @@ def adhoctest3():
   print(f"newest = {newest}")
   oldest = find_oldest_name_n_its_prefix_date_in_strlist(strlines)
   print(f"oldest = {oldest}")
+  n_dates, dateini, datefim = 5, '2025-05-09', '2025-07-09'
+  randomdates = make_random_dates(n_dates, dateini, datefim)
+  scrmsg = f"""n_dates, dateini, datefim = {n_dates}, {dateini}, {datefim}
+  randomdates = {randomdates}"""
+  print(scrmsg)
 
 
 def process():

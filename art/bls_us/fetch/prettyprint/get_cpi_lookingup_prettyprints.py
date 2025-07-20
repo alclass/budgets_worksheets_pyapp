@@ -62,7 +62,7 @@ class FromPrettyPrintCPIYearlyGetter:
   def refmonths_n_cpis_dict(self):
     """
     Dynamic attribute that keeps _refmonth_n_cpis_dict
-    It's a lazy-get_months_n_refmonths_as_dict_bt_refmonths i.e., it's get_months_n_refmonths_as_dict_bt_refmonths upon first get
+    It's a lazy-dbfetch_months_n_refmonths_as_dict_bt_refmonths i.e., it's dbfetch_months_n_refmonths_as_dict_bt_refmonths upon first get
     """
     if self._refmonths_n_cpis_dict is None:
       self.read_n_set_refmonth_n_cpis_dict()

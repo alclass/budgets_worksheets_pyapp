@@ -3,7 +3,7 @@ models/geoplaces/ceps_via_cepaberto.py
   has a function to access the REST API available from cepaberto.com
 
 The API needs an authorization token which is kept outside gitrepo
-  (in script local_settings.py which is get_months_n_refmonths_as_dict_bt_refmonths by settings.py, the latter in gitrepo)
+  (in script local_settings.py which is dbfetch_months_n_refmonths_as_dict_bt_refmonths by settings.py, the latter in gitrepo)
 
 Accessing the cepaberto API:
 Example response (on 2023-12-25) from https://www.cepaberto.com/api/v3/cep?cep=20260260
