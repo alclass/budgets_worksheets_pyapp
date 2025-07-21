@@ -12,6 +12,7 @@ from dateutil.relativedelta import relativedelta
 import settings as sett
 import lib.indices.bcb_br.bcb_remote_api_fin_cls as apicls
 import lib.db.db_settings as dbs
+import lib.db.sqlalchemy_connection_clsmod as exmod  # .SqlAlchemyConnector
 import lib.datefs.convert_to_date_wo_intr_sep_posorder as cnv
 import lib.datefs.convert_to_datetime_wo_intr_sep_posorder as cvdt
 # import art.bcb_br.exrate.currency_exchange_rate_model as exmod
@@ -74,6 +75,15 @@ class CascadeApiDbFileBcbCotacaoDiaFetcher:
     self.curr_den = curr_den
     self.buyprice = None
     self.sellprice = None
+    self._session = None
+
+  @property
+  def session(self):
+    if self._session is not None:
+      return self._session
+    sqlal = exmod.SqlAlchemyConnector()
+    self._session = sqlal.get_sa_session()
+    return self._session
 
   def treat_attrs(self):
     pass
@@ -82,8 +92,7 @@ class CascadeApiDbFileBcbCotacaoDiaFetcher:
     pass
 
   def try_fetch_cotacaodia_in_db(self):
-
-    fetchfs.find_db_cotacao_w_date_currnum_currden_session(self.daysdate, self.curr_num, self.curr_den)
+    fetchfs.find_db_cotacao_w_date_currnum_currden_session(self.daysdate, self.curr_num, self.curr_den, self.session)
     pass
 
   def process(self):
@@ -117,7 +126,7 @@ class BatchApiDbFileBcbCotacaoDiaFetcher:
         b) date_fr (date from)
       were given, only one can. Please, change input parameters and retry.
 
-      datelist=[{self.datelist}]  | dates_fr={self.dates_fr}
+      datelist=[{self.datelist}]  | dates_fr={self.date_fr}
       ------------------------------------------------------------------------- 
       """
       raise ValueError(errmsg)
@@ -138,11 +147,11 @@ class BatchApiDbFileBcbCotacaoDiaFetcher:
   def verify_datelist(self):
     if self.datelist is None or len(self.datelist) == 0:
       return
-    types_fine = list(map(lambda e: isinstance(e, datetime.date), self._currency_dates))
+    types_fine = list(map(lambda e: isinstance(e, datetime.date), self.datelist))
     if False not in types_fine:
       return
     verified_dates = []
-    for pdate in self._currency_dates:
+    for pdate in self.datelist:
       indate = cnv.make_date_or_none(pdate)
       if indate is None:
         continue
@@ -150,9 +159,9 @@ class BatchApiDbFileBcbCotacaoDiaFetcher:
     self._currency_dates = verified_dates
 
   def verify_dates_fr_to(self):
-    if self.dates_fr_to is None:
+    if self.date_fr is None:
       return
-    date_fr, date_to = self.dates_fr_to
+    date_fr, date_to = self.date_fr, self.date_to
     date_fr = cnv.make_date_or_none(date_fr)
     date_to = cnv.make_date_or_none(date_to)
     if date_to < date_fr:
@@ -242,12 +251,13 @@ def dbfetch_nt_bcb_exrate_or_none_w_date_n_currencypair(pdate, currency_pair=Non
   if currency_pair is not None:
     curr_num, curr_den = currency_pair
   res_bcb_api1 = None
-  session = exmod.consa.get_sa_session()
+  sqlal = exmod.SqlAlchemyConnector()
+  session = sqlal.get_sa_session()
   db_found_exch = session.query(exmod.CurrencyPairExchangeRateOnDate). \
-      filter(exmod.CurrencyPairExchangeRateOnDate.refdate == indate). \
-      filter(exmod.CurrencyPairExchangeRateOnDate.curr_num == curr_num). \
-      filter(exmod.CurrencyPairExchangeRateOnDate.curr_den == curr_den). \
-      first()
+    filter(exmod.CurrencyPairExchangeRateOnDate.refdate == indate). \
+    filter(exmod.CurrencyPairExchangeRateOnDate.curr_num == curr_num). \
+    filter(exmod.CurrencyPairExchangeRateOnDate.curr_den == curr_den). \
+    first()
   if db_found_exch:
     log_msg = 'Quote was in db. Returning it: %s' % str(db_found_exch)
     logger.info(log_msg)

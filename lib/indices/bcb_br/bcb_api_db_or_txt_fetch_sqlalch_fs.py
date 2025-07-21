@@ -14,6 +14,9 @@ from dateutil.relativedelta import relativedelta
 import settings as sett
 import lib.indices.bcb_br.bcb_remote_api_fin_cls as apicls
 import lib.datefs.convert_to_date_wo_intr_sep_posorder as dtfs
+import art.bcb_br.classes.modelbase_currency_exchrate as exrt  # .BaseCurrExchRate
+import lib.db.sqlalchemy_connection_clsmod as sqlconn # .SqlAlchemyConnector
+import art.bcb_br.classes.modelsqlalch_currency_exchrate as exrtmod  # .ExchangeRateDate
 # import fs.db.db_settings as dbs
 # import fs.datefs.convert_to_datetime_wo_intr_sep_posorder as cvdt
 # import models.exrate.currency_exchange_rate_model as exmod
@@ -25,6 +28,30 @@ modlevelogfp = os.path.join(sett.get_datafolder_abspath(), modlevelogfn)
 logging.basicConfig(filename=str(modlevelogfp), filemode='w', format='%(name)s %(levelname)s %(message)s')
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)  # DEBUG means it and all others levels will be logged
+
+
+class DbOrTxtExchangeRateFetcher(exrt.BaseCurrExchRate):
+
+  def __init__(self, date_fr, date_to, datelist, currency_pair):
+    super(self, date_fr, date_to, datelist, currency_pair)
+    self.date_fr, self.date_to = date_fr, date_to
+    self.datelist = datelist
+    self.currency_pair = currency_pair
+    sqlal = sqlconn.SqlAlchemyConnector()
+    self.session = sqlal.get_sa_session()
+
+  def find_db_cotacao_w_date_currnum_currden_session(self, pdate):
+    o = find_db_cotacao_w_date_currnum_currden_session(pdate, self.curr_num, self.curr_den, self.session)
+    print(o)
+
+  def run_fetch_thru_dates(self):
+    actual_datelist = []
+    if self.datelist:
+      actual_datelist = self.datelist
+    else:
+      actual_datelist = self.gen_datelist_fr_to
+    for pdate in actual_datelist:
+      self.find_db_cotacao_w_date_currnum_currden_session()
 
 
 def fetch_cotacao_thru_the_api_for_its_not_in_db(indate):
@@ -52,10 +79,10 @@ def find_db_cotacao_w_date_currnum_currden_session(pdate, curr_num, curr_den, se
 
     look up where is the other one: exmod.ExchangeRateDate
   """
-  db_rec = session.query(apicls.BcbCotacaoDiaApiCallerExchangeRateDate). \
-      filter(exmod.CurrencyPairExchangeRateOnDate.refdate == pdate). \
-      filter(exmod.CurrencyPairExchangeRateOnDate.curr_num == curr_num). \
-      filter(exmod.CurrencyPairExchangeRateOnDate.curr_den == curr_den). \
+  db_rec = session.query(exrtmod.ExchangeRateDate). \
+      filter(exrtmod.ExchangeRateDate.refdate == pdate). \
+      filter(exrtmod.ExchangeRateDate.curr_num == curr_num). \
+      filter(exrtmod.ExchangeRateDate.curr_den == curr_den). \
       first()
   if db_rec:
     scrmsg = f"rec date {pdate} has been found {db_rec}"
@@ -90,7 +117,7 @@ def put_cotacao_into_db_n_return_namedtuple(namedtuple_res_bcb_api1, pdate):
   db_rec = find_db_cotacao_w_date_currnum_currden_session(pdate, curr_num, curr_den, session)
   if db_rec:
     return update_db(namedtuple_res_bcb_api1, db_rec, session)
-  db_found_exch = exmod.CurrencyPairExchangeRateOnDate()
+  db_found_exch = exmod.BaseCurrExchRate()
   session.add(db_found_exch)
   db_found_exch.curr_num = curr_num
   db_found_exch.curr_den = curr_den
@@ -112,7 +139,12 @@ def put_cotacao_into_db_n_return_namedtuple(namedtuple_res_bcb_api1, pdate):
 
 
 def adhoc_test():
-  pass
+  pdate = '2020-10-15'
+  curr_num, curr_den = 'BRL', 'USD'
+  sqlal = sqlconn.SqlAlchemyConnector()
+  session = sqlal.get_sa_session()
+  o = find_db_cotacao_w_date_currnum_currden_session(pdate, curr_num, curr_den, session)
+  print(o)
 
 
 def process():

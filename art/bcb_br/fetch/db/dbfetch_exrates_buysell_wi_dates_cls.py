@@ -312,7 +312,7 @@ class BCBExchangeRateDbFetcher:
       refdate = dtfs.make_date_or_none(row['refdate'])
       if refdate is None:
         continue
-      exrt_o = exrt.CurrencyPairExchangeRateOnDate(refdate)
+      exrt_o = exrt.BaseCurrExchRate(refdate)
       exrt_o.buypriceint = row['buypriceint']
       exrt_o.sellpriceint = row['sellpriceint']
       self.n_daily_exrates += 1
