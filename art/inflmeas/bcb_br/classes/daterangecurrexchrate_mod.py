@@ -17,7 +17,7 @@ from dateutil.relativedelta import relativedelta
 # from urllib3.contrib.pyopenssl import orig_util_SSLContext
 import lib.db.db_settings as dbs
 import lib.datefs.convert_to_date_wo_intr_sep_posorder as cnv
-import art.bcb_br.classes.daycurrexchrate_mod as dayexrtmod  # dayexrtmod.DayCurrExchRate
+import art.inflmeas.bcb_br.classes.daycurrexchrate_mod as dayexrtmod  # dayexrtmod.DayCurrExchRate
 EXRATE_TABLENAME = dbs.EXRATE_TABLENAME
 BRL, EUR, USD = 'BRL', 'EUR', 'USD'
 DEFAULT_CURR_NUM = BRL

@@ -5,7 +5,7 @@ SELECT * FROM daily_exchange_rates WHERE quotesdate = "2022-04-01";
 """
 import datetime
 from dateutil.relativedelta import relativedelta
-import art.bcb_br.exrate.currency_exchange_rate_model as exrt  # exrt.ExchangeRateDate()
+import art.inflmeas.bcb_br.exrate.currency_exchange_rate_model as exrt  # exrt.ExchangeRateDate()
 import lib.datefs.dategenerators as gendt
 import lib.datefs.years_date_functions as yedt
 import lib.datefs.convert_to_date_wo_intr_sep_posorder as cnv

@@ -16,7 +16,7 @@ import json
 import math
 import sqlite3
 from dateutil.relativedelta import relativedelta
-import art.bcb_br.classes.modelbase_currency_exchrate as exrt  # exrt.CurrencyPairExchangeRateOnDate
+import art.inflmeas.bcb_br.classes.modelbase_currency_exchrate as exrt  # exrt.CurrencyPairExchangeRateOnDate
 import lib.datefs.convert_to_date_wo_intr_sep_posorder as dtfs
 import lib.datefs.refmonths_mod as rmd
 import lib.db.sqlite.db_sqlite_manager as sqlim  # sqlim.SqliteHandler

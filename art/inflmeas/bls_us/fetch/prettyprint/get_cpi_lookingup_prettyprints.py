@@ -11,9 +11,8 @@ The script is useful when either the API is not available or the sqlite-db file 
 import argparse
 import datetime
 import lib.datefs.refmonths_mod as rmfs
-import art.bls_us.fetch.prettyprint.read_cpis_from_prettyprintdb as prettyfreader
-import lib.db.sqlite.db_sqlite_manager as sqlim  # sqlim.SqliteHandler
-import art.bls_us.classes.cpis_clsmod as cpimod
+import art.inflmeas.bls_us.fetch.prettyprint.read_cpis_from_prettyprintdb as prettyfreader
+import art.inflmeas.bls_us.classes.cpis_clsmod as cpimod
 # from commands.fetch.bls_us.read_cpis_from_db import KNOWN_SERIESID  # CUUR0000SA0, SUUR0000SA0, others?
 DEFAULT_SERIESID = cpimod.SERIESID_CUUR0000SA0
 # Parse command-line arguments

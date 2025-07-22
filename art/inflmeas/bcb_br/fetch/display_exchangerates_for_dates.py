@@ -33,7 +33,7 @@ import calendar
 import datetime
 # import datetime
 import sys
-import art.bcb_br.fetch.report.corr_monet_n_indices_calculator_from_dates as composite
+import art.inflmeas.bcb_br.fetch.report.corr_monet_n_indices_calculator_from_dates as composite
 import lib.indices.bcb_br.bcb_cotacao_fetcher_from_db_or_api as fin
 import lib.datefs.dategenerators as gendt
 import lib.datefs.refmonths_mod as rmd

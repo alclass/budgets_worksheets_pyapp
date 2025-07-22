@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-models/exrate/currency_exchange_rate_model.py
+art/inflmeas/bcb_br/classes/daycurrexchrate_sqlal.py
   models the sql-table `currencies_exchangerates` via SqlAlchemy
 
 At the time of this writing, a sqlite file maintains the table.
@@ -10,23 +10,19 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, Date, Time, String, TIMESTAMP
 from sqlalchemy.sql.expression import asc
 import settings as sett
-import lib.db.db_settings as dbs
 import lib.datefs.convert_to_date_wo_intr_sep_posorder as cnv
 import lib.datefs.convert_to_datetime_wo_intr_sep_posorder as cvdt
+import art.inflmeas.bcb_br.classes as pkg
 # import lib.db.conn_sa as consa
 Base = declarative_base()
-EXRATE_TABLENAME = dbs.EXRATE_TABLENAME
-cur_seriesid = 'CUUR0000SA0'
-sur_seriesid = 'SUUR0000SA0'
-DEFAULT_SERIESID = 'CUUR0000SA0'
-KNOWN_SERIESID = ['CUUR0000SA0', 'SUUR0000SA0']
+EXCHRATE_DBTABLENAME = pkg.EXCHRATE_DBTABLENAME
 
 
 class SADayCurrExchRate(Base):
 
   EXCHANGE_RATE_DECIMAL_TO_INTEGER = 10000  # for keeping quotevalue as integer in db and packing/unpacking it here
 
-  __tablename__ = EXRATE_TABLENAME
+  __tablename__ = EXCHRATE_DBTABLENAME
 
   id = Column(Integer, primary_key=True)
   curr_num = Column(String(3), default=sett.CURR_BRL)

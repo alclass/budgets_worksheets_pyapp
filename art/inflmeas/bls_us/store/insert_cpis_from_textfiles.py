@@ -34,8 +34,8 @@ import datetime
 import sqlite3
 import settings as sett
 import lib.datefs.refmonths_mod as rmd
-from art.bls_us.bls_clss.cpis_cls import SERIESID_LIST
-from art.bls_us..bls_clss.cpis_cls import DEFAULT_SERIESID
+from art.inflmeas.bls_us import SERIESID_LIST
+from art.inflmeas.bls_us import DEFAULT_SERIESID
 import commands.fetch.bls_us.read_cpis_from_prettyprintdb as ppdb
 BLS_CPI_TABLENAME = 'bls_us_indices'
 

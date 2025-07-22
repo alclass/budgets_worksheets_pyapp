@@ -41,7 +41,7 @@ last two:
 import os
 import requests
 import pandas as pd
-import art.ipea_br.folders_n_files_ipea_data as ppdt  # .get_output_filepath
+import art.inflmeas.ipea_br.folders_n_files_ipea_data as ppdt  # .get_output_filepath
 IPEA_IPCA_URL = "http://ipeadata.gov.br/api/odata4/ValoresSerie(SERCODIGO='PRECOS12_IPCA12')"
 
 

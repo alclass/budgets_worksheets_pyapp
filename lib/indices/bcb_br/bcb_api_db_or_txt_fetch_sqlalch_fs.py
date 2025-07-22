@@ -6,17 +6,14 @@ lib/indices/bcb_br/bcb_api_db_or_txt_fetch_sqlalch_fs.py
 import fs.datefs.introspect_dates as intr  # .convert_strdate_to_date_or_none_w_sep_n_posorder
 """
 # from sympy.codegen.ast import continue_
-import copy
 import datetime
 import logging
 import os
-from dateutil.relativedelta import relativedelta
 import settings as sett
 import lib.indices.bcb_br.bcb_remote_api_fin_cls as apicls
-import lib.datefs.convert_to_date_wo_intr_sep_posorder as dtfs
-import art.bcb_br.classes.modelbase_currency_exchrate as exrt  # .BaseCurrExchRate
+import art.inflmeas.bcb_br.classes.modelbase_currency_exchrate as exrt  # .BaseCurrExchRate
 import lib.db.sqlalchemy_connection_clsmod as sqlconn # .SqlAlchemyConnector
-import art.bcb_br.classes.modelsqlalch_currency_exchrate as exrtmod  # .ExchangeRateDate
+import art.inflmeas.bcb_br.classes.daycurrexchrate_sqlal as exrtmod  # .ExchangeRateDate
 # import fs.db.db_settings as dbs
 # import fs.datefs.convert_to_datetime_wo_intr_sep_posorder as cvdt
 # import models.exrate.currency_exchange_rate_model as exmod

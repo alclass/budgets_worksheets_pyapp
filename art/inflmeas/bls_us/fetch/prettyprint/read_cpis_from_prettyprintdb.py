@@ -18,7 +18,7 @@ import re
 # from fs.indices.bls_us.report_reqstatus_in_jsondatafiles_cls import DEFAULT_BLS_DATA_FOLDERNAME
 # import fs.db.db_settings as dbs
 # from models.budgets.pb.tmp1 import recomp
-from art.bls_us.bls_clss import cpis_cls
+from art.inflmeas.bls_us import cpis_cls
 import settings as sett
 from commands.fetch.bls_us.read_cpis_from_db import DEFAULT_SERIESID
 from commands.fetch.bls_us.read_cpis_from_db import KNOWN_SERIESID

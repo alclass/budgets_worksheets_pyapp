@@ -6,7 +6,7 @@ dbfetchcpis.py
 import datetime
 import sqlite3
 import settings as sett
-import art.bls_us.bls_clss as cps
+import art.inflmeas.bls_us.bls_clss as cps
 
 
 def get_connection():
