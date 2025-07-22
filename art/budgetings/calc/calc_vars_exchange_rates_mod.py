@@ -75,7 +75,7 @@ def list_min_max(inidate, findate):
   session = confs.get_sa_session()
   minmax = MinMax()
   for pdate in dtfs.generate_daterange(inidate, findate):
-    exchanger = session.query(mmod.BaseCurrExchRate).filter(mmod.BaseCurrExchRate.refdate == pdate).first()
+    exchanger = session.query(mmod.DayCurrExchRate).filter(mmod.DayCurrExchRate.refdate == pdate).first()
     if exchanger is None or exchanger.buyprice is None:
       continue
     minmax.find_min_max_n_dates(exchanger)

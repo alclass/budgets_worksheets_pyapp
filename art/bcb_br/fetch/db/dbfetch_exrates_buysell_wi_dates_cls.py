@@ -51,7 +51,7 @@ parser.add_argument(
 args = parser.parse_args()
 
 
-class BCBExchangeRateDbFetcher:
+class BCBExchangeRateNonSAFetcher:
 
   tablename = 'currencies_exchangerates'
   days_difference_when_one_of_the_dates_misses = 10
@@ -312,7 +312,7 @@ class BCBExchangeRateDbFetcher:
       refdate = dtfs.make_date_or_none(row['refdate'])
       if refdate is None:
         continue
-      exrt_o = exrt.BaseCurrExchRate(refdate)
+      exrt_o = exrt.DayCurrExchRate(refdate)
       exrt_o.buypriceint = row['buypriceint']
       exrt_o.sellpriceint = row['sellpriceint']
       self.n_daily_exrates += 1
@@ -409,7 +409,7 @@ def adhoctest1():
   # date_to = "2020-10-25"
   date_to = datetime.date.today()
   print('adhoctest1 Looking up exchange rate for date range: =', date_fr, '|', date_to)
-  fetcher = BCBExchangeRateDbFetcher(
+  fetcher = BCBExchangeRateNonSAFetcher(
     dailydate_fr=date_fr,
     dailydate_to=date_to
   )
@@ -453,7 +453,7 @@ def get_args():
 def process():
   dateini, datefim = get_args()
   datelist = dtfs.make_random_dates(5, '2025-05-09', '2025-07-09')
-  fetcher = BCBExchangeRateDbFetcher(
+  fetcher = BCBExchangeRateNonSAFetcher(
     dailydate_fr=dateini,
     dailydate_to=datefim,
     datelist=datelist

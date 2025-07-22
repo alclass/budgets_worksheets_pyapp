@@ -22,7 +22,7 @@ DEFAULT_SERIESID = 'CUUR0000SA0'
 KNOWN_SERIESID = ['CUUR0000SA0', 'SUUR0000SA0']
 
 
-class ExchangeRateDate(Base):
+class SADayCurrExchRate(Base):
 
   EXCHANGE_RATE_DECIMAL_TO_INTEGER = 10000  # for keeping quotevalue as integer in db and packing/unpacking it here
 
@@ -122,7 +122,7 @@ class ExchangeRateDate(Base):
 def ahdoc_test_insert_etc():
   session = consa.get_sa_session()
   quotesdate = cnv.make_date_or_today('2019-12-31')
-  exrate = session.query(ExchangeRateDate).filter(ExchangeRateDate.refdate == quotesdate).first()
+  exrate = session.query(SADayCurrExchRate).filter(SADayCurrExchRate.refdate == quotesdate).first()
   if exrate is None:
     print(quotesdate, 'does not exist in db')
   else:
@@ -136,11 +136,11 @@ def print_db():
   Base.metadata.create_all(sqlalchemy_engine)
   sessionhandler = consa.get_sa_session_handler()
   session = sessionhandler()
-  exrates = session.query(ExchangeRateDate). \
-      order_by(asc(ExchangeRateDate.refdate)).\
+  exrates = session.query(SADayCurrExchRate). \
+      order_by(asc(SADayCurrExchRate.refdate)).\
       all()
   scrmsg = f"""ExchangeRateDate: 1) create table | 2) read table 
-  tablename = {ExchangeRateDate.__tablename__} | Base.metadata.create_all(con.sqlalchemy_engine
+  tablename = {SADayCurrExchRate.__tablename__} | Base.metadata.create_all(con.sqlalchemy_engine
   """
   print(scrmsg)
   for i, exrate in enumerate(exrates):

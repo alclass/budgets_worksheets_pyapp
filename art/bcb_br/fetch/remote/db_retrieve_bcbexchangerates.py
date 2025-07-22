@@ -31,7 +31,7 @@ DEFAULT_CURRENCY_TO = bcbparams.DEFAULT_CURRENCY_TO
 REGISTERED_CURRENCIES_3LETTER = bcbparams.REGISTERED_CURRENCIES_3LETTER
 # import fs.datefs.dategenerators as gendt
 # import fs.datefs.read_write_datelist_files_fs as rwdt
-sqlite3.register_adapter(dateconverter, 'datetime.date'):
+# sqlite3.register_adapter(dateconverter, 'datetime.date'):
 
 
 def dateconverter():

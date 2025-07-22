@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)  # DEBUG means it and all others levels will be logged
 
 
-class DbOrTxtExchangeRateFetcher(exrt.BaseCurrExchRate):
+class DbOrTxtExchangeRateFetcher(exrt.DayCurrExchRate):
 
   def __init__(self, date_fr, date_to, datelist, currency_pair):
     super(self, date_fr, date_to, datelist, currency_pair)
@@ -79,10 +79,10 @@ def find_db_cotacao_w_date_currnum_currden_session(pdate, curr_num, curr_den, se
 
     look up where is the other one: exmod.ExchangeRateDate
   """
-  db_rec = session.query(exrtmod.ExchangeRateDate). \
-      filter(exrtmod.ExchangeRateDate.refdate == pdate). \
-      filter(exrtmod.ExchangeRateDate.curr_num == curr_num). \
-      filter(exrtmod.ExchangeRateDate.curr_den == curr_den). \
+  db_rec = session.query(exrtmod.SADayCurrExchRate). \
+      filter(exrtmod.SADayCurrExchRate.refdate == pdate). \
+      filter(exrtmod.SADayCurrExchRate.curr_num == curr_num). \
+      filter(exrtmod.SADayCurrExchRate.curr_den == curr_den). \
       first()
   if db_rec:
     scrmsg = f"rec date {pdate} has been found {db_rec}"
@@ -117,7 +117,7 @@ def put_cotacao_into_db_n_return_namedtuple(namedtuple_res_bcb_api1, pdate):
   db_rec = find_db_cotacao_w_date_currnum_currden_session(pdate, curr_num, curr_den, session)
   if db_rec:
     return update_db(namedtuple_res_bcb_api1, db_rec, session)
-  db_found_exch = exmod.BaseCurrExchRate()
+  db_found_exch = exmod.DayCurrExchRate()
   session.add(db_found_exch)
   db_found_exch.curr_num = curr_num
   db_found_exch.curr_den = curr_den

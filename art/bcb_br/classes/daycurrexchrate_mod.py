@@ -21,7 +21,7 @@ DEFAULT_CURR_DEN = USD
 REGISTERED_3LETTER_CURRENCIES = [BRL, USD, EUR]
 
 
-class BaseCurrExchRate:
+class DayCurrExchRate:
 
   n_decplaces_for_div_intprices = 4  # this means intprices should be divided by 10 ** n_decplaces_for_div_intprices
 
@@ -99,7 +99,7 @@ class BaseCurrExchRate:
       pass
 
   def make_n_get_exrtobj_with_inverted_currency_pairs(self):
-    o_inv = BaseCurrExchRate(self.dailydate, curr_num=self.curr_den, curr_den=self.curr_num)
+    o_inv = DayCurrExchRate(self.dailydate, curr_num=self.curr_den, curr_den=self.curr_num)
     inv_sellprice = 1 / self.buyprice
     o_inv.buypriceint = inv_sellprice * self.divider_for_intprices
     inv_sellprice = 1 / self.sellprice
@@ -125,7 +125,7 @@ class BaseCurrExchRate:
 
 def adhoc_test():
   dailydate = '2024-12-13'
-  exrt_o = BaseCurrExchRate(dailydate=dailydate)
+  exrt_o = DayCurrExchRate(dailydate=dailydate)
   exrt_o.buypriceint = 54321
   exrt_o.sellpriceint = 54422
   print(exrt_o)

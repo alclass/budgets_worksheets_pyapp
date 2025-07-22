@@ -32,8 +32,8 @@ def show_exrates_on_date(pdate):
   # weekdays range from 0 to 6 where 0 is Monday 6 is Sunday
   weekday3letter = yedt.get_weekday3letter_from_date(indate)
   session = exrt.consa.get_sa_session()
-  exchanger = session.query(exrt.BaseCurrExchRate). \
-      filter(exrt.BaseCurrExchRate.refdate == indate). \
+  exchanger = session.query(exrt.DayCurrExchRate). \
+      filter(exrt.DayCurrExchRate.refdate == indate). \
       first()
   if exchanger:
     print('weekday', weekday3letter, indate, exchanger)
