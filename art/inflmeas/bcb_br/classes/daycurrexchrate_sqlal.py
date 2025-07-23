@@ -13,7 +13,7 @@ import settings as sett
 import lib.datefs.convert_to_date_wo_intr_sep_posorder as cnv
 import lib.datefs.convert_to_datetime_wo_intr_sep_posorder as cvdt
 import art.inflmeas.bcb_br.classes as pkg
-# import lib.db.conn_sa as consa
+import lib.db.sqlalch.sqlalchemy_connection_clsmod as consa
 Base = declarative_base()
 EXCHRATE_DBTABLENAME = pkg.EXCHRATE_DBTABLENAME
 
@@ -128,10 +128,8 @@ def ahdoc_test_insert_etc():
 
 
 def print_db():
-  sqlalchemy_engine = consa.get_sa_engine()
-  Base.metadata.create_all(sqlalchemy_engine)
-  sessionhandler = consa.get_sa_session_handler()
-  session = sessionhandler()
+  sqlal_o = consa.SqlAlchemyConnector()
+  session = sqlal_o.get_sa_session()
   exrates = session.query(SADayCurrExchRate). \
       order_by(asc(SADayCurrExchRate.refdate)).\
       all()

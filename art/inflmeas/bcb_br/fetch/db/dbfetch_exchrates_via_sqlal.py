@@ -30,8 +30,20 @@ class Fetcher(daterang.DateRangeCurrExchRate):
     # Query for events before a specific date
     query = select(tab).where(refdate >= self.date_fr).where(refdate <= self.date_to)
     results = self.session.execute(query).scalars().all()
-    for res in results:
-      print(res)
+    for i, res in enumerate(results):
+      seq = i + 1
+      print(seq, res)
+
+  def fetch2(self):
+    """
+
+    """
+    tab = exchsqlal.SADayCurrExchRate
+    results = self.session.query(tab).filter(
+      tab.refdate >= self.date_fr,
+      tab.refdate <= self.date_to
+    ).all()
+    return results
 
   def fetch(self):
     tab = exchsqlal.SADayCurrExchRate
@@ -57,6 +69,13 @@ def adhoctest():
   # fetcher.process()
   fetcher.fetch_by_daterange()
   print(fetcher)
+  print('dict size =', len(fetcher.dates_n_exchrates_dict))
+  print('fetch2')
+  results = fetcher.fetch2()
+  for i, res in enumerate(results):
+    seq = i + 1
+    print(seq, res)
+  print('dict size =', len(fetcher.dates_n_exchrates_dict))
 
 
 def process():
