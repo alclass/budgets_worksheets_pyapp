@@ -12,7 +12,7 @@ from dateutil.relativedelta import relativedelta
 import settings as sett
 import lib.indices.bcb_br.bcb_remote_api_fin_cls as apicls
 import lib.db.db_settings as dbs
-import lib.db.sqlalchemy_connection_clsmod as exmod  # .SqlAlchemyConnector
+import lib.db.sqlalch.sqlalchemy_connection_clsmod as exmod  # .SqlAlchemyConnector
 import lib.datefs.convert_to_date_wo_intr_sep_posorder as cnv
 import lib.datefs.convert_to_datetime_wo_intr_sep_posorder as cvdt
 # import art.bcb_br.exrate.currency_exchange_rate_model as exmod

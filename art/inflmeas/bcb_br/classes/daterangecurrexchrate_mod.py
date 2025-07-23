@@ -14,20 +14,20 @@ import lib.datefs.convert_to_datetime_wo_intr_sep_posorder as cvdt
 """
 import copy
 from dateutil.relativedelta import relativedelta
-# from urllib3.contrib.pyopenssl import orig_util_SSLContext
-import lib.db.db_settings as dbs
+import art.inflmeas.bcb_br.classes as pkg  # pkg
 import lib.datefs.convert_to_date_wo_intr_sep_posorder as cnv
 import art.inflmeas.bcb_br.classes.daycurrexchrate_mod as dayexrtmod  # dayexrtmod.DayCurrExchRate
-EXRATE_TABLENAME = dbs.EXRATE_TABLENAME
-BRL, EUR, USD = 'BRL', 'EUR', 'USD'
-DEFAULT_CURR_NUM = BRL
-DEFAULT_CURR_DEN = USD
-REGISTERED_3LETTER_CURRENCIES = [BRL, USD, EUR]
+EXCHRATE_DBTABLENAME = pkg.EXCHRATE_DBTABLENAME
+BRL, EUR, USD = pkg.BRL, pkg.EUR, pkg.USD
+DEFAULT_CURR_NUM = pkg.DEFAULT_CURR_NUM
+DEFAULT_CURR_DEN = pkg.DEFAULT_CURR_DEN
+REGISTERED_3LETTER_CURRENCIES = pkg.REGISTERED_3LETTER_CURRENCIES
 
 
 class DateRangeCurrExchRate:
 
-  n_decplaces_for_div_intprices = 4  # this means intprices should be divided by 10 ** n_decplaces_for_div_intprices
+  # db-field-intprices should be divided by 10 ** n_decplaces_for_div_intprices
+  n_decplaces_for_div_intprices = pkg.n_decplaces_for_div_intprices
 
   def __init__(self, date_fr=None, date_to=None, datelist=None, curr_num=None, curr_den=None):
     self.date_fr = date_fr
@@ -116,6 +116,7 @@ class DateRangeCurrExchRate:
   def total_dates(self):
     if self.datelist:
       return len(self.datelist)
+    # at this point, treat_dates() has guaranted that date_fr and date_to are datetime.date's
     diff = self.date_to - self.date_fr
     return diff.days + 1
 

@@ -12,9 +12,9 @@ Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 session = Session()
 """
-import lib.db.sqlalchemy_connection_clsmod as sqlalch  # sqlalch.SqlAlchemyConnector
+import lib.db.sqlalch.sqlalchemy_connection_clsmod as sqlalch  # sqlalch.SqlAlchemyConnector
 import sqlalchemy
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Float
+from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.orm import sessionmaker
 Base = sqlalchemy.orm.declarative_base()
 

@@ -12,7 +12,7 @@ import os
 import settings as sett
 import lib.indices.bcb_br.bcb_remote_api_fin_cls as apicls
 import art.inflmeas.bcb_br.classes.modelbase_currency_exchrate as exrt  # .BaseCurrExchRate
-import lib.db.sqlalchemy_connection_clsmod as sqlconn # .SqlAlchemyConnector
+import lib.db.sqlalch.sqlalchemy_connection_clsmod as sqlconn # .SqlAlchemyConnector
 import art.inflmeas.bcb_br.classes.daycurrexchrate_sqlal as exrtmod  # .ExchangeRateDate
 # import fs.db.db_settings as dbs
 # import fs.datefs.convert_to_datetime_wo_intr_sep_posorder as cvdt

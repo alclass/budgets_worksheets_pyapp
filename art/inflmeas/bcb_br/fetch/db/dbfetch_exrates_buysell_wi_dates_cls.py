@@ -16,11 +16,11 @@ import json
 import math
 import sqlite3
 from dateutil.relativedelta import relativedelta
-import art.inflmeas.bcb_br.classes.modelbase_currency_exchrate as exrt  # exrt.CurrencyPairExchangeRateOnDate
+import art.inflmeas.bcb_br.classes.daycurrexchrate_mod as exrt  # exrt.CurrencyPairExchangeRateOnDate
+import art.inflmeas.bcb_br.classes as pkg  # pkg.<attribute>
 import lib.datefs.convert_to_date_wo_intr_sep_posorder as dtfs
 import lib.datefs.refmonths_mod as rmd
 import lib.db.sqlite.db_sqlite_manager as sqlim  # sqlim.SqliteHandler
-
 sqlite3.register_adapter(dict, lambda d: json.dumps(d).encode())
 # argparse CLI arguments
 parser = argparse.ArgumentParser(description="Obtain Arguments")
@@ -53,8 +53,8 @@ args = parser.parse_args()
 
 class BCBExchangeRateNonSAFetcher:
 
-  tablename = 'currencies_exchangerates'
-  days_difference_when_one_of_the_dates_misses = 10
+  tablename = pkg.EXCHRATE_DBTABLENAME
+  days_difference_when_one_of_the_dates_misses = pkg.days_gap_when_one_of_the_rangedates_misses
 
   def __init__(self, dailydate_fr=None, dailydate_to=None, datelist=None, curr_pair=None):
     self._dailydate_fr = dailydate_fr
@@ -253,6 +253,10 @@ class BCBExchangeRateNonSAFetcher:
 
   @property
   def sqlselect_wi_datelist_str_n_its_tuplevalues(self):
+    """
+    Somehow (at the time of writing) strdatelist (a list of dates) is not fitting into the '?' placeholder
+      maybe it has to do with the dates-adapter-function, something yet to be investigated...
+    """
     strdatelist = dtfs.trans_datelist_to_strdatelist(self.datelist)
     tuplevalues = (
       self.curr_num, self.curr_den, strdatelist

@@ -6,7 +6,7 @@ exratefetch.py
 import sqlite3
 import settings as sett
 import lib.db.db_settings as dbs
-EXRATE_TABLENAME = dbs.EXRATE_TABLENAME
+EXRATE_TABLENAME = dbs.EXCHRATE_DBTABLENAME
 DATE_COLUMN = 'refdate'
 
 

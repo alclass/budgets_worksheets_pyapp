@@ -27,7 +27,7 @@ class Updater:
 
   def update_db(self):
     sql = f"""
-    UPDATE `{dbs.EXRATE_TABLENAME}`
+    UPDATE `{dbs.EXCHRATE_DBTABLENAME}`
       SET 
         curr_num="{BRL}",
         curr_den="{USD}"

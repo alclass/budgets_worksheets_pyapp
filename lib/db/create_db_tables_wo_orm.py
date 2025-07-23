@@ -5,7 +5,7 @@ fs/db/create_db_tables_wo_orm.py
 """
 import settings as cfg
 import lib.db.db_settings as dbs
-EXRATE_TABLENAME = dbs.EXRATE_TABLENAME
+EXRATE_TABLENAME = dbs.EXCHRATE_DBTABLENAME
 IDXIND_TABLENAME = dbs.IDXIND_TABLENAME
 
 

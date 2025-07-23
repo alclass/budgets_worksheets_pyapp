@@ -12,9 +12,9 @@ from sqlalchemy.sql.expression import asc
 import settings as sett
 import lib.datefs.convert_to_datetime_wo_intr_sep_posorder as cvdt
 """
-import lib.db.db_settings as dbs
 import lib.datefs.convert_to_date_wo_intr_sep_posorder as cnv
-EXRATE_TABLENAME = dbs.EXRATE_TABLENAME
+import art.inflmeas.bcb_br.classes as pkg
+EXRATE_TABLENAME = pkg.EXCHRATE_DBTABLENAME
 BRL, EUR, USD = 'BRL', 'EUR', 'USD'
 DEFAULT_CURR_NUM = BRL
 DEFAULT_CURR_DEN = USD

@@ -3,7 +3,7 @@
 art/inflmeas/bcb_br/classes/daycurrexchrate_sqlal.py
   models the sql-table `currencies_exchangerates` via SqlAlchemy
 
-At the time of this writing, a sqlite file maintains the table.
+At the time of this writing, a sqlite file maintains the configured dbtable.
 """
 import datetime
 from sqlalchemy.ext.declarative import declarative_base

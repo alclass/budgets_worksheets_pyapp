@@ -1,8 +1,12 @@
 #!/usr/bin/python3
 """
+lib/db/sqlalch/sqlalchemy_connection_clsmod.py
 fs/db/conn_sa.py
-  This config module organizes the Sqlalchemy session object for
-    the sql-DB (at this moment under sqlite) for exchange rates and index indicators.
+  This config module organizes (Python's) SqlAlchemy session object for
+    the sql-DB RDBMS (at this moment under sqlite) for exchange rates and index indicators.
+
+To use class SqlAlchemyConnector, clients my import:
+  import lib.db.sqlalch.sqlalchemy_connection_clsmod as sqlal  # sqlal.SqlAlchemyConnector
 
 On the same theme, at the time of this writing, CEP "geodata" is placed
   in a different sqlite file configured by another Python module.
@@ -22,8 +26,7 @@ databasename = config.DATABASE_DICT[this_db]['DATABASENAME']
 
 engine_line = this_db + '://' + user + ':' + password + '@' + address + '/' + databasename
 """
-import os.path
-
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import settings as sett

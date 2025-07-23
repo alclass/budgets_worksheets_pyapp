@@ -141,7 +141,7 @@ class CorrMonetWithinDatesCalculator:
       curr_numerator = currency_pair[0]
       curr_denominator = currency_pair[1]
     sql = f"""
-      SELECT sellprice FROM {dbs.EXRATE_TABLENAME}
+      SELECT sellprice FROM {dbs.EXCHRATE_DBTABLENAME}
       WHERE
         refdate=? and
         curr_num=? and
