@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-models/exrate/currency_exchange_rate_model.py
-  models the sql-table `currencies_exchangerates` via SqlAlchemy
+BudgetsWorksheets:
+  art/inflmeas/bcb_br/classes/daterangecurrexchrate_mod.py
+    Models the sql-table `currencies_exchangerates` via SqlAlchemy
 
 At the time of this writing, a sqlite file maintains the table.
 

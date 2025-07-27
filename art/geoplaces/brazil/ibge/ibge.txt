@@ -1,0 +1,41 @@
+https://www.ibge.gov.br/geociencias/cartas-e-mapas/mapas-municipais.html
+https://www.ibge.gov.br/geociencias/cartas-e-mapas/mapas-municipais/27437-atualizacao-dos-mapas-municipais.html
+https://www.ibge.gov.br/geociencias/cartas-e-mapas/mapas-municipais/31452-colecao-de-mapas-municipais.html
+
+https://www.ibge.gov.br/geociencias/cartas-e-mapas/redes-geograficas/15798-regioes-de-influencia-das-cidades.html
+
+Acesso ao produto - 2018 - Resultados definitivos
+Publicações
+
+    Regiões de Influência das Cidades 2018
+    Folder: Regiões de Influência das Cidades 2018
+    Metodologia de compatibilização hierárquica entre as edições da pesquisa no período de 1966 a 2018
+
+
+Bases de dados
+
+    REGIC 2018 - Cidades - Base tabular (xlsx | ods) - atualizado em 09/10/2020
+    REGIC 2018 - Ligações entre Cidades - Base tabular (xlsx | ods)
+    REGIC 2018 - Matriz de regiões de influência - Base tabular (xlsx | ods) - incluído em 02/07/2020
+    REGIC 2018 - Municípios integrantes de Arranjos Populacionais - Base tabular (xlsx | ods) - atualizado em 09/10/2020
+    REGIC 2018 - Municípios - Hierarquia e região de influência - Base tabular (xlsx | ods) - incluído em 17/02/2023
+    REGIC 2018 - Municípios - Ligações e atração segundo temas do questionário - Base tabular (xlsx | ods) - incluído em 11/03/2021
+    REGIC 2018 - Internacional - Cidades - Base tabular (xlsx | ods)
+    REGIC 2018 - Internacional - Ligações entre Cidades - Base tabular (xlsx | ods)
+    REGIC 2018 - Fluxos Agropecuários - Base tabular (xlsx | ods) - incluído em 02/07/2020
+    REGIC 2018 - Base vetorial
+    REGIC 2018 - Base de referência de distâncias rodoviárias, hidroviárias e aéreas - Base vetorial - incluído em 5/12/2022
+    REGIC 2018 - Base de referência de distâncias rodoviárias, hidroviárias e aéreas - Base tabular (xlsx | ods) - incluído em 06/10/2023
+    REGIC 2018 - Base de hierarquias urbanas históricas compatibilizadas - Base tabular (xlsx | ods) - incluído em 17/12/2024
+    REGIC 2018 - Ligações das redes urbanas - 1966 a 2018 - Base tabular (xlsx | ods) - incluído em 17/12/2024
+
+
+Documentação
+
+    Nota metodológica - Regiões de Influência das Cidades 2018 - Base de referência de distâncias rodoviárias, hidroviárias e aéreas 2021
+    Nota metodológica - Regiões de Influência das Cidades 2018
+
+
+Mapas interativos e consulta de dados por Cidade
+
+    Regiões de Influência das Cidades 2018
