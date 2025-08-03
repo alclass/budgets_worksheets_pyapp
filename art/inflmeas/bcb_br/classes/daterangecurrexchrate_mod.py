@@ -15,9 +15,12 @@ import lib.datefs.convert_to_datetime_wo_intr_sep_posorder as cvdt
 """
 import copy
 from dateutil.relativedelta import relativedelta
+# from sqlalchemy.sql.expression import asc
 import art.inflmeas.bcb_br.classes as pkg  # pkg
-import lib.datefs.convert_to_date_wo_intr_sep_posorder as cnv
 import art.inflmeas.bcb_br.classes.daycurrexchrate_mod as dayexrtmod  # dayexrtmod.DayCurrExchRate
+import lib.datefs.convert_to_date_wo_intr_sep_posorder as cnv
+import lib.db.sqlalch.sqlalchemy_connection_clsmod as consa
+import art.inflmeas.bcb_br.classes.daycurrexchrate_sqlal as sqal  # .SADayCurrExchRate
 EXCHRATE_DBTABLENAME = pkg.EXCHRATE_DBTABLENAME
 BRL, EUR, USD = pkg.BRL, pkg.EUR, pkg.USD
 DEFAULT_CURR_NUM = pkg.DEFAULT_CURR_NUM
@@ -30,17 +33,16 @@ class DateRangeCurrExchRate:
   # db-field-intprices should be divided by 10 ** n_decplaces_for_div_intprices
   n_decplaces_for_div_intprices = pkg.n_decplaces_for_div_intprices
 
-  def __init__(self, date_fr=None, date_to=None, datelist=None, curr_num=None, curr_den=None):
+  def __init__(self, date_fr=None, date_to=None, datelist=None):
     self.date_fr = date_fr
     self.date_to = date_to
     self.datelist = datelist
-    self.curr_num, self.curr_den = curr_num, curr_den
     self.dates_n_exchrates_dict = {}
+    self.saconnector = consa.SqlAlchemyConnector()
     self.treat_attrs()
 
   def treat_attrs(self):
     self.treat_dates()
-    self.treat_currency_pair()
 
   def treat_dates(self):
     if self.datelist is not None:
@@ -71,21 +73,50 @@ class DateRangeCurrExchRate:
       self.date_fr = self.date_to
       self.date_to = tmpdate
 
-  def treat_currency_pair(self):
-    if self.curr_num is None:
-      self.curr_num = DEFAULT_CURR_NUM
-    if self.curr_num not in REGISTERED_3LETTER_CURRENCIES:
-      errmsg = (f"Data Error: curr_num [{self.curr_num}] not in registered currencies {REGISTERED_3LETTER_CURRENCIES}."
-                f" Halting.")
-      raise ValueError(errmsg)
-    if self.curr_den is None:
-      self.curr_den = DEFAULT_CURR_DEN
-    if self.curr_den not in REGISTERED_3LETTER_CURRENCIES:
-      errmsg = (f"Data Error: curr_den [{self.curr_den}] not in registered currencies {REGISTERED_3LETTER_CURRENCIES}."
-                f" Halting.")
-      raise ValueError(errmsg)
+  def fetch_exrts_wi_daterange_via_sqlalchemy(self):
+    s = self.saconnector.get_sa_session()
+    m = sqal.SADayCurrExchRate
+    exrates = s.query(m).\
+        filter(m.refdate.between(self.date_fr, self.date_to)).\
+        order_by(m.refdate.asc())
+    return exrates
 
-  def add_or_update_dates_n_exchrates_dict(self, daycurrexchrate_o: dayexrtmod.DayCurrExchRate):
+  def fetch_exrts_inside_datelist_via_sqlalchemy(self):
+    s = self.saconnector.get_sa_session()
+    m = sqal.SADayCurrExchRate
+    exrates = s.query(m).\
+        filter(m.refdate.in_(self.datelist)).\
+        order_by(m.refdate.asc())
+    return exrates
+
+  def fetch_contextual_exrts_via_sqlalchemy(self):
+    """
+    """
+    if self.datelist is None:
+      return self.fetch_exrts_wi_daterange_via_sqlalchemy()
+    return self.fetch_exrts_inside_datelist_via_sqlalchemy()
+
+  def load_exrts_via_sqlalchemy(self):
+    exrts = self.fetch_contextual_exrts_via_sqlalchemy()
+    exrts = exrts.all()
+    self.update_exchrates_dict_from_sa_w_exrts(exrts)
+
+  def update_exchrates_dict_from_sa_w_exrts(self, exrts):
+    for exrt in exrts:
+      self.update_exchrates_dict_from_sa_w_exrt(exrt)
+
+  def update_exchrates_dict_from_sa_w_exrt(self, daycurrexchrate_sa):
+    dailydate = daycurrexchrate_sa.refdate
+    curr_num = daycurrexchrate_sa.curr_num
+    curr_den = daycurrexchrate_sa.curr_den
+    buypriceint = daycurrexchrate_sa.buyprice_as_int
+    sellpriceint = daycurrexchrate_sa.sellprice_as_int
+    daycurrexchrate_o = dayexrtmod.DayCurrExchRate(dailydate=dailydate, curr_num=curr_num, curr_den=curr_den)
+    daycurrexchrate_o.buypriceint = buypriceint
+    daycurrexchrate_o.sellpriceint = sellpriceint
+    self.update_exchrates_dict_w_exrt(daycurrexchrate_o)
+
+  def update_exchrates_dict_w_exrt(self, daycurrexchrate_o: dayexrtmod.DayCurrExchRate):
     if isinstance(daycurrexchrate_o, dayexrtmod.DayCurrExchRate):
       pdate = daycurrexchrate_o.dailydate
       if self.datelist:
@@ -157,7 +188,6 @@ class DateRangeCurrExchRate:
 
   def __str__(self):
     outstr = f"""{self.__class__.__name__}
-    curr_num = {self.curr_num} | curr_den = {self.curr_den}
     nº of exch-rates in obj = {len(self.dates_n_exchrates_dict)}
     nº of dates = {self.total_dates} | len dates = {self.len_dates}
     date_fr = {self.date_fr} | date_to = {self.date_to}
@@ -167,24 +197,33 @@ class DateRangeCurrExchRate:
     return outstr
 
 
-def adhoc_test():
-  dailydate = '2024-12-13'
-  exrt_o = dayexrtmod.DayCurrExchRate(dailydate=dailydate)
+def adhoctest2():
+  date_ini = '2023-12-13'
+  date_fim = '2025-7-23'
+  dtrange = DateRangeCurrExchRate(date_fr=date_ini, date_to=date_fim)
+  dtrange.load_exrts_via_sqlalchemy()
+  print(dtrange)
+  dtrange.print_exrate_data()
+
+
+def adhoctest1():
+  date_ini = '2023-12-13'
+  date_fim = '2024-12-23'
+  dtrange = DateRangeCurrExchRate(date_fr=date_ini, date_to=date_fim)
+  exrt_o = dayexrtmod.DayCurrExchRate(dailydate=date_ini)
   exrt_o.buypriceint = 54321
   exrt_o.sellpriceint = 54422
   print(exrt_o)
-  exrt_o.report_invert_curr_pair()
+  dtrange.update_exchrates_dict_w_exrt(exrt_o)
   # =============================
-  dtrange = DateRangeCurrExchRate(date_fr=dailydate)
-  dtrange.add_or_update_dates_n_exchrates_dict(exrt_o)
   # =============================
-  dailydate = '2024-12-23'
-  exrt_o = dayexrtmod.DayCurrExchRate(dailydate=dailydate)
+  exrt_o = dayexrtmod.DayCurrExchRate(dailydate=date_ini)
   exrt_o.buypriceint = 45312
   exrt_o.sellpriceint = 45411
-  dtrange.add_or_update_dates_n_exchrates_dict(exrt_o)
+  dtrange.update_exchrates_dict_w_exrt(exrt_o)
   print(dtrange)
   dtrange.print_exrate_data()
+  exrt_o.report_invert_curr_pair()
 
 
 def process():
@@ -195,4 +234,4 @@ if __name__ == "__main__":
   """
   process()
   """
-  adhoc_test()
+  adhoctest2()

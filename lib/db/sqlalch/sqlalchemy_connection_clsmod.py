@@ -18,11 +18,11 @@ In order to make mysql work with sqlalchemy, two things were to be done:
   2) after that, mysqlclient was installed via pip.
 
 this_db = config.THIS_DATABASE;
-user         = config.DATABASE_DICT[this_db]['USER']
-password     = config.DATABASE_DICT[this_db]['PASSWORD']
-address      = config.DATABASE_DICT[this_db]['ADDRESS']
-port         = config.DATABASE_DICT[this_db]['PORT']
-databasename = config.DATABASE_DICT[this_db]['DATABASENAME']
+  user         = config.DATABASE_DICT[this_db]['USER']
+  password     = config.DATABASE_DICT[this_db]['PASSWORD']
+  address      = config.DATABASE_DICT[this_db]['ADDRESS']
+  port         = config.DATABASE_DICT[this_db]['PORT']
+  databasename = config.DATABASE_DICT[this_db]['DATABASENAME']
 
 engine_line = this_db + '://' + user + ':' + password + '@' + address + '/' + databasename
 """

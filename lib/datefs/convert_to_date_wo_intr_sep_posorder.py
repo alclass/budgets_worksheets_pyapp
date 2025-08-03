@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-fs/datefs/convert_to_date_wo_intr_sep_posorder.py
-  Has functions for converting str's or attr_obj's into datetime. date's
+lib/datefs/convert_to_date_wo_intr_sep_posorder.py
+  Has functions for converting str's or attr_obj's into datetime. date's et-al
 
 Differently from the introspect_dates.py modules, it does not use parameters used by the latter, ie:
 
@@ -20,10 +20,12 @@ Also:
       of course, in the case above, the final consistency check will be taken
       through datetime. date's constructor.
 """
+import copy
 import datetime
 import random
 from typing import Union  # Optional, List, Dict, Any, Tuple
 from dateutil.relativedelta import relativedelta
+from jedi.inference.gradual.typing import AnyClass
 DEFAULT_N_RANDOMDATES_TO_MAKE = 3
 
 
@@ -250,17 +252,24 @@ def calc_n_completedays_between_dates(
   return diff.days
 
 
-def trans_convertabledates_to_datelist(datelist: list[datetime.date] | None) -> list[datetime.date]:
+def trans_convertabledates_to_datelist(datelist: list[datetime.date | str] | None) -> list[datetime.date]:
   odates = []
   if datelist is None:
     return []
   for pdate in datelist:
+    if isinstance(pdate, datetime.date):
+      odates.append(pdate)
+      continue
     odate = make_date_or_none(pdate)
-    odates.append(odate)
+    if isinstance(odate, datetime.date):
+      odates.append(odate)
   return odates
 
 
-def trans_datelist_to_strdatelist(datelist, raises_if_any_not_date=False):
+def trans_datelist_to_strdatelist(
+      datelist: list[datetime.date | str | AnyClass] | None,
+      raises_if_any_not_date: bool = False
+  ):
   """
   Transforms a date list into a string date list
 
@@ -277,14 +286,23 @@ def trans_datelist_to_strdatelist(datelist, raises_if_any_not_date=False):
         raise TypeError(errmsg)
       else:
         continue
-    pdate = make_date_or_none(pdate)
     if pdate is None:
       if raises_if_any_not_date:
         errmsg = f'Error: An element (date={pdate}) is not a date in trans_datelist_to_strdatelist(). Halting.'
         raise TypeError(errmsg)
       else:
         continue
-    strdate = str(pdate)
+    odate = copy.copy(pdate)
+    if not isinstance(odate, datetime.date):
+      odate = make_date_or_none(odate)
+      if odate is None:
+        if raises_if_any_not_date:
+          errmsg = (f'Error: An element (date={pdate}) is not convertible-to-date in trans_datelist_to_strdatelist().'
+                    f' Halting.')
+          raise TypeError(errmsg)
+        else:
+          continue
+    strdate = str(odate)
     strdatelist.append(strdate)
   return strdatelist
 
@@ -385,6 +403,12 @@ def adhoctest3():
   scrmsg = f"""n_dates, dateini, datefim = {n_dates}, {dateini}, {datefim}
   randomdates = {randomdates}"""
   print(scrmsg)
+  strdatelist = ['2025-05-09', '2025-07-09']
+  print('strdatelist', strdatelist)
+  datelist = trans_convertabledates_to_datelist(strdatelist)
+  print('datelist trans_convertabledates_to_datelist', datelist)
+  ret_strdatelist = trans_datelist_to_strdatelist(datelist)
+  print('ret_strdatelist trans_datelist_to_strdatelist', ret_strdatelist)
 
 
 def process():

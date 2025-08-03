@@ -4,17 +4,30 @@ art/inflmeas/bcb_br/classes/daycurrexchrate_sqlal.py
   models the sql-table `currencies_exchangerates` via SqlAlchemy
 
 At the time of this writing, a sqlite file maintains the configured dbtable.
+
+  => how to query a date within a range date with sqlalchemy?
+
+Example:
+  qry = DBSession.query(User).filter(
+          and_(User.birthday <= '1988-01-17', User.birthday >= '1985-01-17'))
+  # or same:
+  qry = DBSession.query(User).filter(User.birthday <= '1988-01-17').\
+          filter(User.birthday >= '1985-01-17')
+  Also you can use between:
+
+  qry = DBSession.query(User).filter(User.birthday.between('1985-01-17', '1988-01-17'))
+
 """
 import datetime
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, Date, Time, String, TIMESTAMP
 from sqlalchemy.sql.expression import asc
 import settings as sett
+import art.inflmeas.bcb_br.classes as pkg
 import lib.datefs.convert_to_date_wo_intr_sep_posorder as cnv
 import lib.datefs.convert_to_datetime_wo_intr_sep_posorder as cvdt
-import art.inflmeas.bcb_br.classes as pkg
 import lib.db.sqlalch.sqlalchemy_connection_clsmod as consa
-Base = declarative_base()
+import sqlalchemy.orm as sorm
+Base = sorm.declarative_base()
 EXCHRATE_DBTABLENAME = pkg.EXCHRATE_DBTABLENAME
 
 
@@ -116,7 +129,8 @@ class SADayCurrExchRate(Base):
 
 
 def ahdoc_test_insert_etc():
-  session = consa.get_sa_session()
+  sqal_o = consa.SqlAlchemyConnector()
+  session = sqal_o.get_sa_session()
   quotesdate = cnv.make_date_or_today('2019-12-31')
   exrate = session.query(SADayCurrExchRate).filter(SADayCurrExchRate.refdate == quotesdate).first()
   if exrate is None:
@@ -133,8 +147,8 @@ def print_db():
   exrates = session.query(SADayCurrExchRate). \
       order_by(asc(SADayCurrExchRate.refdate)).\
       all()
-  scrmsg = f"""ExchangeRateDate: 1) create table | 2) read table 
-  tablename = {SADayCurrExchRate.__tablename__} | Base.metadata.create_all(con.sqlalchemy_engine
+  scrmsg = f"""ExchangeRateDate: tablename = {SADayCurrExchRate.__tablename__}
+  reading all records
   """
   print(scrmsg)
   for i, exrate in enumerate(exrates):
